@@ -2,18 +2,22 @@ import express from 'express';
 import { supabase } from '../supabaseClient.js';
 import { jourLocal, hierLocal } from '../lib/dates.js';
 import { requireAuth } from '../middleware/auth.js';
+import { evaluerRupturesStreak, marquerReprise } from '../lib/streaksLogic.js';
 
 const router = express.Router();
 
 router.get('/', requireAuth, async (req, res) => {
+  // Évalue les ruptures à chaque lecture (cheap, mono-user)
+  await evaluerRupturesStreak();
+
   const { data, error } = await supabase.from('streaks').select('*');
   if (error) return res.status(500).json({ error: error.message });
   res.json(data);
 });
 
 /**
- * Incrémente un streak de façon conditionnelle (évite double-compte le même jour local).
- * Utilise le fuseau TZ (Indian/Antananarivo par défaut).
+ * Incrémente un streak (fuseau TZ Madagascar).
+ * Si reprise après rupture → chapitres rompus → 'reprise'.
  */
 export async function incrementerStreak(streakId) {
   const { data: streak, error: readErr } = await supabase
@@ -29,10 +33,10 @@ export async function incrementerStreak(streakId) {
   }
 
   const hier = hierLocal();
+  const etaitRompu = streak.dernier_jour && streak.dernier_jour !== hier && streak.dernier_jour !== aujourdhui;
   const suite = streak.dernier_jour === hier ? streak.jours_consecutifs + 1 : 1;
   const record = Math.max(suite, streak.record ?? 0);
 
-  // Update conditionnel : n'écrit que si dernier_jour n'est pas déjà aujourd'hui (anti race)
   const { data: updated, error } = await supabase
     .from('streaks')
     .update({
@@ -50,7 +54,16 @@ export async function incrementerStreak(streakId) {
     return { ok: false, reason: error.message };
   }
 
-  return { ok: true, skipped: !updated, jours: updated?.jours_consecutifs ?? suite };
+  if (etaitRompu || (suite === 1 && streak.jours_consecutifs === 0)) {
+    await marquerReprise(streakId);
+  }
+
+  return {
+    ok: true,
+    skipped: !updated,
+    jours: updated?.jours_consecutifs ?? suite,
+    reprise: Boolean(etaitRompu),
+  };
 }
 
 export default router;
