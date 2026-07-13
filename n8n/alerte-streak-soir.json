@@ -1,0 +1,70 @@
+{
+  "name": "TWIY — Alerte préventive de rupture de streak",
+  "nodes": [
+    {
+      "parameters": { "rule": { "interval": [{ "field": "cronExpression", "expression": "0 21 * * *" }] } },
+      "id": "cron-soir",
+      "name": "Chaque soir 21h",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [200, 300]
+    },
+    {
+      "parameters": { "url": "={{$env.TWIY_API_URL}}/streaks", "method": "GET" },
+      "id": "get-streaks",
+      "name": "Lire les streaks",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const aujourdhui = new Date().toISOString().slice(0,10);\nconst enRisque = $input.first().json.filter(s => s.dernier_jour !== aujourdhui);\nreturn [{ json: { enRisque, message: enRisque.map(s => s.id).join(', ') } }];"
+      },
+      "id": "filtrer-risque",
+      "name": "Filtrer streaks à risque",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [700, 300]
+    },
+    {
+      "parameters": {
+        "conditions": { "options": {}, "conditions": [{ "leftValue": "={{$json.enRisque.length}}", "rightValue": 0, "operator": { "type": "number", "operation": "gt" } }] }
+      },
+      "id": "if-risque",
+      "name": "Si au moins une série menacée",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [950, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{$env.TWIY_API_URL}}/entree",
+        "method": "POST",
+        "headerParameters": { "parameters": [{ "name": "x-api-key", "value": "={{$env.TWIY_WEBHOOK_KEY}}" }] },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "type_fait", "value": "alerte" },
+            { "name": "detail", "value": "={{'Streaks en risque ce soir : ' + $json.message}}" },
+            { "name": "source", "value": "n8n" }
+          ]
+        },
+        "note": "Remplacer par un vrai canal de notif (Telegram/email) si le check-in Cowork ne suffit pas — voir n8n/README.md"
+      },
+      "id": "notifier",
+      "name": "Notifier (à brancher)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1200, 300]
+    }
+  ],
+  "connections": {
+    "Chaque soir 21h": { "main": [[{ "node": "Lire les streaks", "type": "main", "index": 0 }]] },
+    "Lire les streaks": { "main": [[{ "node": "Filtrer streaks à risque", "type": "main", "index": 0 }]] },
+    "Filtrer streaks à risque": { "main": [[{ "node": "Si au moins une série menacée", "type": "main", "index": 0 }]] },
+    "Si au moins une série menacée": { "main": [[{ "node": "Notifier (à brancher)", "type": "main", "index": 0 }], []] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" }
+}

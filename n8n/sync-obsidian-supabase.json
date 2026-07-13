@@ -1,0 +1,63 @@
+{
+  "name": "TWIY — Sync Obsidian vers Supabase",
+  "nodes": [
+    {
+      "parameters": { "rule": { "interval": [{ "field": "hours" }] } },
+      "id": "cron-sync",
+      "name": "Toutes les heures",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [200, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://127.0.0.1:27123/vault/02-Projets/",
+        "method": "GET",
+        "headerParameters": {
+          "parameters": [{ "name": "Authorization", "value": "Bearer {{$env.OBSIDIAN_API_KEY}}" }]
+        }
+      },
+      "id": "get-notes",
+      "name": "Lister notes 02-Projets",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse le frontmatter (statut, resultat, revenu_genere, type) de chaque note\n// et prépare le payload pour l'upsert Supabase.\nconst notes = $input.all();\nreturn notes.map(n => ({ json: { titre: n.json.filename, frontmatter: n.json.frontmatter } }));"
+      },
+      "id": "parse-frontmatter",
+      "name": "Parser frontmatter",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [700, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{$env.TWIY_API_URL}}/quetes",
+        "method": "POST",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "titre", "value": "={{$json.titre}}" },
+            { "name": "statut", "value": "={{$json.frontmatter.statut}}" },
+            { "name": "lien_note_obsidian", "value": "={{$json.titre}}" }
+          ]
+        }
+      },
+      "id": "upsert-supabase",
+      "name": "Upsert vers TWIY API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [950, 300]
+    }
+  ],
+  "connections": {
+    "Toutes les heures": { "main": [[{ "node": "Lister notes 02-Projets", "type": "main", "index": 0 }]] },
+    "Lister notes 02-Projets": { "main": [[{ "node": "Parser frontmatter", "type": "main", "index": 0 }]] },
+    "Parser frontmatter": { "main": [[{ "node": "Upsert vers TWIY API", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" }
+}

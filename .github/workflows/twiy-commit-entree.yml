@@ -1,0 +1,31 @@
+# THE WORLD IS YOURS — push commits → Chroniques
+# Prérequis secrets repo :
+#   TWIY_WEBHOOK_URL     = https://<ton-api>/api/webhooks/github
+#   TWIY_WEBHOOK_SECRET  = même valeur que GITHUB_WEBHOOK_SECRET côté serveur
+name: twiy-commit-entree
+
+on:
+  push:
+    branches: [main, master]
+
+jobs:
+  chronicle:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Poster l'entrée commit
+        env:
+          TWIY_WEBHOOK_URL: ${{ secrets.TWIY_WEBHOOK_URL }}
+          TWIY_WEBHOOK_SECRET: ${{ secrets.TWIY_WEBHOOK_SECRET }}
+        run: |
+          if [ -z "$TWIY_WEBHOOK_URL" ] || [ -z "$TWIY_WEBHOOK_SECRET" ]; then
+            echo "Secrets TWIY manquants — skip"
+            exit 0
+          fi
+          curl -fsS -X POST "$TWIY_WEBHOOK_URL" \
+            -H "Content-Type: application/json" \
+            -H "x-webhook-secret: $TWIY_WEBHOOK_SECRET" \
+            -d "$(jq -n \
+              --arg repo "${{ github.repository }}" \
+              --arg message "${{ github.event.head_commit.message }}" \
+              --arg sha "${{ github.sha }}" \
+              '{repo:$repo, message:$message, sha:$sha}')"

@@ -1,0 +1,82 @@
+{
+  "name": "TWIY — Revue du dimanche auto-générée",
+  "nodes": [
+    {
+      "parameters": { "rule": { "interval": [{ "field": "cronExpression", "expression": "0 8 * * 0" }] } },
+      "id": "cron-dimanche",
+      "name": "Dimanche 8h",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [200, 300]
+    },
+    {
+      "parameters": { "url": "={{$env.TWIY_API_URL}}/entrees", "method": "GET" },
+      "id": "get-entrees",
+      "name": "Lire entrées de la semaine",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [450, 200]
+    },
+    {
+      "parameters": { "url": "={{$env.TWIY_API_URL}}/prospects", "method": "GET" },
+      "id": "get-prospects",
+      "name": "Lire pipeline freelance",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [450, 400]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Agrège : commits, XP dev/beatmaker, proposals envoyés, applique les règles de contingence\n// (retard 1/2/3 semaines) définies dans la roadmap Learn By Doing.\nconst entrees = $items('Lire entrées de la semaine').map(i => i.json);\nconst prospects = $items('Lire pipeline freelance').map(i => i.json);\nconst commits = entrees.filter(e => e.type_fait === 'commit').length;\nconst sessionsProd = entrees.filter(e => e.type_fait === 'session_prod').length;\nconst proposals = prospects.filter(p => p.statut === 'proposal_envoye').length;\nreturn [{ json: { commits, sessionsProd, proposals, quotaFreelanceOk: proposals >= 2 } }];"
+      },
+      "id": "agreger",
+      "name": "Agréger la semaine",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [700, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://api.anthropic.com/v1/messages",
+        "method": "POST",
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-api-key", "value": "={{$env.ANTHROPIC_API_KEY}}" },
+            { "name": "anthropic-version", "value": "2023-06-01" },
+            { "name": "content-type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "bodyParametersJson": "={{ { model: 'claude-sonnet-5', max_tokens: 800, messages: [{ role: 'user', content: 'Rédige la revue dominicale à partir de ces données : ' + JSON.stringify($json) + '. Suis les 6 questions de la routine hebdo (cert de la semaine, commit quotidien, avancement Dev/Beatmaker, 2 proposals envoyés, post LinkedIn, respect des délais) et applique le plan de contingence si retard détecté.' }] } }}"
+      },
+      "id": "claude-redige",
+      "name": "Claude rédige la revue",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [950, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://127.0.0.1:27123/vault/00-Veille/Revue-Dominicale.md",
+        "method": "PUT",
+        "headerParameters": { "parameters": [{ "name": "Authorization", "value": "Bearer {{$env.OBSIDIAN_API_KEY}}" }] },
+        "sendBody": true,
+        "body": "={{$json.content[0].text}}"
+      },
+      "id": "ecrire-obsidian",
+      "name": "Écrire dans Obsidian",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1200, 300]
+    }
+  ],
+  "connections": {
+    "Dimanche 8h": { "main": [[{ "node": "Lire entrées de la semaine", "type": "main", "index": 0 }, { "node": "Lire pipeline freelance", "type": "main", "index": 0 }]] },
+    "Lire entrées de la semaine": { "main": [[{ "node": "Agréger la semaine", "type": "main", "index": 0 }]] },
+    "Lire pipeline freelance": { "main": [[{ "node": "Agréger la semaine", "type": "main", "index": 0 }]] },
+    "Agréger la semaine": { "main": [[{ "node": "Claude rédige la revue", "type": "main", "index": 0 }]] },
+    "Claude rédige la revue": { "main": [[{ "node": "Écrire dans Obsidian", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" }
+}

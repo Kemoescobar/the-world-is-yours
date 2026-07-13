@@ -1,0 +1,42 @@
+{
+  "name": "TWIY — Sauvegarde hebdomadaire",
+  "nodes": [
+    {
+      "parameters": { "rule": { "interval": [{ "field": "cronExpression", "expression": "0 4 * * 1" }] } },
+      "id": "cron-backup",
+      "name": "Lundi 4h",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [200, 300]
+    },
+    {
+      "parameters": { "url": "={{$env.TWIY_API_URL}}/export", "method": "GET" },
+      "id": "get-export",
+      "name": "Exporter toutes les tables",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "url": "=http://127.0.0.1:27123/vault/00-Veille/Backups/twiy-{{$now.format('yyyy-MM-dd')}}.json",
+        "method": "PUT",
+        "headerParameters": { "parameters": [{ "name": "Authorization", "value": "Bearer {{$env.OBSIDIAN_API_KEY}}" }] },
+        "sendBody": true,
+        "body": "={{JSON.stringify($json)}}",
+        "note": "Le tier gratuit Supabase n'a pas de backup natif — cette copie hebdo dans le vault (déjà sauvegardé par tes soins) sert de filet de sécurité, voir spec 7quater."
+      },
+      "id": "ecrire-backup",
+      "name": "Écrire la sauvegarde dans Obsidian",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [700, 300]
+    }
+  ],
+  "connections": {
+    "Lundi 4h": { "main": [[{ "node": "Exporter toutes les tables", "type": "main", "index": 0 }]] },
+    "Exporter toutes les tables": { "main": [[{ "node": "Écrire la sauvegarde dans Obsidian", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" }
+}

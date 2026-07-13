@@ -1,0 +1,15 @@
+name: Notifier THE WORLD IS YOURS
+on:
+  push:
+    branches: [main, master]
+
+jobs:
+  notifier:
+    runs-on: ubuntu-latest
+    steps:
+      - name: POST vers /api/webhooks/github
+        run: |
+          curl -X POST "${{ secrets.TWIY_API_URL }}/webhooks/github" \
+            -H "Content-Type: application/json" \
+            -H "x-webhook-secret: ${{ secrets.TWIY_GITHUB_WEBHOOK_SECRET }}" \
+            -d "{\"repo\": \"${{ github.repository }}\", \"message\": \"$(git log -1 --pretty=%s)\", \"sha\": \"${{ github.sha }}\"}"
