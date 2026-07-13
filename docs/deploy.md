@@ -7,23 +7,22 @@
 
 ## 1. API → Railway
 
-1. New Project → Deploy from local folder **ou** GitHub repo
-2. Root directory : `server`
-3. Variables d'environnement (Settings → Variables) — copier depuis `server/.env` :
-   - `PORT` = `4000` (Railway injecte souvent `$PORT` automatiquement)
+1. New Project → Deploy from GitHub repo `the-world-is-yours`
+2. **Root Directory** = `server` (obligatoire — monorepo)
+3. **Config as Code** (Settings) = `/server/railway.json` si demandé
+4. **Start Command** (si besoin) = `npm start`
+5. Variable utile : `RAILPACK_NO_SPA=1` (évite une mauvaise détection site statique)
+6. Variables d'environnement — copier depuis `server/.env` :
    - `TZ` = `Indian/Antananarivo`
-   - `CLIENT_URL` = `https://<ton-app>.vercel.app` (mettre à jour après Vercel)
+   - `CLIENT_URL` = `https://<ton-app>.vercel.app` (après Vercel)
    - `SUPABASE_URL`
    - `SUPABASE_SERVICE_KEY`
    - `WEBHOOK_API_KEY`
    - `GITHUB_WEBHOOK_SECRET`
-4. Deploy → noter l'URL publique : `https://xxxx.up.railway.app`
+7. Deploy → **Networking → Generate Domain**
+8. Test : `https://xxxx.up.railway.app/health`
 
-Test :
-```bash
-curl https://xxxx.up.railway.app/health
-```
-
+Si erreur `railpack process exited` : presque toujours **Root Directory ≠ server**.
 ## 2. Client → Vercel
 
 1. Import projet / dossier `client`

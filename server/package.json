@@ -2,9 +2,14 @@
   "name": "the-world-is-yours-server",
   "version": "0.1.0",
   "type": "module",
+  "main": "src/index.js",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "dev": "node --watch src/index.js",
-    "start": "node src/index.js"
+    "start": "node src/index.js",
+    "build": "node -e \"console.log('no build step')\""
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.0",
