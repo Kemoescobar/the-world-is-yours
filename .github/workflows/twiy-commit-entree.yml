@@ -18,8 +18,8 @@ jobs:
           TWIY_WEBHOOK_SECRET: ${{ secrets.TWIY_WEBHOOK_SECRET }}
         run: |
           if [ -z "$TWIY_WEBHOOK_URL" ] || [ -z "$TWIY_WEBHOOK_SECRET" ]; then
-            echo "Secrets TWIY manquants — skip"
-            exit 0
+            echo "::error::Secrets TWIY_WEBHOOK_URL / TWIY_WEBHOOK_SECRET manquants — voir docs/github-webhook.md"
+            exit 1
           fi
           curl -fsS -X POST "$TWIY_WEBHOOK_URL" \
             -H "Content-Type: application/json" \
@@ -29,3 +29,4 @@ jobs:
               --arg message "${{ github.event.head_commit.message }}" \
               --arg sha "${{ github.sha }}" \
               '{repo:$repo, message:$message, sha:$sha}')"
+          echo "Entrée Chroniques postée pour ${{ github.sha }}"
