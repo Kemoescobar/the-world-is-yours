@@ -83,7 +83,16 @@ export default function Drops() {
               </Link>
             );
           })}
-          {!items.length && <p className="compteur" style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center' }}>Spiral vide — les paliers apparaîtront ici.</p>}
+          {!items.length && (
+            <div className="empty-wall" style={{ position: 'absolute', inset: 40, display: 'grid', placeItems: 'center' }}>
+              <div style={{ textAlign: 'center' }}>
+                <p className="compteur">SPIRAL · DROPS</p>
+                <h2 style={{ margin: '12px 0' }}>Aucun palier encore</h2>
+                <p style={{ color: 'var(--text-muted)' }}>Valide une quête — le Drop apparaît ici.</p>
+                <span className="annotation-manuscrite">vide pour l’instant</span>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

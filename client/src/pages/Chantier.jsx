@@ -8,8 +8,20 @@ import { apiGet } from '../lib/api.js';
 
 const streakParArc = { dev: 'dev', beatmaker: 'miprod', croisement: null };
 
+const ROUTINES = ['Aube', 'Miprod', 'Dev', 'Étude', 'Odin', 'Miprod+'];
+
 function jourISO() {
   return new Date().toISOString().slice(0, 10);
+}
+
+function blocRoutineActuel() {
+  const h = new Date().getHours();
+  if (h < 8) return 0;
+  if (h < 11) return 1;
+  if (h < 14) return 2;
+  if (h < 17) return 3;
+  if (h < 20) return 4;
+  return 5;
 }
 
 export default function Chantier() {
@@ -18,6 +30,7 @@ export default function Chantier() {
   const quetes = useSelector((s) => s.quetes.items);
   const [streaks, setStreaks] = useState([]);
   const [chapitres, setChapitres] = useState([]);
+  const actuel = blocRoutineActuel();
 
   useEffect(() => {
     dispatch(fetchArcs());
@@ -64,13 +77,36 @@ export default function Chantier() {
 
   return (
     <div style={{ padding: 'var(--space-4)' }}>
-      <p className="compteur">{titreGlobal.toUpperCase()}</p>
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-        gap: 'var(--space-3)',
-        marginTop: 'var(--space-3)',
-      }}>
+      <p
+        style={{
+          fontFamily: 'var(--font-display)',
+          fontWeight: 800,
+          fontSize: 'clamp(1.5rem, 4vw, 2.2rem)',
+          letterSpacing: '-0.03em',
+          marginBottom: 4,
+        }}
+      >
+        Chantier
+      </p>
+      <p className="compteur" style={{ marginBottom: 'var(--space-3)' }}>
+        {titreGlobal.toUpperCase()}
+      </p>
+
+      <div className="routine-frise" aria-label="Routine du jour">
+        {ROUTINES.map((label, i) => (
+          <span key={label} className={i === actuel ? 'actuel' : undefined}>
+            {label}
+          </span>
+        ))}
+      </div>
+
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+          gap: 'var(--space-3)',
+        }}
+      >
         {arcs.map((a) => {
           const liste = quetesPourArc(a.id);
           const chap = chapitrePourArc(a.id);
@@ -87,7 +123,16 @@ export default function Chantier() {
                 badge={rompu ? 'rompu' : reprise ? 'reprise' : null}
                 onValider={(id) => dispatch(validerQuete(id))}
               />
-              <Link to={`/chantier/${a.id}`} style={{ display: 'inline-block', marginTop: 8, color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', fontSize: '0.75rem' }}>
+              <Link
+                to={`/chantier/${a.id}`}
+                style={{
+                  display: 'inline-block',
+                  marginTop: 8,
+                  color: 'var(--text-muted)',
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: '0.75rem',
+                }}
+              >
                 Voir l’arc →
               </Link>
             </div>

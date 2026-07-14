@@ -112,8 +112,9 @@ export default function CatalogueInstrus({ mode = 'public' }) {
 
   return (
     <div style={{ padding: 'var(--space-4)' }}>
-      <h1>Instrumentaux</h1>
-      <p className="compteur">
+      <p className="compteur" style={{ marginBottom: 8 }}>02 · SOUND · CHROME</p>
+      <h1 style={{ fontSize: 'clamp(2rem, 6vw, 3.2rem)' }}>Instrumentaux</h1>
+      <p className="compteur" style={{ marginTop: 8 }}>
         {showcase.length} showcase
         {editable ? ' · studio' : (
           <> · <Link to="/login" style={{ color: 'var(--jaune)' }}>connexion</Link> pour publier</>
@@ -121,41 +122,61 @@ export default function CatalogueInstrus({ mode = 'public' }) {
       </p>
 
       {editable && (
-        <form onSubmit={uploader} className="blueprint-grid" style={{ background: 'var(--bg-1)', padding: 'var(--space-3)', borderRadius: 4, margin: 'var(--space-4) 0', display: 'grid', gap: 10 }}>
+        <form onSubmit={uploader} className="chrome-panel" style={{ padding: 'var(--space-3)', margin: 'var(--space-4) 0', display: 'grid', gap: 10 }}>
           <p className="compteur">NOUVEL UPLOAD</p>
           <input value={titre} onChange={(e) => setTitre(e.target.value)} placeholder="Titre" required
-            style={{ padding: 10, background: 'var(--bg-2)', color: 'var(--text)', border: '1px solid var(--bg-3)', borderRadius: 4 }} />
+            style={{ padding: 10, background: 'var(--bg-2)', color: 'var(--text)', border: '1px solid var(--bg-3)' }} />
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
             <input value={bpm} onChange={(e) => setBpm(e.target.value)} placeholder="BPM" type="number"
-              style={{ padding: 10, background: 'var(--bg-2)', color: 'var(--text)', border: '1px solid var(--bg-3)', borderRadius: 4 }} />
+              style={{ padding: 10, background: 'var(--bg-2)', color: 'var(--text)', border: '1px solid var(--bg-3)' }} />
             <input value={genre} onChange={(e) => setGenre(e.target.value)} placeholder="Genre"
-              style={{ padding: 10, background: 'var(--bg-2)', color: 'var(--text)', border: '1px solid var(--bg-3)', borderRadius: 4 }} />
+              style={{ padding: 10, background: 'var(--bg-2)', color: 'var(--text)', border: '1px solid var(--bg-3)' }} />
           </div>
           <input type="file" accept="audio/*" onChange={(e) => setFichier(e.target.files?.[0] || null)} />
           {erreur && <p className="annotation-manuscrite">{erreur}</p>}
-          <button type="submit" disabled={statut === 'envoi'}
-            style={{ padding: 10, border: 'none', borderRadius: 4, background: 'var(--jaune)', color: '#060a1a', fontWeight: 700, cursor: 'pointer' }}>
+          <button type="submit" disabled={statut === 'envoi'} className="btn-poster">
             {statut === 'envoi' ? 'Upload…' : 'Publier'}
           </button>
         </form>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 'var(--space-3)', marginTop: 'var(--space-3)' }}>
-        {showcase.map((item) => (
-          <article key={item.id} className="blueprint-grid" style={{ background: 'var(--bg-1)', padding: 'var(--space-3)', borderRadius: 4 }}>
-            <h2 style={{ fontSize: '1.1rem' }}>{item.titre}</h2>
-            <p className="compteur">{[item.bpm && `${item.bpm} BPM`, item.genre].filter(Boolean).join(' · ') || '—'}</p>
-            {actif === item.id ? (
-              <Player url={item.fichier_url} peaks={item.waveform_data ? [item.waveform_data] : undefined} />
-            ) : (
-              <button type="button" onClick={() => setActif(item.id)}
-                style={{ marginTop: 10, background: 'transparent', color: 'var(--text)', border: '1px solid var(--bg-3)', borderRadius: 4, padding: '8px 10px', cursor: 'pointer' }}>
-                Écouter
-              </button>
-            )}
-          </article>
-        ))}
-      </div>
+      {!showcase.length ? (
+        <div className="empty-wall" style={{ marginTop: 'var(--space-4)' }}>
+          <img
+            src="/brand/vinyl-chrome.png"
+            alt=""
+            aria-hidden
+            style={{ position: 'absolute', right: 24, bottom: 16, width: 140, opacity: 0.35, transform: 'rotate(-20deg)' }}
+          />
+          <p className="compteur">MUR DE PREUVES · SOUND</p>
+          <h2 style={{ fontSize: 'clamp(1.6rem, 4vw, 2.4rem)', margin: '12px 0' }}>Aucune instru encore</h2>
+          <p style={{ color: 'var(--text-muted)', maxWidth: 360 }}>
+            Le catalogue est une vitrine waveform — pas une page vide. Upload la première session depuis le studio.
+          </p>
+          <span className="annotation-manuscrite" style={{ marginTop: 16, display: 'block' }}>à venir…</span>
+          {editable ? null : (
+            <Link to="/login" className="btn-poster" style={{ marginTop: 20, textDecoration: 'none', display: 'inline-flex' }}>
+              Entrer pour publier
+            </Link>
+          )}
+        </div>
+      ) : (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 'var(--space-3)', marginTop: 'var(--space-3)' }}>
+          {showcase.map((item) => (
+            <article key={item.id} className="chrome-panel" style={{ padding: 'var(--space-3)' }}>
+              <h2 style={{ fontSize: '1.1rem' }}>{item.titre}</h2>
+              <p className="compteur">{[item.bpm && `${item.bpm} BPM`, item.genre].filter(Boolean).join(' · ') || '—'}</p>
+              {actif === item.id ? (
+                <Player url={item.fichier_url} peaks={item.waveform_data ? [item.waveform_data] : undefined} />
+              ) : (
+                <button type="button" onClick={() => setActif(item.id)} className="btn-ghost" style={{ marginTop: 10 }}>
+                  Écouter
+                </button>
+              )}
+            </article>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

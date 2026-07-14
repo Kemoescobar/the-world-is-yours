@@ -30,13 +30,28 @@ export default function Login() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', padding: 'var(--space-4)' }}>
+    <div
+      style={{
+        minHeight: '100vh',
+        display: 'grid',
+        placeItems: 'center',
+        padding: 'var(--space-4)',
+        position: 'relative',
+        overflow: 'hidden',
+        background:
+          'radial-gradient(ellipse at 70% 20%, rgba(91,45,158,0.35), transparent 50%), var(--bg-0)',
+      }}
+    >
+      <div className="halftone-overlay" style={{ position: 'absolute', opacity: 0.16 }} />
+      <div className="scanlines" />
       <form
         onSubmit={onSubmit}
-        style={{ width: '100%', maxWidth: 380, background: 'var(--bg-2)', padding: 'var(--space-4)', borderRadius: 8 }}
+        className="anim-gate poster-panel"
+        style={{ width: '100%', maxWidth: 400, padding: 'var(--space-4)', position: 'relative', zIndex: 2 }}
       >
-        <h1 style={{ fontSize: '1.6rem' }}>THE WORLD IS YOURS</h1>
-        <p className="compteur" style={{ marginTop: 'var(--space-2)' }}>Accès Chroniques</p>
+        <p className="compteur"><span className="caret-blink">›</span> ACCESS</p>
+        <h1 style={{ fontSize: 'clamp(1.6rem, 5vw, 2rem)', marginTop: 8 }}>THE WORLD IS YOURS</h1>
+        <p className="compteur" style={{ marginTop: 'var(--space-2)' }}>Chroniques</p>
 
         <label style={{ display: 'block', marginTop: 'var(--space-4)', fontSize: '0.85rem' }}>
           Email
@@ -47,7 +62,7 @@ export default function Login() {
             onChange={(e) => setEmail(e.target.value)}
             style={{
               display: 'block', width: '100%', marginTop: 6, padding: 10,
-              background: 'var(--bg-1)', color: 'var(--text)', border: '1px solid var(--bg-3)', borderRadius: 4,
+              background: 'var(--bg-1)', color: 'var(--text)', border: '1px solid var(--bg-3)',
             }}
           />
         </label>
@@ -60,20 +75,13 @@ export default function Login() {
             onChange={(e) => setPassword(e.target.value)}
             style={{
               display: 'block', width: '100%', marginTop: 6, padding: 10,
-              background: 'var(--bg-1)', color: 'var(--text)', border: '1px solid var(--bg-3)', borderRadius: 4,
+              background: 'var(--bg-1)', color: 'var(--text)', border: '1px solid var(--bg-3)',
             }}
           />
         </label>
         {erreur && <p className="annotation-manuscrite" style={{ marginTop: 'var(--space-2)' }}>{erreur}</p>}
-        <button
-          type="submit"
-          disabled={envoi}
-          style={{
-            width: '100%', marginTop: 'var(--space-4)', padding: 12, border: 'none', borderRadius: 4,
-            background: 'var(--jaune)', color: '#060a1a', fontFamily: 'var(--font-display)', fontWeight: 700, cursor: 'pointer',
-          }}
-        >
-          {envoi ? '…' : 'Entrer'}
+        <button type="submit" disabled={envoi} className="btn-poster" style={{ width: '100%', marginTop: 'var(--space-4)' }}>
+          {envoi ? '…' : '› Enter'}
         </button>
       </form>
     </div>

@@ -1,82 +1,298 @@
-/* THE WORLD IS YOURS — design tokens
-   Palette bleue dominante, rouge/jaune en ponctuation, halftone partout,
-   poids visuel identique dashboard privé / pages publiques (spec section 2). */
+/* THE WORLD IS YOURS — Phase 2 World Poster OS
+   Bleu nuit base · halftone fort · chrome SOUND · gate culturelle */
 
 :root {
-  /* Fond en couches bleu nuit */
   --bg-0: #060a1a;
   --bg-1: #0a1128;
   --bg-2: #0d1b3e;
   --bg-3: #13275a;
 
-  /* Texte */
+  --violet-marque: #5b2d9e;
+  --chrome: #c8d0e0;
+  --chrome-glow: rgba(200, 220, 255, 0.35);
+
   --text: #f2f0e8;
   --text-muted: #8a95b8;
 
-  /* Ponctuation uniquement — jamais en fond */
-  --rouge: #ff3b30;   /* alertes, annotations manuscrites, streak rompu */
-  --jaune: #ffd23f;   /* highlight rare, badges */
-  --orange-clin-oeil: #ff9d00; /* réservé à l'arc Beatmaker, usage ponctuel */
+  --rouge: #ff3b30;
+  --jaune: #ffd23f;
+  --orange-clin-oeil: #ff9d00;
 
-  /* Typo */
-  --font-display: 'Syne', sans-serif;   /* titres de chapitre, Drops */
-  --font-mono: 'DM Mono', monospace;    /* données vérifiables : dates, streaks, hash */
+  --font-display: 'Syne', sans-serif;
+  --font-mono: 'DM Mono', monospace;
   --font-body: 'DM Sans', sans-serif;
+  --font-hand: 'Caveat', cursive;
 
-  /* Espacements */
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 16px;
   --space-4: 32px;
   --space-5: 64px;
 
-  /* Transition cinématique entre vues plein écran (section 7bis) */
   --transition-vue: 450ms cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-poster: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 * { box-sizing: border-box; }
+
+html, body, #root { min-height: 100%; }
 
 body {
   margin: 0;
   background: var(--bg-0);
   color: var(--text);
   font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
 }
 
-/* Halftone — remplace le grain numérique, appliqué globalement (section 2 + 8bis) */
+a { color: inherit; }
+
+button, input, select, textarea { font: inherit; }
+
+h1, h2, h3 {
+  font-family: var(--font-display);
+  font-weight: 800;
+  margin: 0;
+  letter-spacing: -0.03em;
+}
+
+/* —— Textures —— */
 .halftone-overlay {
   position: fixed;
   inset: 0;
   pointer-events: none;
   z-index: 9999;
-  opacity: 0.06;
-  background-image: radial-gradient(circle, #000 1px, transparent 1px);
+  opacity: 0.14;
+  background-image: radial-gradient(circle, rgba(0, 0, 0, 0.9) 0.85px, transparent 1.1px);
   background-size: 3px 3px;
-  mix-blend-mode: overlay;
+  mix-blend-mode: multiply;
 }
 
-/* Annotation manuscrite — langage d'interface fonctionnel (section 8bis) */
+.scanlines {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.12) 2px,
+    rgba(0, 0, 0, 0.12) 3px
+  );
+  mix-blend-mode: multiply;
+  opacity: 0.55;
+  z-index: 2;
+}
+
+.grain {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  opacity: 0.08;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  z-index: 1;
+}
+
 .annotation-manuscrite {
-  font-family: 'Caveat', cursive; /* police manuscrite à charger si besoin d'un rendu plus fidèle */
+  font-family: var(--font-hand);
   color: var(--rouge);
   transform: rotate(-2deg);
   display: inline-block;
+  font-size: 1.15rem;
+  line-height: 1;
 }
 
-/* Compteur façon spec-sheet (référence BECANE, section 8bis) */
 .compteur {
   font-family: var(--font-mono);
   font-size: 0.75rem;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
   color: var(--text-muted);
   text-transform: uppercase;
 }
 
-h1, h2, h3 { font-family: var(--font-display); font-weight: 800; margin: 0; }
-
 .blueprint-grid {
   background-image:
-    linear-gradient(rgba(255,255,255,0.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,0.06) 1px, transparent 1px);
+    linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
   background-size: 24px 24px;
+}
+
+.chrome-panel {
+  background:
+    linear-gradient(145deg, rgba(200, 210, 230, 0.12), transparent 40%),
+    var(--bg-1);
+  border: 1px solid rgba(200, 220, 255, 0.18);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.poster-panel {
+  position: relative;
+  overflow: hidden;
+  background: var(--bg-1);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* —— Motion —— */
+@keyframes gate-in {
+  from { opacity: 0; transform: scale(1.04); filter: blur(6px); }
+  to { opacity: 1; transform: scale(1); filter: blur(0); }
+}
+
+@keyframes pulse-caret {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.15; }
+}
+
+@keyframes split-rise {
+  from { opacity: 0; transform: translateY(28px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes drop-flash {
+  from { opacity: 0; transform: scale(0.96); filter: contrast(1.2); }
+  to { opacity: 1; transform: scale(1); filter: contrast(1); }
+}
+
+@keyframes streak-glow {
+  from { text-shadow: 0 0 0 transparent; }
+  to { text-shadow: 0 0 24px rgba(255, 210, 63, 0.35); }
+}
+
+.anim-gate { animation: gate-in 700ms var(--ease-poster) both; }
+.anim-split { animation: split-rise 650ms var(--ease-poster) both; }
+.anim-drop { animation: drop-flash 600ms var(--ease-poster) both; }
+.caret-blink { animation: pulse-caret 1.1s steps(1) infinite; }
+
+/* —— Buttons —— */
+.btn-poster {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 18px;
+  border: none;
+  background: var(--jaune);
+  color: var(--bg-0);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: transform var(--transition-vue), background 200ms ease;
+}
+
+.btn-poster:hover { transform: translateY(-1px); background: #ffe066; }
+
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 18px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  background: transparent;
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: border-color 200ms ease, background 200ms ease;
+}
+
+.btn-ghost:hover {
+  border-color: var(--jaune);
+  background: rgba(255, 210, 63, 0.06);
+}
+
+/* —— Empty / Drop collage —— */
+.empty-wall {
+  position: relative;
+  min-height: 280px;
+  padding: var(--space-4);
+  border: 1px dashed rgba(255, 255, 255, 0.18);
+  background:
+    radial-gradient(ellipse at 20% 30%, rgba(91, 45, 158, 0.25), transparent 55%),
+    radial-gradient(ellipse at 80% 70%, rgba(19, 39, 90, 0.8), transparent 50%),
+    var(--bg-1);
+}
+
+.empty-wall::before {
+  content: '';
+  position: absolute;
+  inset: 12px;
+  border: 1px solid rgba(255, 59, 48, 0.35);
+  transform: rotate(-1.2deg);
+  pointer-events: none;
+}
+
+.collage-frame {
+  position: relative;
+}
+
+.collage-frame::after {
+  content: '';
+  position: absolute;
+  top: 8%;
+  right: 6%;
+  width: 42%;
+  height: 38%;
+  background:
+    linear-gradient(135deg, transparent 40%, rgba(255, 59, 48, 0.15)),
+    repeating-linear-gradient(
+      -12deg,
+      transparent,
+      transparent 6px,
+      rgba(255, 210, 63, 0.08) 6px,
+      rgba(255, 210, 63, 0.08) 7px
+    );
+  clip-path: polygon(8% 0, 100% 12%, 92% 100%, 0 88%);
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
+
+.routine-frise {
+  display: flex;
+  gap: 0;
+  overflow-x: auto;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  margin-bottom: var(--space-4);
+}
+
+.routine-frise span {
+  flex: 1;
+  min-width: 72px;
+  padding: 10px 8px;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--bg-1);
+}
+
+.routine-frise span:last-child { border-right: none; }
+
+.routine-frise span.actuel {
+  color: var(--bg-0);
+  background: var(--jaune);
+  font-weight: 700;
+}
+
+.nav-primary a[aria-current='page'] {
+  color: var(--jaune) !important;
+}
+
+@media (max-width: 720px) {
+  .home-split {
+    grid-template-columns: 1fr !important;
+    min-height: auto !important;
+  }
+  .home-split > a {
+    min-height: 42vh;
+    border-right: none !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
 }

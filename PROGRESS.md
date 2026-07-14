@@ -4,40 +4,38 @@
 JWT, `lib/api.js`, layouts public/privé, Zod, idempotence quêtes, dédup GitHub, TZ Madagascar, CORS.
 
 ## Phase 1 — Boucle quotidienne ✅
+API Railway + client Vercel + CORS + webhook GitHub → Chroniques.
 
-### Code
-- Seed Chapitre 0 + quêtes amorçage (Saison 1)
-- Streak rompu → chapitres `rompu` ; reprise → `reprise`
-- `enRetard` + badge rompu/reprise sur Chantier
-- Configs : `server/railway.json`, `client/vercel.json`
-- Docs : `docs/deploy.md`, `docs/github-webhook.md`
-- Workflow `twiy-commit-entree.yml` ; normalisation `VITE_API_URL` (https)
+| Élément | URL |
+|---------|-----|
+| API | `https://the-world-is-yours-production.up.railway.app` |
+| Client | `https://the-world-is-yours-seven.vercel.app` |
 
-### Déploiement
-| Élément | URL / note |
-|---------|------------|
-| API Railway | `https://the-world-is-yours-production.up.railway.app` |
-| Client Vercel | `https://the-world-is-yours-seven.vercel.app` |
-| `CLIENT_URL` | Vercel URL (CORS) |
-| `VITE_API_URL` | Railway `/api` **avec** `https://` |
+## Phase 2 — Vitrine / World Poster OS ✅
 
-### GitHub → Chroniques
-Workflow prêt. Secrets repo à confirmer une fois :
-- `TWIY_WEBHOOK_URL`
-- `TWIY_WEBHOOK_SECRET` (= `GITHUB_WEBHOOK_SECRET`)
+Direction : `docs/art-direction.md` · AWGE : `docs/moodboard-awge.md`
 
-Voir `docs/github-webhook.md`.
+### Livré
+- Tokens : halftone fort, grain, scanlines, chrome, motion
+- Assets marque : `client/public/brand/` (globe-hand, globe-youth, vinyl-chrome)
+- SoundGate type PRESS START + globe
+- Home CODE/SOUND dualité blueprint / chrome
+- Catalogues : empty states « mur de preuves »
+- DropDetail collage (annotations, × rouge, flash)
+- Chantier : frise routines + ArcCard densifié
+- Nav hiérarchisée (primaire | outils)
+- Login aligné DA
 
-### Usage
-Vivre la boucle : Capture + Chantier + commits (streak Dev auto si secrets OK).
+### Suite possible (polish fin)
+- Son réel sur gate / tick quête
+- Stats publiques 3–4 chiffres
+- Collages Drop générés par palier (assets uniques)
+
+## Phase 3 — plus tard
+IA chapitres, n8n, sync Obsidian, quêtes depuis habitudes.
 
 ## Relancer local
 ```powershell
 cd C:\twiy\server; npm run dev
 cd C:\twiy\client; npm run dev
 ```
-→ http://localhost:5173/login
-
-## Suite
-- **Phase 2** — vitrine / polish public
-- **Phase 3** — IA + 1 flux n8n
