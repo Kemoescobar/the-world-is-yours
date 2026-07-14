@@ -1,35 +1,24 @@
 # TWIY — avancement
 
 ## Phase 0 — Sécurisation ✅
-JWT, `lib/api.js`, layouts public/privé, Zod, idempotence quêtes, dédup GitHub, TZ Madagascar, CORS.
-
 ## Phase 1 — Boucle quotidienne ✅
-API Railway + client Vercel + CORS + webhook GitHub → Chroniques.
+## Phase 2 — Vitrine World Poster OS ✅
 
-| Élément | URL |
-|---------|-----|
-| API | `https://the-world-is-yours-production.up.railway.app` |
-| Client | `https://the-world-is-yours-seven.vercel.app` |
+## Phase 3 — IA + automatisation ✅ (fondations)
 
-## Phase 2 — Vitrine / World Poster OS ✅
+### Code
+- `POST/GET /api/ai/*` — revue, insights, check-in, titre chapitre, routines-jour
+- Claude via fetch Anthropic (`server/src/lib/claude.js`)
+- Mémoire coaching `server/data/coaching-memory.md`
+- `POST /chapitres/:id/cloturer` avec titre IA
+- UI : Revue, Insights, Capture check-in, Paramètres (statut Claude)
 
-Direction : `docs/art-direction.md` · AWGE : `docs/moodboard-awge.md`
+### À activer (toi)
+1. Railway → `ANTHROPIC_API_KEY` → Redeploy  
+2. Tester Revue / Insights / Check-in  
+3. (Optionnel) Importer workflows `n8n/` + crons  
 
-### Livré
-- Tokens : halftone fort, grain, scanlines, chrome, motion
-- Assets marque : `client/public/brand/`
-- SoundGate + Home dualité + **stats publiques** (shippés / showcase / arcs)
-- **Sons UI** (enter / tick quête / impact Drop) via Web Audio
-- Micro-interactions : hover CODE/SOUND, grain/scanline live, typo dither
-- Catalogues CODE + SOUND en case studies éditoriales
-- DropDetail collage + Chantier frise + Nav hiérarchisée
-- Paramètres : auto-probe webhook
-
-### Contenu (toi)
-Ajouter captures projets + instrus showcase pour que la vitrine soit pleine.
-
-## Phase 3 — plus tard
-IA chapitres, n8n, sync Obsidian, quêtes depuis habitudes.
+Doc : `docs/phase-3.md`
 
 ## Relancer local
 ```powershell

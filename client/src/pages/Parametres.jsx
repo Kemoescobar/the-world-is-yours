@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../auth/AuthContext.jsx';
-import { apiGet } from '../lib/api.js';
+import { apiGet, apiPost } from '../lib/api.js';
 
 const rawApi = (import.meta.env.VITE_API_URL || '').trim();
 const API_URL = rawApi && !/^https?:\/\//i.test(rawApi) ? `https://${rawApi}` : rawApi;
@@ -11,7 +11,6 @@ async function probeWebhook() {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ repo: 'twiy-probe', message: 'parametres probe', sha: `probe-${Date.now()}` }),
   });
-  // Sans secret → 401 = protection active (comportement attendu)
   return res.status === 401;
 }
 
@@ -21,6 +20,8 @@ export default function Parametres() {
   const [streaks, setStreaks] = useState([]);
   const [webhookOk, setWebhookOk] = useState(null);
   const [webhookDetail, setWebhookDetail] = useState('probe…');
+  const [ai, setAi] = useState(null);
+  const [msg, setMsg] = useState('');
 
   useEffect(() => {
     fetch(`${API_URL.replace(/\/api$/, '')}/health`)
@@ -28,6 +29,7 @@ export default function Parametres() {
       .then(setHealth)
       .catch(() => setHealth({ ok: false }));
     apiGet('/streaks').then(setStreaks).catch(() => setStreaks([]));
+    apiGet('/ai/status').then(setAi).catch(() => setAi({ anthropic: false }));
     probeWebhook()
       .then((ok) => {
         setWebhookOk(ok);
@@ -48,7 +50,12 @@ export default function Parametres() {
       ok: webhookOk === true,
       detail: webhookOk == null ? webhookDetail : webhookOk ? webhookDetail : webhookDetail || 'échec',
     },
-  ]), [health, session, streaks, webhookOk, webhookDetail]);
+    {
+      nom: 'Claude (Phase 3)',
+      ok: !!ai?.anthropic,
+      detail: ai?.anthropic ? `OK · ${ai.model}` : 'ANTHROPIC_API_KEY manquante sur Railway',
+    },
+  ]), [health, session, streaks, webhookOk, webhookDetail, ai]);
 
   async function testerWebhook() {
     setWebhookOk(null);
@@ -60,6 +67,16 @@ export default function Parametres() {
     } catch {
       setWebhookOk(false);
       setWebhookDetail('injoignable');
+    }
+  }
+
+  async function routinesJour() {
+    setMsg('');
+    try {
+      const data = await apiPost('/ai/routines-jour', {});
+      setMsg(`${data.creees?.length || 0} routine(s) créées pour ${data.jour}`);
+    } catch (err) {
+      setMsg(err.message);
     }
   }
 
@@ -77,7 +94,7 @@ export default function Parametres() {
   return (
     <div style={{ padding: 'var(--space-4)', maxWidth: 720 }}>
       <h1>Paramètres</h1>
-      <p className="compteur" style={{ marginTop: 8 }}>Connexions · Export · Webhook</p>
+      <p className="compteur" style={{ marginTop: 8 }}>Connexions · IA · Export</p>
 
       <div style={{ display: 'grid', gap: 10, marginTop: 'var(--space-4)' }}>
         {connexions.map((c) => (
@@ -103,16 +120,14 @@ export default function Parametres() {
       </div>
 
       <div style={{ display: 'flex', gap: 10, marginTop: 'var(--space-4)', flexWrap: 'wrap' }}>
-        <button type="button" onClick={testerWebhook} className="btn-ghost">
-          Retester webhook
-        </button>
-        <button type="button" onClick={exporter} className="btn-poster">
-          Exporter JSON
-        </button>
+        <button type="button" onClick={testerWebhook} className="btn-ghost">Retester webhook</button>
+        <button type="button" onClick={routinesJour} className="btn-ghost">Routines du jour</button>
+        <button type="button" onClick={exporter} className="btn-poster">Exporter JSON</button>
       </div>
+      {msg && <p className="compteur" style={{ marginTop: 12 }}>{msg}</p>}
 
       <p className="compteur" style={{ marginTop: 'var(--space-4)' }}>
-        Probe sans secret = 401 attendu. Push GitHub réel → Chroniques. Voir docs/github-webhook.md
+        Phase 3 : docs/phase-3.md · n8n/ · ANTHROPIC_API_KEY sur Railway
       </p>
     </div>
   );

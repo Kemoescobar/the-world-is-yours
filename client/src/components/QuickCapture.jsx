@@ -13,12 +13,14 @@ const TYPES = [
 
 export default function QuickCapture() {
   const [ouvert, setOuvert] = useState(false);
+  const [mode, setMode] = useState('fait'); // fait | checkin
   const [typeFait, setTypeFait] = useState('commit');
   const [detail, setDetail] = useState('');
   const [statut, setStatut] = useState('idle');
   const [erreur, setErreur] = useState('');
+  const [suggestion, setSuggestion] = useState(null);
 
-  async function soumettre(e) {
+  async function soumettreFait(e) {
     e.preventDefault();
     if (!detail.trim()) return;
     setStatut('envoi');
@@ -36,6 +38,23 @@ export default function QuickCapture() {
         setOuvert(false);
         setStatut('idle');
       }, 600);
+    } catch (err) {
+      setErreur(err.message);
+      setStatut('idle');
+    }
+  }
+
+  async function soumettreCheckin(e) {
+    e.preventDefault();
+    if (!detail.trim()) return;
+    setStatut('envoi');
+    setErreur('');
+    setSuggestion(null);
+    try {
+      const data = await apiPost('/ai/checkin', { texte: detail.trim(), creer: true });
+      setSuggestion(data);
+      setDetail('');
+      setStatut('ok');
     } catch (err) {
       setErreur(err.message);
       setStatut('idle');
@@ -64,61 +83,85 @@ export default function QuickCapture() {
           onKeyDown={(e) => e.key === 'Escape' && setOuvert(false)}
         >
           <form
-            onSubmit={soumettre}
+            onSubmit={mode === 'fait' ? soumettreFait : soumettreCheckin}
             onClick={(e) => e.stopPropagation()}
-            style={{ background: 'var(--bg-2)', padding: 'var(--space-4)', borderRadius: 8, minWidth: 320, maxWidth: 420, width: '90%' }}
+            className="poster-panel"
+            style={{ background: 'var(--bg-2)', padding: 'var(--space-4)', minWidth: 320, maxWidth: 440, width: '90%' }}
           >
-            <p id="capture-title" className="compteur">CAPTURE RAPIDE</p>
-            <label htmlFor="capture-type" style={{ display: 'block', marginTop: 'var(--space-3)', fontSize: '0.85rem' }}>
-              Type
-              <select
-                id="capture-type"
-                value={typeFait}
-                onChange={(e) => setTypeFait(e.target.value)}
-                style={{
-                  display: 'block', width: '100%', marginTop: 6, padding: 10,
-                  background: 'var(--bg-1)', color: 'var(--text)', border: '1px solid var(--bg-3)', borderRadius: 4,
-                }}
-              >
-                {TYPES.map((t) => (
-                  <option key={t.value} value={t.value}>{t.label}</option>
-                ))}
-              </select>
-            </label>
-            <label htmlFor="capture-detail" style={{ display: 'block', marginTop: 'var(--space-3)', fontSize: '0.85rem' }}>
-              Détail
-              <input
-                id="capture-detail"
-                autoFocus
-                value={detail}
-                onChange={(e) => setDetail(e.target.value)}
-                placeholder="Ex. push auth + capture"
-                style={{
-                  display: 'block', width: '100%', marginTop: 6, padding: 10,
-                  background: 'var(--bg-1)', color: 'var(--text)', border: '1px solid var(--bg-3)', borderRadius: 4,
-                }}
-              />
-            </label>
-            {erreur && <p className="annotation-manuscrite" style={{ marginTop: 'var(--space-2)' }}>{erreur}</p>}
-            <div style={{ display: 'flex', gap: 'var(--space-2)', marginTop: 'var(--space-4)' }}>
-              <button
-                type="submit"
-                disabled={statut === 'envoi' || !detail.trim()}
-                style={{
-                  flex: 1, padding: '10px 14px', border: 'none', borderRadius: 4, cursor: 'pointer',
-                  background: 'var(--jaune)', color: '#060a1a', fontFamily: 'var(--font-display)', fontWeight: 700,
-                }}
-              >
-                {statut === 'ok' ? 'Capturé' : statut === 'envoi' ? '…' : 'Capturer'}
+            <p id="capture-title" className="compteur">CAPTURE · PHASE 3</p>
+            <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+              <button type="button" className={mode === 'fait' ? 'btn-poster' : 'btn-ghost'} style={{ padding: '6px 10px' }} onClick={() => setMode('fait')}>
+                Fait
               </button>
-              <button
-                type="button"
-                onClick={() => setOuvert(false)}
-                style={{
-                  padding: '10px 14px', border: '1px solid var(--bg-3)', borderRadius: 4,
-                  background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer',
-                }}
-              >
+              <button type="button" className={mode === 'checkin' ? 'btn-poster' : 'btn-ghost'} style={{ padding: '6px 10px' }} onClick={() => setMode('checkin')}>
+                Check-in IA
+              </button>
+            </div>
+
+            {mode === 'fait' ? (
+              <>
+                <label htmlFor="capture-type" style={{ display: 'block', marginTop: 'var(--space-3)', fontSize: '0.85rem' }}>
+                  Type
+                  <select
+                    id="capture-type"
+                    value={typeFait}
+                    onChange={(e) => setTypeFait(e.target.value)}
+                    style={{
+                      display: 'block', width: '100%', marginTop: 6, padding: 10,
+                      background: 'var(--bg-1)', color: 'var(--text)', border: '1px solid var(--bg-3)',
+                    }}
+                  >
+                    {TYPES.map((t) => (
+                      <option key={t.value} value={t.value}>{t.label}</option>
+                    ))}
+                  </select>
+                </label>
+                <label htmlFor="capture-detail" style={{ display: 'block', marginTop: 'var(--space-3)', fontSize: '0.85rem' }}>
+                  Détail
+                  <input
+                    id="capture-detail"
+                    autoFocus
+                    value={detail}
+                    onChange={(e) => setDetail(e.target.value)}
+                    placeholder="Ex. push auth + capture"
+                    style={{
+                      display: 'block', width: '100%', marginTop: 6, padding: 10,
+                      background: 'var(--bg-1)', color: 'var(--text)', border: '1px solid var(--bg-3)',
+                    }}
+                  />
+                </label>
+              </>
+            ) : (
+              <label htmlFor="checkin-text" style={{ display: 'block', marginTop: 'var(--space-3)', fontSize: '0.85rem' }}>
+                Qu’as-tu fait aujourd’hui ?
+                <textarea
+                  id="checkin-text"
+                  autoFocus
+                  value={detail}
+                  onChange={(e) => setDetail(e.target.value)}
+                  rows={4}
+                  placeholder="Ex. 2 commits auth, session drum 40min, relancé un prospect…"
+                  style={{
+                    display: 'block', width: '100%', marginTop: 6, padding: 10, resize: 'vertical',
+                    background: 'var(--bg-1)', color: 'var(--text)', border: '1px solid var(--bg-3)',
+                    fontFamily: 'var(--font-body)',
+                  }}
+                />
+              </label>
+            )}
+
+            {erreur && <p className="annotation-manuscrite" style={{ marginTop: 'var(--space-2)' }}>{erreur}</p>}
+            {suggestion?.creees?.length > 0 && (
+              <p className="compteur" style={{ marginTop: 10 }}>
+                {suggestion.creees.length} entrée(s) créée(s) par l’IA
+              </p>
+            )}
+
+            <div style={{ display: 'flex', gap: 'var(--space-2)', marginTop: 'var(--space-4)' }}>
+              <button type="submit" disabled={statut === 'envoi' || !detail.trim()} className="btn-poster" style={{ flex: 1 }}>
+                {statut === 'ok' ? 'OK' : statut === 'envoi' ? '…' : (mode === 'checkin' ? 'Parser + créer' : 'Capturer')}
+              </button>
+              <button type="button" onClick={() => setOuvert(false)} className="btn-ghost">
                 Fermer
               </button>
             </div>

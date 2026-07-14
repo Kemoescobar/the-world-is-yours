@@ -2,6 +2,17 @@
 
 4 workflows prêts à importer (Menu n8n → Import from File) + patterns pour les 3 restants à assembler toi-même sur le même modèle.
 
+## Variables n8n (prod TWIY)
+
+| Variable | Exemple |
+|----------|---------|
+| `TWIY_API_URL` | `https://the-world-is-yours-production.up.railway.app/api` |
+| `TWIY_WEBHOOK_KEY` | même valeur que `WEBHOOK_API_KEY` Railway |
+| `OBSIDIAN_API_KEY` | Plugin Local REST API |
+| `ANTHROPIC_API_KEY` | *(optionnel)* seulement si un workflow appelle Claude en direct — `revue-dominicale.json` n’en a plus besoin |
+
+**Phase 3 :** `revue-dominicale.json` appelle `POST {{$env.TWIY_API_URL}}/ai/revue` avec `x-api-key: {{$env.TWIY_WEBHOOK_KEY}}` — rédaction + mémoire coaching côté Railway. Voir `docs/phase-3.md`.
+
 ## Import
 
 1. Lance n8n (voir Partie 13 de ton guide MCP — Docker + `docker run ...`)
@@ -10,7 +21,7 @@
    - `TWIY_API_URL` — URL de ton serveur Railway déployé (ex. `https://twiy-api.up.railway.app/api`)
    - `TWIY_WEBHOOK_KEY` — même valeur que `WEBHOOK_API_KEY` côté serveur
    - `OBSIDIAN_API_KEY` — clé du plugin Local REST API (Partie 3.2 de ton guide)
-   - `ANTHROPIC_API_KEY` — clé Console Anthropic (Partie 0bis de ton guide, facturée à l'usage)
+   - `ANTHROPIC_API_KEY` — optionnel (revue passe par TWIY ; clé Anthropic sur Railway)
 4. Active chaque workflow (toggle en haut à droite) une fois testé manuellement (bouton "Execute Workflow")
 
 ## Workflows fournis
@@ -19,7 +30,7 @@
 |---|---|---|
 | `sync-obsidian-supabase.json` | Toutes les heures | Frontmatter du vault (`02-Projets`) → table `quetes` |
 | `alerte-streak-soir.json` | Chaque soir 21h | Repère les streaks non alimentés aujourd'hui, notifie |
-| `revue-dominicale.json` | Dimanche 8h | Agrège la semaine, Claude rédige la revue, écrit dans Obsidian |
+| `revue-dominicale.json` | Dimanche 8h | `POST /ai/revue` (x-api-key) → écrit la revue dans Obsidian |
 | `backup-hebdo.json` | Lundi 4h | Exporte toutes les tables Supabase (`/api/export`) vers le vault |
 
 ## Le nœud "Notifier" d'`alerte-streak-soir.json`

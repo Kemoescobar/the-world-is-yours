@@ -13,6 +13,7 @@ import prospectsRouter from './routes/prospects.js';
 import webhooksRouter from './routes/webhooks.js';
 import portefeuilleRouter from './routes/portefeuille.js';
 import exportRouter from './routes/export.js';
+import aiRouter from './routes/ai.js';
 
 const app = express();
 
@@ -47,6 +48,7 @@ app.use('/api/prospects', prospectsRouter);
 app.use('/api/portefeuille', portefeuilleRouter);
 app.use('/api', webhooksRouter);
 app.use('/api/export', exportRouter);
+app.use('/api/ai', aiRouter);
 
 app.get('/', (req, res) => {
   res.json({

@@ -1,10 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
-import { apiGet } from '../lib/api.js';
+import { apiGet, apiPost } from '../lib/api.js';
 
 export default function Revue() {
   const [entrees, setEntrees] = useState([]);
   const [quetes, setQuetes] = useState([]);
   const [streaks, setStreaks] = useState([]);
+  const [revue, setRevue] = useState('');
+  const [statut, setStatut] = useState('idle');
+  const [erreur, setErreur] = useState('');
 
   useEffect(() => {
     apiGet('/entrees').then(setEntrees).catch(() => setEntrees([]));
@@ -20,24 +23,45 @@ export default function Revue() {
     return {
       recentes,
       faites,
-      brouillon: [
+      resumeLocal: [
         `Cette semaine : ${recentes.length} faits capturés.`,
         `Quêtes closes : ${faites.length}/${quetes.length}.`,
         `Streaks — ${streaks.map((s) => `${s.id}:${s.jours_consecutifs}j`).join(' · ') || 'n/a'}.`,
-        'Titre Claude + revue narrative : Phase 3 (ANTHROPIC_API_KEY).',
       ],
     };
   }, [entrees, quetes, streaks]);
 
+  async function generer() {
+    setStatut('gen');
+    setErreur('');
+    try {
+      const data = await apiPost('/ai/revue', {});
+      setRevue(data.revue || '');
+      setStatut('ok');
+    } catch (err) {
+      setErreur(err.message);
+      setStatut('idle');
+    }
+  }
+
   return (
     <div style={{ padding: 'var(--space-4)', maxWidth: 720 }}>
       <h1>Revue</h1>
-      <p className="compteur">Brouillon hebdo (IA — Phase 3)</p>
-      <article className="blueprint-grid" style={{ background: 'var(--bg-1)', padding: 'var(--space-4)', borderRadius: 4, marginTop: 'var(--space-4)' }}>
-        {semaine.brouillon.map((l) => (
-          <p key={l} style={{ marginBottom: 12, lineHeight: 1.5 }}>{l}</p>
+      <p className="compteur" style={{ marginTop: 8 }}>Hebdo · Claude (Phase 3)</p>
+
+      <div style={{ display: 'flex', gap: 10, marginTop: 'var(--space-3)', flexWrap: 'wrap' }}>
+        <button type="button" className="btn-poster" onClick={generer} disabled={statut === 'gen'}>
+          {statut === 'gen' ? 'Génération…' : '› Générer la revue IA'}
+        </button>
+      </div>
+      {erreur && <p className="annotation-manuscrite" style={{ marginTop: 12 }}>{erreur}</p>}
+
+      <article className="poster-panel blueprint-grid" style={{ padding: 'var(--space-4)', marginTop: 'var(--space-4)' }}>
+        {(revue ? revue.split('\n') : semaine.resumeLocal).map((l, i) => (
+          <p key={`${i}-${l.slice(0, 24)}`} style={{ marginBottom: 12, lineHeight: 1.55, whiteSpace: 'pre-wrap' }}>{l}</p>
         ))}
       </article>
+
       <h2 style={{ marginTop: 'var(--space-4)' }}>Faits récents</h2>
       <ul style={{ listStyle: 'none', padding: 0 }}>
         {semaine.recentes.slice(0, 12).map((e) => (
