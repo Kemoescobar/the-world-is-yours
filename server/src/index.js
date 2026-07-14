@@ -48,8 +48,16 @@ app.use('/api/portefeuille', portefeuilleRouter);
 app.use('/api', webhooksRouter);
 app.use('/api/export', exportRouter);
 
+app.get('/', (req, res) => {
+  res.json({
+    ok: true,
+    systeme: 'THE WORLD IS YOURS',
+    health: '/health',
+    api: '/api',
+  });
+});
+
 app.get('/health', async (req, res) => {
-  // Health léger — pas de ping DB pour rester rapide ; Phase 1 pourra enrichir
   res.json({
     ok: true,
     systeme: 'THE WORLD IS YOURS',
