@@ -34,8 +34,9 @@ export default function App() {
   const location = useLocation();
   const [entre, setEntre] = useState(() => sessionStorage.getItem('twiy_gate') === '1');
 
-  function onEnter() {
+  function onEnter(withSound) {
     sessionStorage.setItem('twiy_gate', '1');
+    if (withSound === false) sessionStorage.setItem('twiy_sound', '0');
     setEntre(true);
   }
 

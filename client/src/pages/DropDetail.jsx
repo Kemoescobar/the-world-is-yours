@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { apiGet } from '../lib/api.js';
+import { playImpact } from '../lib/sounds.js';
 
 export default function DropDetail() {
   const { id } = useParams();
@@ -11,6 +12,10 @@ export default function DropDetail() {
       .then((list) => setItem((list || []).find((e) => e.id === id) || null))
       .catch(() => setItem(null));
   }, [id]);
+
+  useEffect(() => {
+    if (item) playImpact();
+  }, [item]);
 
   if (!item) {
     return (
@@ -35,10 +40,10 @@ export default function DropDetail() {
           'radial-gradient(circle at 25% 20%, rgba(91,45,158,0.45), transparent 40%), radial-gradient(circle at 80% 70%, #13275a, #060a1a 55%)',
       }}
     >
-      <div className="halftone-overlay" style={{ position: 'absolute', opacity: 0.2 }} />
-      <div className="grain" />
+      <div className="halftone-overlay halftone-live" style={{ position: 'absolute', opacity: 0.22 }} />
+      <div className="grain grain-live" />
       <span
-        className="annotation-manuscrite"
+        className="annotation-manuscrite annotation-pop"
         style={{
           position: 'absolute',
           top: '12%',
@@ -73,11 +78,11 @@ export default function DropDetail() {
           {item.type_fait} · {String(item.cree_le).slice(0, 10)}
         </p>
         <h1
+          className="title-dither"
           style={{
-            fontSize: 'clamp(2.4rem, 8vw, 5rem)',
+            fontSize: 'clamp(2.8rem, 9vw, 5.5rem)',
             margin: 'var(--space-3) 0',
-            lineHeight: 0.95,
-            textShadow: '0 12px 40px rgba(0,0,0,0.45)',
+            lineHeight: 0.92,
           }}
         >
           {item.detail || 'Drop'}

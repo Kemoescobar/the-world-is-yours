@@ -17,19 +17,16 @@ Direction : `docs/art-direction.md` · AWGE : `docs/moodboard-awge.md`
 
 ### Livré
 - Tokens : halftone fort, grain, scanlines, chrome, motion
-- Assets marque : `client/public/brand/` (globe-hand, globe-youth, vinyl-chrome)
-- SoundGate type PRESS START + globe
-- Home CODE/SOUND dualité blueprint / chrome
-- Catalogues : empty states « mur de preuves »
-- DropDetail collage (annotations, × rouge, flash)
-- Chantier : frise routines + ArcCard densifié
-- Nav hiérarchisée (primaire | outils)
-- Login aligné DA
+- Assets marque : `client/public/brand/`
+- SoundGate + Home dualité + **stats publiques** (shippés / showcase / arcs)
+- **Sons UI** (enter / tick quête / impact Drop) via Web Audio
+- Micro-interactions : hover CODE/SOUND, grain/scanline live, typo dither
+- Catalogues CODE + SOUND en case studies éditoriales
+- DropDetail collage + Chantier frise + Nav hiérarchisée
+- Paramètres : auto-probe webhook
 
-### Suite possible (polish fin)
-- Son réel sur gate / tick quête
-- Stats publiques 3–4 chiffres
-- Collages Drop générés par palier (assets uniques)
+### Contenu (toi)
+Ajouter captures projets + instrus showcase pour que la vitrine soit pleine.
 
 ## Phase 3 — plus tard
 IA chapitres, n8n, sync Obsidian, quêtes depuis habitudes.

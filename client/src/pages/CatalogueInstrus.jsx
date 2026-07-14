@@ -29,9 +29,10 @@ function Player({ url, peaks }) {
       <button
         type="button"
         onClick={() => ws.current?.playPause()}
-        style={{ marginTop: 8, background: 'transparent', color: 'var(--jaune)', border: '1px solid var(--bg-3)', borderRadius: 4, padding: '6px 10px', cursor: 'pointer' }}
+        className="btn-ghost"
+        style={{ marginTop: 8, alignSelf: 'flex-start' }}
       >
-        Lecture
+        › Play / Pause
       </button>
     </div>
   );
@@ -111,10 +112,10 @@ export default function CatalogueInstrus({ mode = 'public' }) {
   }
 
   return (
-    <div style={{ padding: 'var(--space-4)' }}>
+    <div style={{ padding: 'var(--space-4)', maxWidth: 1100, margin: '0 auto' }}>
       <p className="compteur" style={{ marginBottom: 8 }}>02 · SOUND · CHROME</p>
-      <h1 style={{ fontSize: 'clamp(2rem, 6vw, 3.2rem)' }}>Instrumentaux</h1>
-      <p className="compteur" style={{ marginTop: 8 }}>
+      <h1 style={{ fontSize: 'clamp(2.2rem, 7vw, 3.6rem)', lineHeight: 0.95 }}>Instrumentaux</h1>
+      <p className="compteur" style={{ marginTop: 10 }}>
         {showcase.length} showcase
         {editable ? ' · studio' : (
           <> · <Link to="/login" style={{ color: 'var(--jaune)' }}>connexion</Link> pour publier</>
@@ -161,20 +162,34 @@ export default function CatalogueInstrus({ mode = 'public' }) {
           )}
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 'var(--space-3)', marginTop: 'var(--space-3)' }}>
-          {showcase.map((item) => (
-            <article key={item.id} className="chrome-panel" style={{ padding: 'var(--space-3)' }}>
-              <h2 style={{ fontSize: '1.1rem' }}>{item.titre}</h2>
-              <p className="compteur">{[item.bpm && `${item.bpm} BPM`, item.genre].filter(Boolean).join(' · ') || '—'}</p>
-              {actif === item.id ? (
-                <Player url={item.fichier_url} peaks={item.waveform_data ? [item.waveform_data] : undefined} />
-              ) : (
-                <button type="button" onClick={() => setActif(item.id)} className="btn-ghost" style={{ marginTop: 10 }}>
-                  Écouter
-                </button>
-              )}
-            </article>
-          ))}
+        <div className="instru-index">
+          {showcase.map((item, i) => {
+            const n = String(i + 1).padStart(2, '0');
+            const featured = i === 0;
+            return (
+              <article key={item.id} className={`instru-ship${featured ? ' instru-ship--featured' : ''}`}>
+                <div className="instru-ship__wave">
+                  <span className="compteur" style={{ color: 'var(--jaune)' }}>{n} / SHOWCASE</span>
+                  {actif === item.id ? (
+                    <Player url={item.fichier_url} peaks={item.waveform_data ? [item.waveform_data] : undefined} />
+                  ) : (
+                    <button type="button" onClick={() => setActif(item.id)} className="btn-ghost">
+                      › Écouter
+                    </button>
+                  )}
+                </div>
+                <div className="instru-ship__body">
+                  <p className="compteur">CASE · SOUND · CHROME</p>
+                  <h2 style={{ fontSize: featured ? 'clamp(1.5rem, 4vw, 2.2rem)' : '1.25rem', lineHeight: 1.05 }}>
+                    {item.titre}
+                  </h2>
+                  <p className="compteur">
+                    {[item.bpm && `${item.bpm} BPM`, item.genre].filter(Boolean).join(' · ') || 'session'}
+                  </p>
+                </div>
+              </article>
+            );
+          })}
         </div>
       )}
     </div>

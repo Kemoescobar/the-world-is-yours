@@ -1,3 +1,5 @@
+import { playTick } from '../lib/sounds.js';
+
 export default function ArcCard({ nom, streak, progression, quetes = [], enRetard, badge, onValider }) {
   return (
     <div
@@ -11,7 +13,7 @@ export default function ArcCard({ nom, streak, progression, quetes = [], enRetar
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
         <h2 style={{ fontSize: '1.35rem' }}>{nom}</h2>
         {badge && (
-          <span className="annotation-manuscrite" style={{ fontSize: '1.1rem' }}>
+          <span className="annotation-manuscrite annotation-pop" style={{ fontSize: '1.1rem' }}>
             {badge}
           </span>
         )}
@@ -65,9 +67,13 @@ export default function ArcCard({ nom, streak, progression, quetes = [], enRetar
             >
               <input
                 type="checkbox"
+                className="quest-check"
                 checked={faite}
                 disabled={faite || !onValider}
-                onChange={() => onValider?.(q.id)}
+                onChange={() => {
+                  playTick();
+                  onValider?.(q.id);
+                }}
                 style={{ marginTop: 3, accentColor: 'var(--jaune)' }}
                 aria-label={q.titre}
               />
@@ -84,7 +90,7 @@ export default function ArcCard({ nom, streak, progression, quetes = [], enRetar
 
       {enRetard && !badge && (
         <span
-          className="annotation-manuscrite"
+          className="annotation-manuscrite annotation-pop"
           style={{ position: 'absolute', bottom: 12, right: 14, fontSize: '1.25rem' }}
         >
           en retard !

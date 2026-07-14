@@ -1,4 +1,12 @@
+import { playEnter, setSoundEnabled } from '../lib/sounds.js';
+
 export default function SoundGate({ onEnter }) {
+  function enter(withSound) {
+    setSoundEnabled(withSound);
+    if (withSound) playEnter();
+    onEnter?.(withSound);
+  }
+
   return (
     <div
       className="anim-gate"
@@ -37,22 +45,15 @@ export default function SoundGate({ onEnter }) {
           pointerEvents: 'none',
         }}
       />
-      <div className="grain" />
-      <div className="scanlines" />
-      <div className="halftone-overlay" style={{ position: 'absolute', zIndex: 3, opacity: 0.18 }} />
+      <div className="grain grain-live" />
+      <div className="scanlines scanlines-live" />
+      <div className="halftone-overlay halftone-live" style={{ position: 'absolute', zIndex: 3, opacity: 0.2 }} />
 
-      <div style={{ position: 'relative', zIndex: 4, textAlign: 'center', padding: 'var(--space-4)', maxWidth: 560 }}>
+      <div style={{ position: 'relative', zIndex: 4, textAlign: 'center', padding: 'var(--space-4)', maxWidth: 640 }}>
         <p className="compteur" style={{ marginBottom: 'var(--space-3)' }}>
           <span className="caret-blink">›</span> SYSTEM READY
         </p>
-        <h1
-          style={{
-            fontSize: 'clamp(2.4rem, 9vw, 4.5rem)',
-            lineHeight: 0.92,
-            marginBottom: 'var(--space-2)',
-            textShadow: '0 0 40px rgba(91,45,158,0.35)',
-          }}
-        >
+        <h1 className="title-dither" style={{ fontSize: 'clamp(2.8rem, 11vw, 5.5rem)', lineHeight: 0.88, marginBottom: 'var(--space-2)' }}>
           THE WORLD
           <br />
           IS YOURS
@@ -61,10 +62,10 @@ export default function SoundGate({ onEnter }) {
           Chroniques · Chantier · Preuves
         </p>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, justifyContent: 'center' }}>
-          <button type="button" className="btn-poster" onClick={() => onEnter?.(true)}>
+          <button type="button" className="btn-poster" onClick={() => enter(true)}>
             <span className="caret-blink">›</span> Enter with sound
           </button>
-          <button type="button" className="btn-ghost" onClick={() => onEnter?.(false)}>
+          <button type="button" className="btn-ghost" onClick={() => enter(false)}>
             Enter muted
           </button>
         </div>
