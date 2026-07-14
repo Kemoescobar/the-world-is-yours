@@ -1,10 +1,11 @@
 import express from 'express';
 import { supabase } from '../supabaseClient.js';
 import { requireAuth } from '../middleware/auth.js';
+import { authSensitiveRateLimit } from '../middleware/rateLimit.js';
 
 const router = express.Router();
 
-router.use(requireAuth);
+router.use(authSensitiveRateLimit, requireAuth);
 
 const TABLES = [
   'saisons', 'arcs', 'chapitres', 'quetes', 'quetes_historique', 'entrees', 'streaks',

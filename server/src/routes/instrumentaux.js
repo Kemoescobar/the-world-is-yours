@@ -1,25 +1,23 @@
 import express from 'express';
 import { supabase } from '../supabaseClient.js';
-import { requireAuth } from '../middleware/auth.js';
+import { requireAuth, resolveOwnerFromBearer } from '../middleware/auth.js';
 import { validateBody } from '../middleware/validate.js';
 import { createInstrumentalSchema } from '../schemas.js';
 
 const router = express.Router();
 
-// Lecture publique : showcase uniquement. Auth → tout.
+// Lecture publique : showcase uniquement. Owner JWT vérifié → tout.
 router.get('/', async (req, res) => {
-  const authHeader = req.header('authorization');
+  const owner = await resolveOwnerFromBearer(req);
   let query = supabase.from('instrumentaux').select('*').order('cree_le', { ascending: false });
-  if (!authHeader) {
+  if (!owner) {
     query = query.eq('statut', 'showcase');
-  } else {
-    // Si token invalide, on reste en mode public plutôt que 401 sur GET vitrine
-    const match = authHeader.match(/^Bearer\s+(.+)$/i);
-    if (!match) query = query.eq('statut', 'showcase');
+  } else if (req.query.statut) {
+    query = query.eq('statut', req.query.statut);
   }
-  if (req.query.statut) query = query.eq('statut', req.query.statut);
   const { data, error } = await query;
   if (error) return res.status(500).json({ error: error.message });
+  res.setHeader('Cache-Control', owner ? 'private, no-store' : 'public, max-age=60');
   res.json(data);
 });
 

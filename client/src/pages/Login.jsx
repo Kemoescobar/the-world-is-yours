@@ -2,6 +2,33 @@ import { useState } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext.jsx';
 
+const LOGIN_ATTEMPTS_KEY = 'twiy_login_attempts';
+const LOGIN_MAX = 8;
+const LOGIN_WINDOW_MS = 15 * 60 * 1000;
+
+function loginRateLimited() {
+  try {
+    const raw = sessionStorage.getItem(LOGIN_ATTEMPTS_KEY);
+    const data = raw ? JSON.parse(raw) : { n: 0, t: Date.now() };
+    if (Date.now() - data.t > LOGIN_WINDOW_MS) return false;
+    return data.n >= LOGIN_MAX;
+  } catch {
+    return false;
+  }
+}
+
+function recordLoginFailure() {
+  try {
+    const raw = sessionStorage.getItem(LOGIN_ATTEMPTS_KEY);
+    let data = raw ? JSON.parse(raw) : { n: 0, t: Date.now() };
+    if (Date.now() - data.t > LOGIN_WINDOW_MS) data = { n: 0, t: Date.now() };
+    data.n += 1;
+    sessionStorage.setItem(LOGIN_ATTEMPTS_KEY, JSON.stringify(data));
+  } catch {
+    /* ignore */
+  }
+}
+
 export default function Login() {
   const { session, signIn } = useAuth();
   const navigate = useNavigate();
@@ -17,12 +44,18 @@ export default function Login() {
 
   async function onSubmit(e) {
     e.preventDefault();
+    if (loginRateLimited()) {
+      setErreur('Trop de tentatives — réessaie dans quelques minutes');
+      return;
+    }
     setEnvoi(true);
     setErreur('');
     try {
       await signIn(email.trim(), password);
+      sessionStorage.removeItem(LOGIN_ATTEMPTS_KEY);
       navigate(location.state?.from || '/chantier', { replace: true });
     } catch (err) {
+      recordLoginFailure();
       setErreur(err.message || 'Connexion impossible');
     } finally {
       setEnvoi(false);

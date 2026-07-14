@@ -1,0 +1,18 @@
+User-agent: *
+Allow: /
+Allow: /catalogue/
+Allow: /mentions
+Allow: /confidentialite
+Disallow: /chantier
+Disallow: /studio/
+Disallow: /login
+Disallow: /portefeuille
+Disallow: /freelance
+Disallow: /parametres
+Disallow: /revue
+Disallow: /insights
+Disallow: /analytics
+Disallow: /drops
+Disallow: /streaks
+
+Sitemap: /sitemap.xml

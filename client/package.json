@@ -8,6 +8,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@fontsource/bricolage-grotesque": "^5.2.10",
+    "@fontsource/caveat": "^5.2.8",
+    "@fontsource/instrument-sans": "^5.2.8",
+    "@fontsource/space-mono": "^5.2.9",
     "@reduxjs/toolkit": "^2.2.7",
     "@supabase/supabase-js": "^2.45.0",
     "react": "^18.3.1",

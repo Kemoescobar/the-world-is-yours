@@ -21,7 +21,11 @@ function ProjetShip({ projet, index, featured }) {
     <>
       <div className={`projet-ship__media${projet.capture_url ? '' : ' projet-ship__media--empty blueprint-grid'}`}>
         {projet.capture_url ? (
-          <img src={projet.capture_url} alt="" loading="lazy" />
+          <img
+            src={projet.capture_url}
+            alt={projet.titre ? `Capture — ${projet.titre}` : 'Capture projet'}
+            loading="lazy"
+          />
         ) : (
           <p className="compteur" style={{ opacity: 0.5 }}>NO CAPTURE</p>
         )}

@@ -4,6 +4,7 @@ import { supabase } from '../supabaseClient.js';
 import { incrementerStreak } from './streaks.js';
 import { validateBody } from '../middleware/validate.js';
 import { webhookEntreeSchema } from '../schemas.js';
+import { webhookRateLimit } from '../middleware/rateLimit.js';
 
 const router = express.Router();
 
@@ -84,7 +85,7 @@ async function creerEntreeCommit({ repo, message, sha }) {
   return { data, deduped: false };
 }
 
-router.post('/entree', verifierCleApi, validateBody(webhookEntreeSchema), async (req, res) => {
+router.post('/entree', webhookRateLimit, verifierCleApi, validateBody(webhookEntreeSchema), async (req, res) => {
   const { arc_id, type_fait, detail, source } = req.body;
 
   const { data, error } = await supabase
@@ -101,7 +102,7 @@ router.post('/entree', verifierCleApi, validateBody(webhookEntreeSchema), async 
   res.status(201).json(data);
 });
 
-router.post('/webhooks/github', async (req, res) => {
+router.post('/webhooks/github', webhookRateLimit, async (req, res) => {
   if (!verifierSecretGithub(req)) {
     return res.status(401).json({ error: 'secret invalide' });
   }

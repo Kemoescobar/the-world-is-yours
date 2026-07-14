@@ -18,9 +18,10 @@
   --jaune: #ffd23f;
   --orange-clin-oeil: #ff9d00;
 
-  --font-display: 'Syne', sans-serif;
-  --font-mono: 'DM Mono', monospace;
-  --font-body: 'DM Sans', sans-serif;
+  /* Poster industrial · editorial OS · chrome CRT · annotation rue */
+  --font-display: 'Bricolage Grotesque', sans-serif;
+  --font-mono: 'Space Mono', monospace;
+  --font-body: 'Instrument Sans', sans-serif;
   --font-hand: 'Caveat', cursive;
 
   --space-1: 4px;
@@ -49,11 +50,29 @@ a { color: inherit; }
 
 button, input, select, textarea { font: inherit; }
 
+/* Clavier — focus visible sans peindre les clics souris */
+:focus { outline: none; }
+:focus-visible {
+  outline: 2px solid var(--jaune);
+  outline-offset: 3px;
+}
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--jaune);
+  outline-offset: 3px;
+}
+
 h1, h2, h3 {
   font-family: var(--font-display);
   font-weight: 800;
+  font-optical-sizing: auto;
   margin: 0;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.04em;
+  line-height: 0.95;
 }
 
 /* —— Textures —— */
@@ -105,7 +124,7 @@ h1, h2, h3 {
 .compteur {
   font-family: var(--font-mono);
   font-size: 0.75rem;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.1em;
   color: var(--text-muted);
   text-transform: uppercase;
 }
@@ -175,8 +194,8 @@ h1, h2, h3 {
   color: var(--bg-0);
   font-family: var(--font-mono);
   font-size: 0.75rem;
-  font-weight: 500;
-  letter-spacing: 0.08em;
+  font-weight: 700;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   cursor: pointer;
   transition: transform var(--transition-vue), background 200ms ease;
@@ -194,7 +213,8 @@ h1, h2, h3 {
   color: var(--text);
   font-family: var(--font-mono);
   font-size: 0.75rem;
-  letter-spacing: 0.08em;
+  font-weight: 400;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   cursor: pointer;
   transition: border-color 200ms ease, background 200ms ease;
@@ -266,7 +286,7 @@ h1, h2, h3 {
   text-align: center;
   font-family: var(--font-mono);
   font-size: 0.65rem;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--text-muted);
   border-right: 1px solid rgba(255, 255, 255, 0.08);
@@ -406,10 +426,44 @@ h1, h2, h3 {
   animation: halftone-drift 1.2s steps(2) infinite;
 }
 
+/* Perf mobile : une seule couche animée lourde */
+@media (max-width: 720px) {
+  .grain-live { animation: none; }
+  .scanlines-live { animation: none; }
+  .halftone-live {
+    animation: halftone-drift 2.4s steps(2) infinite;
+    opacity: 0.1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .grain-live,
+  .scanlines-live,
+  .halftone-live,
+  .caret-blink {
+    animation: none !important;
+  }
+
+  .halftone-overlay {
+    opacity: 0.08;
+  }
+}
+
 .title-dither {
   font-family: var(--font-display);
   font-weight: 800;
-  letter-spacing: -0.05em;
+  font-optical-sizing: auto;
+  letter-spacing: -0.055em;
+  text-transform: uppercase;
   text-shadow:
     1px 0 0 rgba(255, 59, 48, 0.25),
     -1px 0 0 rgba(91, 45, 158, 0.35),
@@ -437,7 +491,8 @@ h1, h2, h3 {
   font-size: clamp(1.4rem, 4vw, 2rem);
   margin: 4px 0 0;
   color: var(--jaune);
-  letter-spacing: 0.04em;
+  letter-spacing: 0.02em;
+  font-weight: 700;
 }
 
 .home-pane {
@@ -465,9 +520,13 @@ h1, h2, h3 {
 }
 
 .home-pane__title {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-optical-sizing: auto;
   font-size: clamp(3.8rem, 14vw, 8rem);
-  line-height: 0.82;
-  letter-spacing: -0.06em;
+  line-height: 0.8;
+  letter-spacing: -0.065em;
+  text-transform: uppercase;
   transition: transform 320ms var(--ease-poster), text-shadow 320ms ease;
 }
 

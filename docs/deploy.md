@@ -17,10 +17,12 @@
    - `CLIENT_URL` = `https://<ton-app>.vercel.app` (après Vercel)
    - `SUPABASE_URL`
    - `SUPABASE_SERVICE_KEY`
+   - `OWNER_USER_ID` = UUID Auth du propriétaire (**obligatoire en prod** — voir `docs/auth-hardening.md`)
    - `WEBHOOK_API_KEY`
    - `GITHUB_WEBHOOK_SECRET`
 7. Deploy → **Networking → Generate Domain**
 8. Test : `https://xxxx.up.railway.app/health`
+9. Auth Supabase : désactiver signup public + `insert into app_owners` (migration RLS)
 
 Si erreur `railpack process exited` : presque toujours **Root Directory ≠ server**.
 ## 2. Client → Vercel

@@ -54,7 +54,8 @@ export default function Nav() {
           fontFamily: 'var(--font-display)',
           fontWeight: 800,
           fontSize: '0.95rem',
-          letterSpacing: '-0.03em',
+          letterSpacing: '-0.04em',
+          textTransform: 'uppercase',
           marginRight: 4,
         }}
       >

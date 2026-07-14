@@ -1,18 +1,20 @@
 import express from 'express';
 import { supabase } from '../supabaseClient.js';
-import { requireAuth } from '../middleware/auth.js';
+import { requireAuth, resolveOwnerFromBearer } from '../middleware/auth.js';
 import { validateBody } from '../middleware/validate.js';
 import { createProjetSchema } from '../schemas.js';
 
 const router = express.Router();
 
 router.get('/', async (req, res) => {
+  const owner = await resolveOwnerFromBearer(req);
   let query = supabase.from('projets_dev').select('*').order('cree_le', { ascending: false });
-  if (!req.header('authorization')) {
+  if (!owner) {
     query = query.eq('statut', 'shippe');
   }
   const { data, error } = await query;
   if (error) return res.status(500).json({ error: error.message });
+  res.setHeader('Cache-Control', owner ? 'private, no-store' : 'public, max-age=60');
   res.json(data);
 });
 

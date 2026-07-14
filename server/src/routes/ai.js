@@ -2,6 +2,7 @@ import express from 'express';
 import crypto from 'crypto';
 import { supabase } from '../supabaseClient.js';
 import { requireAuth } from '../middleware/auth.js';
+import { aiRateLimit } from '../middleware/rateLimit.js';
 import { askClaude, anthropicConfigured } from '../lib/claude.js';
 import { lireMemoire, appendLecon } from '../lib/coachingMemory.js';
 
@@ -25,7 +26,7 @@ export function requireAuthOrApiKey(req, res, next) {
   return requireAuth(req, res, next);
 }
 
-router.use(requireAuthOrApiKey);
+router.use(aiRateLimit, requireAuthOrApiKey);
 
 router.get('/status', (_req, res) => {
   res.json({
@@ -160,7 +161,7 @@ router.post('/chapitre-titre', async (req, res) => {
       .limit(30);
 
     const { text } = await askClaude(
-      `Tu titres un chapitre Chroniques TWIY (affiche, Syne vibe).
+      `Tu titres un chapitre Chroniques TWIY (affiche street, Bricolage vibe).
 Réponds JSON: {"titre":"...","resume_public":"1-2 phrases"}
 Titre court, punchy, pas générique.`,
       JSON.stringify({ chapitre: chap, entrees: entrees || [] }),

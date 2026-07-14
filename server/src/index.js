@@ -17,6 +17,9 @@ import aiRouter from './routes/ai.js';
 
 const app = express();
 
+// Railway / reverse-proxy — IP réelle pour le rate limiting
+app.set('trust proxy', 1);
+
 const allowedOrigins = (process.env.CLIENT_URL || 'http://localhost:5173')
   .split(',')
   .map((s) => s.trim())
