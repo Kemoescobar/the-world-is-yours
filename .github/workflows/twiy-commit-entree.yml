@@ -17,16 +17,27 @@ jobs:
           TWIY_WEBHOOK_URL: ${{ secrets.TWIY_WEBHOOK_URL }}
           TWIY_WEBHOOK_SECRET: ${{ secrets.TWIY_WEBHOOK_SECRET }}
         run: |
+          echo "TWIY_WEBHOOK_URL défini: $([ -n "$TWIY_WEBHOOK_URL" ] && echo oui || echo NON)"
+          echo "TWIY_WEBHOOK_SECRET longueur: ${#TWIY_WEBHOOK_SECRET}"
           if [ -z "$TWIY_WEBHOOK_URL" ] || [ -z "$TWIY_WEBHOOK_SECRET" ]; then
-            echo "::error::Secrets TWIY_WEBHOOK_URL / TWIY_WEBHOOK_SECRET manquants — voir docs/github-webhook.md"
+            echo "::error::Secrets repo manquants. Settings → Secrets and variables → Actions → Repository secrets (pas Environment)."
+            echo "Noms exacts: TWIY_WEBHOOK_URL et TWIY_WEBHOOK_SECRET — voir docs/github-webhook.md"
             exit 1
           fi
-          curl -fsS -X POST "$TWIY_WEBHOOK_URL" \
+          payload="$(jq -n \
+            --arg repo "${{ github.repository }}" \
+            --arg message "${{ github.event.head_commit.message }}" \
+            --arg sha "${{ github.sha }}" \
+            '{repo:$repo, message:$message, sha:$sha}')"
+          code=$(curl -sS -o /tmp/twiy-webhook-body.txt -w "%{http_code}" -X POST "$TWIY_WEBHOOK_URL" \
             -H "Content-Type: application/json" \
             -H "x-webhook-secret: $TWIY_WEBHOOK_SECRET" \
-            -d "$(jq -n \
-              --arg repo "${{ github.repository }}" \
-              --arg message "${{ github.event.head_commit.message }}" \
-              --arg sha "${{ github.sha }}" \
-              '{repo:$repo, message:$message, sha:$sha}')"
+            -d "$payload")
+          echo "HTTP $code"
+          cat /tmp/twiy-webhook-body.txt || true
+          echo
+          if [ "$code" != "200" ] && [ "$code" != "201" ]; then
+            echo "::error::Webhook refusé (HTTP $code). Vérifie TWIY_WEBHOOK_SECRET = GITHUB_WEBHOOK_SECRET (Railway + server/.env)."
+            exit 1
+          fi
           echo "Entrée Chroniques postée pour ${{ github.sha }}"
