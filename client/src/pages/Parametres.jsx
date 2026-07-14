@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../auth/AuthContext.jsx';
 import { apiGet } from '../lib/api.js';
 
-const API_URL = import.meta.env.VITE_API_URL;
+const rawApi = (import.meta.env.VITE_API_URL || '').trim();
+const API_URL = rawApi && !/^https?:\/\//i.test(rawApi) ? `https://${rawApi}` : rawApi;
 
 export default function Parametres() {
   const { session } = useAuth();

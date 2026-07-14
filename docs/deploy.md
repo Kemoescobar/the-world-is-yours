@@ -37,13 +37,13 @@ Si erreur `railpack process exited` : presque toujours **Root Directory ≠ serv
 
 ## 3. GitHub Actions (1 repo)
 
-Voir `docs/github-webhook.md`.
+Voir `docs/github-webhook.md` (URLs prod déjà remplies).
 
-Secrets du repo :
-- `TWIY_WEBHOOK_URL` = `https://xxxx.up.railway.app/api/webhooks/github`
-- `TWIY_WEBHOOK_SECRET` = même valeur que `GITHUB_WEBHOOK_SECRET`
+Secrets du repo `Kemoescobar/the-world-is-yours` :
+- `TWIY_WEBHOOK_URL` = `https://the-world-is-yours-production.up.railway.app/api/webhooks/github`
+- `TWIY_WEBHOOK_SECRET` = même valeur que `GITHUB_WEBHOOK_SECRET` (Railway + `server/.env`)
 
-Copier `.github/workflows/twiy-commit-entree.yml` dans ce repo.
+Le workflow `.github/workflows/twiy-commit-entree.yml` est déjà dans ce repo.
 
 ## Alternative locale (sans Railway)
 

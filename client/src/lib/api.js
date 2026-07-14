@@ -1,6 +1,14 @@
 import { supabase } from './supabase.js';
 
-const API_URL = import.meta.env.VITE_API_URL;
+/** Normalise VITE_API_URL — sans schéma, fetch devient relatif à Vercel et renvoie du HTML. */
+function resolveApiUrl() {
+  let base = (import.meta.env.VITE_API_URL || '').trim();
+  if (!base) return '';
+  if (!/^https?:\/\//i.test(base)) base = `https://${base}`;
+  return base.replace(/\/$/, '');
+}
+
+const API_URL = resolveApiUrl();
 
 export class ApiError extends Error {
   constructor(message, status, body) {
