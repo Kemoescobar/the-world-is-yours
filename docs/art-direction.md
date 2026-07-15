@@ -45,3 +45,4 @@ Privé = même ADN que le public, en **console HUD** (pas admin SaaS) :
 - Pages : `OsHeader` (ghost title + kicker mono), rails archive, panels chrome (`os-panel`), forms `os-input`
 - Surfaces : Chantier / arcs, Streaks, Drops, Revue, Insights, Analytics, Freelance, Portefeuille, Paramètres, QuickCapture
 - Usability : validation quêtes restée dense et lisible ; `prefers-reduced-motion` respecté via tokens existants
+- Pass chrome/Cover Flow : Login = gate AUTH HUD ; panels OS plus iridescents ; headers wide + chrome-bar

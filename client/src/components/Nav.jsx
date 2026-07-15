@@ -23,7 +23,8 @@ export default function Nav() {
   const stamp = new Date().toISOString().slice(0, 10).replace(/-/g, '.');
 
   return (
-    <nav className="nav-primary nav-chrome nav-os chrome-edge chrome-edge-live" aria-label="Navigation privée">
+    <nav className="nav-primary nav-chrome nav-os chrome-edge chrome-edge-live chrome-specular" aria-label="Navigation privée">
+      <div className="chrome-bar--nav" aria-hidden style={{ top: 0, bottom: 'auto' }} />
       <Link to="/" className="nav-brand" style={{ marginRight: 2 }}>
         TWIY
       </Link>

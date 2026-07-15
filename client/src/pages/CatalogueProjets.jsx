@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { apiGet, apiPost } from '../lib/api.js';
+import CoverFlow from '../components/CoverFlow.jsx';
 
 const empty = {
   titre: '',
@@ -11,6 +12,36 @@ const empty = {
   stack: '',
   statut: 'shippe',
 };
+
+function ProjetSleeve({ projet, index }) {
+  const n = String(index + 1).padStart(2, '0');
+  return (
+    <div className="cover-sleeve cover-sleeve--code chrome-specular">
+      <div className="cover-sleeve__media">
+        {projet.capture_url ? (
+          <img
+            src={projet.capture_url}
+            alt={projet.titre ? `Capture — ${projet.titre}` : 'Capture projet'}
+            loading="lazy"
+          />
+        ) : (
+          <div className="blueprint-grid" aria-hidden style={{ position: 'absolute', inset: 0, opacity: 0.55 }} />
+        )}
+        <span className="compteur" style={{ position: 'relative', zIndex: 1, color: 'var(--jaune)' }}>
+          {n} / SHIPPÉ
+        </span>
+      </div>
+      <div className="cover-sleeve__body">
+        <p className="compteur">CASE · CODE · BLUEPRINT</p>
+        <h2 className="cover-sleeve__title">{projet.titre}</h2>
+        <p className="compteur">
+          {(projet.stack || []).slice(0, 3).join(' · ') || 'stack'}
+          {projet.lien_live ? ' · LIVE' : ''}
+        </p>
+      </div>
+    </div>
+  );
+}
 
 function ProjetShip({ projet, index, featured }) {
   const n = String(index + 1).padStart(2, '0');
@@ -105,6 +136,7 @@ export default function CatalogueProjets({ mode = 'public' }) {
   const [items, setItems] = useState([]);
   const [form, setForm] = useState(empty);
   const [erreur, setErreur] = useState('');
+  const [focusItem, setFocusItem] = useState(null);
 
   async function charger() {
     setItems(await apiGet('/projets', { auth: editable }) || []);
@@ -130,21 +162,30 @@ export default function CatalogueProjets({ mode = 'public' }) {
     }
   }
 
+  const deck = focusItem || items[0];
+
   return (
     <div style={{ padding: 'var(--space-4)', maxWidth: 1100, margin: '0 auto' }}>
-      <p className="compteur" style={{ marginBottom: 8 }}>01 • CODE • BLUEPRINT</p>
-      <h1 className="title-dither" style={{ fontSize: 'clamp(2.2rem, 7vw, 3.6rem)', lineHeight: 0.95 }}>
-        Projets shippés
-      </h1>
-      <p className="compteur" style={{ marginTop: 10 }}>
-        {String(items.length).padStart(2, '0')} case{items.length > 1 ? 's' : ''}
-        {editable ? ' • studio' : (
-          <> • <Link to="/login" style={{ color: 'var(--jaune)' }}>connexion</Link> pour ajouter</>
-        )}
-      </p>
+      <header className="catalogue-header hud-frame">
+        <p className="compteur" style={{ marginBottom: 8 }}>
+          <span className="caret-blink" aria-hidden>›</span> 01 • CODE • BLUEPRINT
+          <span style={{ color: 'rgba(255,210,63,0.45)' }}> • </span>
+          LOOKBOOK
+        </p>
+        <h1 className="title-wide title-dither title-ghost-wrap" data-ghost="PROJETS SHIPPÉS" style={{ fontSize: 'clamp(2.2rem, 7vw, 3.6rem)' }}>
+          Projets shippés
+        </h1>
+        <p className="compteur" style={{ marginTop: 10 }}>
+          {String(items.length).padStart(2, '0')} / {String(Math.max(items.length, 1)).padStart(2, '0')} case{items.length > 1 ? 's' : ''}
+          {editable ? ' • studio' : (
+            <> • <Link to="/login" style={{ color: 'var(--jaune)' }}>connexion</Link> pour ajouter</>
+          )}
+        </p>
+        <div className="chrome-bar chrome-bar--thin" aria-hidden />
+      </header>
 
       {editable && (
-        <form onSubmit={creer} className="poster-panel blueprint-grid" style={{ padding: 'var(--space-3)', margin: 'var(--space-4) 0', display: 'grid', gap: 10 }}>
+        <form onSubmit={creer} className="chrome-panel chrome-edge" style={{ padding: 'var(--space-3)', margin: 'var(--space-4) 0', display: 'grid', gap: 10 }}>
           <p className="compteur">NOUVEAU PROJET</p>
           {['titre', 'description', 'lien_github', 'lien_live', 'capture_url', 'stack'].map((k) => (
             <input
@@ -153,7 +194,7 @@ export default function CatalogueProjets({ mode = 'public' }) {
               value={form[k]}
               onChange={(e) => setForm((f) => ({ ...f, [k]: e.target.value }))}
               placeholder={k === 'stack' ? 'stack (virgules)' : k === 'capture_url' ? 'capture_url (image)' : k}
-              style={{ padding: 10, background: 'var(--bg-2)', color: 'var(--text)', border: '1px solid var(--bg-3)' }}
+              className="os-input"
             />
           ))}
           {erreur && <p className="annotation-manuscrite">{erreur}</p>}
@@ -179,11 +220,53 @@ export default function CatalogueProjets({ mode = 'public' }) {
           )}
         </div>
       ) : (
-        <div className="projet-index">
-          {items.map((p, i) => (
-            <ProjetShip key={p.id} projet={p} index={i} featured={i === 0} />
-          ))}
-        </div>
+        <>
+          <CoverFlow
+            items={items}
+            label="Projets shippés"
+            counterPrefix="CASE"
+            onFocusChange={(_, item) => setFocusItem(item)}
+            renderSleeve={(item, { index }) => (
+              <ProjetSleeve projet={item} index={index} />
+            )}
+          />
+
+          {deck && (
+            <div className="chrome-panel chrome-edge" style={{ padding: 'var(--space-3)', marginTop: 'var(--space-3)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'baseline', flexWrap: 'wrap' }}>
+                <p className="compteur">
+                  <span className="caret-blink" aria-hidden>›</span> DECK · {deck.titre}
+                </p>
+                <div style={{ display: 'flex', gap: 12 }}>
+                  {deck.lien_live && (
+                    <a href={deck.lien_live} target="_blank" rel="noreferrer" className="btn-ghost" style={{ textDecoration: 'none', padding: '6px 10px' }}>
+                      › LIVE
+                    </a>
+                  )}
+                  {deck.lien_github && (
+                    <a href={deck.lien_github} target="_blank" rel="noreferrer" className="btn-ghost" style={{ textDecoration: 'none', padding: '6px 10px' }}>
+                      › GITHUB
+                    </a>
+                  )}
+                </div>
+              </div>
+              {deck.description && (
+                <p style={{ marginTop: 12, color: 'var(--text-muted)', maxWidth: 56 * 8, lineHeight: 1.5 }}>
+                  {deck.description}
+                </p>
+              )}
+            </div>
+          )}
+
+          {editable && (
+            <div className="projet-index" style={{ marginTop: 'var(--space-4)' }}>
+              <p className="compteur" style={{ marginBottom: 12 }}>INDEX · STUDIO</p>
+              {items.map((p, i) => (
+                <ProjetShip key={p.id} projet={p} index={i} featured={i === 0} />
+              ))}
+            </div>
+          )}
+        </>
       )}
     </div>
   );

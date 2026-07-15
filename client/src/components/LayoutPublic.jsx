@@ -4,9 +4,10 @@ import { Link } from 'react-router-dom';
 export default function LayoutPublic({ children }) {
   return (
     <div className="layout" style={{ position: 'relative', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <div className="halftone-overlay" />
+      <div className="halftone-overlay halftone-live" />
+      <div className="grain grain-live" style={{ position: 'fixed', opacity: 0.12, zIndex: 1 }} aria-hidden />
       <nav
-        className="nav-chrome"
+        className="nav-chrome chrome-specular"
         style={{
           display: 'flex',
           gap: 18,
@@ -22,6 +23,9 @@ export default function LayoutPublic({ children }) {
         <Link to="/" className="nav-brand">
           TWIY
         </Link>
+        <span className="compteur" style={{ color: 'rgba(138,149,184,0.55)', fontSize: '0.58rem' }}>
+          › PUBLIC
+        </span>
         <Link to="/catalogue/projets" style={{ color: 'var(--text-muted)', textDecoration: 'none' }}>
           Code
         </Link>
@@ -36,6 +40,7 @@ export default function LayoutPublic({ children }) {
         >
           Entrer
         </Link>
+        <div className="chrome-bar--nav" aria-hidden />
       </nav>
       <main style={{ position: 'relative', zIndex: 1, flex: 1 }}>{children}</main>
       <footer
@@ -56,6 +61,7 @@ export default function LayoutPublic({ children }) {
         }}
       >
         <span>THE WORLD IS YOURS</span>
+        <span style={{ color: 'rgba(255,210,63,0.35)' }} aria-hidden>•</span>
         <Link to="/mentions" style={{ color: 'var(--text-muted)', textDecoration: 'none' }}>
           Mentions légales
         </Link>

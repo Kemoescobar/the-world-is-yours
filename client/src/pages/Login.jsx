@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { Navigate, useLocation, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext.jsx';
 
 const LOGIN_ATTEMPTS_KEY = 'twiy_login_attempts';
@@ -64,6 +64,7 @@ export default function Login() {
 
   return (
     <div
+      className="hud-frame"
       style={{
         minHeight: '100vh',
         display: 'grid',
@@ -71,51 +72,81 @@ export default function Login() {
         padding: 'var(--space-4)',
         position: 'relative',
         overflow: 'hidden',
-        background:
-          'radial-gradient(ellipse at 70% 20%, rgba(91,45,158,0.35), transparent 50%), var(--bg-0)',
       }}
     >
-      <div className="halftone-overlay" style={{ position: 'absolute', opacity: 0.16 }} />
-      <div className="scanlines" />
+      <div className="atmosphere-void void-grid atmosphere-breathe" aria-hidden style={{ position: 'absolute', inset: 0 }} />
+      <div
+        aria-hidden
+        style={{
+          position: 'absolute',
+          inset: 0,
+          background:
+            'radial-gradient(ellipse at 70% 20%, rgba(42,111,176,0.38), transparent 50%), radial-gradient(ellipse at 20% 80%, rgba(255,59,48,0.1), transparent 45%), var(--bg-0)',
+        }}
+      />
+      <div className="halftone-overlay halftone-live" style={{ position: 'absolute', opacity: 0.18 }} />
+      <div className="grain grain-live" style={{ position: 'absolute' }} />
+      <div className="scanlines scanlines-live" style={{ opacity: 0.5 }} />
+      <span className="hud-corner hud-corner--tl" aria-hidden />
+      <span className="hud-corner hud-corner--tr" aria-hidden />
+      <span className="hud-corner hud-corner--bl" aria-hidden />
+      <span className="hud-corner hud-corner--br" aria-hidden />
+
       <form
         onSubmit={onSubmit}
-        className="anim-gate poster-panel"
-        style={{ width: '100%', maxWidth: 400, padding: 'var(--space-4)', position: 'relative', zIndex: 2 }}
+        className="anim-gate chrome-panel chrome-edge chrome-edge-live os-panel capture-sheet"
+        style={{ width: '100%', maxWidth: 420, position: 'relative', zIndex: 2 }}
       >
-        <p className="compteur"><span className="caret-blink">›</span> ACCESS</p>
-        <h1 style={{ fontSize: 'clamp(1.6rem, 5vw, 2rem)', marginTop: 8 }}>THE WORLD IS YOURS</h1>
-        <p className="compteur" style={{ marginTop: 'var(--space-2)' }}>Chroniques</p>
+        <div className="os-panel__bar">
+          <span>ACCESS · PRIVATE OS</span>
+          <span className="compteur-dot">AUTH</span>
+        </div>
+        <div className="os-panel__body">
+          <p className="compteur">
+            <span className="caret-blink">›</span> LOOK 00 / GATE
+          </p>
+          <h1
+            className="title-dither title-wide title-ghost-wrap"
+            data-ghost="THE WORLD IS YOURS"
+            style={{ fontSize: 'clamp(1.6rem, 5vw, 2.1rem)', marginTop: 10 }}
+          >
+            THE WORLD IS YOURS
+          </h1>
+          <p className="compteur" style={{ marginTop: 8 }}>Chroniques · Chantier</p>
+          <div className="chrome-bar chrome-bar--thin" aria-hidden style={{ margin: '14px 0 4px', maxWidth: 120 }} />
 
-        <label style={{ display: 'block', marginTop: 'var(--space-4)', fontSize: '0.85rem' }}>
-          Email
+          <label className="os-label" htmlFor="login-email" style={{ marginTop: 'var(--space-3)' }}>
+            Email
+          </label>
           <input
+            id="login-email"
             type="email"
             required
+            className="os-input"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            style={{
-              display: 'block', width: '100%', marginTop: 6, padding: 10,
-              background: 'var(--bg-1)', color: 'var(--text)', border: '1px solid var(--bg-3)',
-            }}
+            autoComplete="username"
           />
-        </label>
-        <label style={{ display: 'block', marginTop: 'var(--space-3)', fontSize: '0.85rem' }}>
-          Mot de passe
+          <label className="os-label" htmlFor="login-password" style={{ marginTop: 'var(--space-3)' }}>
+            Mot de passe
+          </label>
           <input
+            id="login-password"
             type="password"
             required
+            className="os-input"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            style={{
-              display: 'block', width: '100%', marginTop: 6, padding: 10,
-              background: 'var(--bg-1)', color: 'var(--text)', border: '1px solid var(--bg-3)',
-            }}
+            autoComplete="current-password"
           />
-        </label>
-        {erreur && <p className="annotation-manuscrite" style={{ marginTop: 'var(--space-2)' }}>{erreur}</p>}
-        <button type="submit" disabled={envoi} className="btn-poster" style={{ width: '100%', marginTop: 'var(--space-4)' }}>
-          {envoi ? '…' : '› Enter'}
-        </button>
+          {erreur && <p className="annotation-manuscrite" style={{ marginTop: 'var(--space-2)' }}>{erreur}</p>}
+          <button type="submit" disabled={envoi} className="btn-poster" style={{ width: '100%', marginTop: 'var(--space-4)' }}>
+            {envoi ? '…' : '› Enter'}
+          </button>
+          <p className="compteur" style={{ marginTop: 14, textAlign: 'center' }}>
+            <Link to="/" style={{ color: 'var(--text-muted)', textDecoration: 'none' }}>‹ Retour public</Link>
+          </p>
+        </div>
       </form>
     </div>
   );

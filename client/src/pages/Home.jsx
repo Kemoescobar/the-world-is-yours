@@ -19,17 +19,16 @@ export default function Home() {
     });
   }, []);
 
+  const lookN = String(stats.projets + stats.instrus).padStart(2, '0');
+
   return (
-    <div style={{ position: 'relative', minHeight: '100vh', overflow: 'hidden' }}>
+    <div className="hud-frame" style={{ position: 'relative', minHeight: '100vh', overflow: 'hidden' }}>
       <div className="halftone-overlay halftone-live" />
       <div className="grain grain-live" style={{ position: 'fixed' }} />
       <div
         aria-hidden
         className="atmosphere-void void-grid atmosphere-breathe"
-        style={{
-          position: 'absolute',
-          inset: 0,
-        }}
+        style={{ position: 'absolute', inset: 0 }}
       />
       <div
         aria-hidden
@@ -40,6 +39,11 @@ export default function Home() {
             'radial-gradient(ellipse at 50% 0%, rgba(42,111,176,0.32), transparent 42%), radial-gradient(ellipse at 12% 70%, rgba(255,59,48,0.1), transparent 40%), radial-gradient(ellipse at 88% 65%, rgba(200,220,255,0.08), transparent 42%), linear-gradient(165deg, #040812, #0a1128 42%, #0d1b3e)',
         }}
       />
+
+      <span className="hud-corner hud-corner--tl" aria-hidden />
+      <span className="hud-corner hud-corner--tr" aria-hidden />
+      <span className="hud-corner hud-corner--bl" aria-hidden />
+      <span className="hud-corner hud-corner--br" aria-hidden />
 
       <header
         className="anim-split"
@@ -54,18 +58,24 @@ export default function Home() {
         }}
       >
         <div>
+          <p className="compteur" style={{ marginBottom: 8 }}>
+            <span className="caret-blink" aria-hidden>›</span> LOOK {lookN} / ARCHIVE
+            <span style={{ color: 'rgba(255,210,63,0.5)' }}> • </span>
+            HUD 1440
+          </p>
           <p
-            className="title-dither title-ghost-wrap"
+            className="title-dither title-wide title-ghost-wrap"
             data-ghost="THE WORLD IS YOURS"
-            style={{ fontSize: 'clamp(1.75rem, 5.5vw, 2.7rem)', margin: 0, lineHeight: 1 }}
+            style={{ fontSize: 'clamp(1.75rem, 5.5vw, 2.7rem)', margin: 0, lineHeight: 0.9 }}
           >
             THE WORLD IS YOURS
           </p>
           <p className="compteur" style={{ marginTop: 10 }}>
-            <span className="caret-blink">›</span> PUBLIC PROOF
+            PUBLIC PROOF
             <span style={{ color: 'rgba(255,210,63,0.5)' }}> • </span>
             CODE / SOUND
           </p>
+          <div className="chrome-bar chrome-bar--thin" aria-hidden style={{ marginTop: 14, maxWidth: 180 }} />
         </div>
         <Link to="/login" className="btn-ghost" style={{ textDecoration: 'none', padding: '10px 14px' }}>
           Entrer
@@ -73,7 +83,7 @@ export default function Home() {
       </header>
 
       <div
-        className="anim-split proof-stats"
+        className="anim-split proof-stats chrome-edge"
         style={{ position: 'relative', zIndex: 2, animationDelay: '40ms' }}
       >
         <div>
@@ -97,7 +107,7 @@ export default function Home() {
           zIndex: 2,
           display: 'grid',
           gridTemplateColumns: '1fr 1fr',
-          minHeight: 'calc(100vh - 180px)',
+          minHeight: 'calc(100vh - 200px)',
         }}
       >
         <Link
@@ -106,7 +116,7 @@ export default function Home() {
           style={{ animationDelay: '80ms', textDecoration: 'none', color: 'var(--text)' }}
         >
           <div className="blueprint-grid" aria-hidden style={{ position: 'absolute', inset: 0, opacity: 0.5 }} />
-          <div className="scanlines" aria-hidden style={{ opacity: 0.35 }} />
+          <div className="scanlines scanlines-live" aria-hidden style={{ opacity: 0.35 }} />
           <div style={{ position: 'relative', textAlign: 'center', padding: 'var(--space-4)' }}>
             <p className="compteur" style={{ marginBottom: 12 }}>01 • BLUEPRINT</p>
             <h1 className="home-pane__title title-ghost-wrap" data-ghost="CODE">CODE</h1>
@@ -116,7 +126,7 @@ export default function Home() {
 
         <Link
           to="/catalogue/instrus"
-          className="anim-split home-pane home-pane--sound chrome-edge"
+          className="anim-split home-pane home-pane--sound chrome-edge chrome-edge-live"
           style={{ animationDelay: '160ms', textDecoration: 'none', color: 'var(--text)' }}
         >
           <img
@@ -125,7 +135,7 @@ export default function Home() {
             aria-hidden
             className="home-pane__vinyl"
           />
-          <div className="scanlines" aria-hidden style={{ opacity: 0.4 }} />
+          <div className="scanlines scanlines-live" aria-hidden style={{ opacity: 0.4 }} />
           <div style={{ position: 'relative', textAlign: 'center', padding: 'var(--space-4)' }}>
             <p className="compteur" style={{ marginBottom: 12, color: 'var(--chrome)' }}>02 • CHROME</p>
             <h1 className="home-pane__title title-ghost-wrap" data-ghost="SOUND">SOUND</h1>

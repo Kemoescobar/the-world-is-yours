@@ -52,3 +52,11 @@ Traduction spiral/lookbook côté **authentifié** (shell + pages) :
 - Compteurs archive (`os-stat-rail`) · panels chrome (pas card-grid SaaS)
 - Capture FAB clip-path rouge · modal chrome-edge
 - Voir aussi note « Private OS pass » dans [`art-direction.md`](./art-direction.md).
+
+## Ship — chrome + Cover Flow + HUD (pass courant)
+Appliqué côté public + login gate :
+- **Chrome** — bordures iridescentes plus épaisses, bars shimmer, specular panels (bleu/rouge/jaune)
+- **Cover Flow** — `CoverFlow.jsx` sur CatalogueInstrus + CatalogueProjets (perspective desktop, scroll-snap mobile, ghost neighbors)
+- **HUD 1440** — coins + compteurs mono + titres wide/ghost sur Home, SoundGate, headers catalogue, Login
+- **Textures** — grain/scanlines live + `prefers-reduced-motion` (animations coupées, opacités adoucies)
+- **Private** — OsHeader wide + chrome bars ; panels OS plus métalliques ; Login = console AUTH (pas form plat)

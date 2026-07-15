@@ -9,7 +9,7 @@ export default function SoundGate({ onEnter }) {
 
   return (
     <div
-      className="anim-gate chrome-edge chrome-edge-live"
+      className="anim-gate chrome-edge chrome-edge-live hud-frame"
       style={{
         position: 'fixed',
         inset: 0,
@@ -23,10 +23,7 @@ export default function SoundGate({ onEnter }) {
       <div
         aria-hidden
         className="atmosphere-void void-grid atmosphere-breathe"
-        style={{
-          position: 'absolute',
-          inset: 0,
-        }}
+        style={{ position: 'absolute', inset: 0 }}
       />
       <div
         aria-hidden
@@ -60,14 +57,22 @@ export default function SoundGate({ onEnter }) {
       <div className="scanlines scanlines-live" />
       <div className="halftone-overlay halftone-live" style={{ position: 'absolute', zIndex: 3, opacity: 0.24 }} />
 
+      <span className="hud-corner hud-corner--tl" aria-hidden />
+      <span className="hud-corner hud-corner--tr" aria-hidden />
+      <span className="hud-corner hud-corner--bl" aria-hidden />
+      <span className="hud-corner hud-corner--br" aria-hidden />
+
       <div style={{ position: 'relative', zIndex: 4, textAlign: 'center', padding: 'var(--space-4)', maxWidth: 680 }}>
         <p className="compteur" style={{ marginBottom: 'var(--space-3)' }}>
           <span className="caret-blink">›</span> SYSTEM READY
           <span style={{ color: 'rgba(255,210,63,0.45)' }}> • </span>
+          LOOK 00 / BOOT
+          <span style={{ color: 'rgba(255,210,63,0.45)' }}> • </span>
           PRESS START
         </p>
+        <div className="chrome-bar chrome-bar--thin" aria-hidden style={{ margin: '0 auto 18px', maxWidth: 160 }} />
         <h1
-          className="title-dither title-ghost-wrap"
+          className="title-dither title-wide title-ghost-wrap"
           data-ghost="THE WORLD IS YOURS"
           style={{ fontSize: 'clamp(2.8rem, 11vw, 5.5rem)', lineHeight: 0.88, marginBottom: 'var(--space-2)' }}
         >
