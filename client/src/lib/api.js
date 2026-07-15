@@ -10,6 +10,16 @@ function resolveApiUrl() {
 
 const API_URL = resolveApiUrl();
 
+export function getApiBaseUrl() {
+  return API_URL;
+}
+
+/** Origin Express (sans /api) pour /health etc. */
+export function getApiOrigin() {
+  if (!API_URL) return '';
+  return API_URL.replace(/\/api\/?$/, '');
+}
+
 export class ApiError extends Error {
   constructor(message, status, body) {
     super(message);
@@ -36,16 +46,28 @@ export async function api(path, options = {}) {
     ...extraHeaders,
   };
 
+  if (!API_URL && !path.startsWith('http')) {
+    throw new ApiError(
+      'VITE_API_URL manquante — impossible d’appeler l’API (rebuild client requis)',
+      0,
+    );
+  }
+
   if (auth) {
     const token = await getAccessToken();
     if (!token) {
+      // Throw BEFORE fetch → zero network. Callers must surface this, never invent data.
       throw new ApiError('authentification requise', 401);
     }
     headers.Authorization = `Bearer ${token}`;
   }
 
   const url = path.startsWith('http') ? path : `${API_URL}${path.startsWith('/') ? path : `/${path}`}`;
-  const res = await fetch(url, { ...rest, headers });
+  const res = await fetch(url, {
+    cache: 'no-store',
+    ...rest,
+    headers,
+  });
 
   if (res.status === 204) return null;
 
@@ -54,6 +76,14 @@ export async function api(path, options = {}) {
   try {
     body = text ? JSON.parse(text) : null;
   } catch {
+    // HTML from SPA rewrite = misconfigured API URL
+    if (typeof text === 'string' && text.trimStart().startsWith('<')) {
+      throw new ApiError(
+        'réponse HTML au lieu de JSON — VITE_API_URL pointe probablement sur le front, pas Railway',
+        res.status,
+        text.slice(0, 120),
+      );
+    }
     body = text;
   }
 

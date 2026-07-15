@@ -12,33 +12,125 @@ function extractFirstUrl(desc) {
   return m ? m[1] : null;
 }
 
+function roadmapOrder(source) {
+  if (!source) return [9999, 0];
+  const week =
+    source.match(/LearnByDoing-S(\d+)/)?.[1] ||
+    source.match(/SS(\d+)/)?.[1];
+  const course = source.match(/-C(\d+)$/)?.[1];
+  return [week ? Number(week) : 9999, course ? Number(course) : 0];
+}
+
+function emptyPreuveForm(competenceId = '') {
+  return {
+    competence_id: competenceId,
+    type: 'cert_externe',
+    url: '',
+    reference_id: '',
+  };
+}
+
 export default function ArcDetail() {
   const { arc } = useParams();
   const dispatch = useDispatch();
   const [chapitres, setChapitres] = useState([]);
   const [quetes, setQuetes] = useState([]);
   const [competences, setCompetences] = useState([]);
-  const [preuvesMap, setPreuvesMap] = useState({});
-  const [preuveForm, setPreuveForm] = useState({ competence_id: '', type: 'cert_externe', url: '' });
+  const [expandedId, setExpandedId] = useState(null);
+  const [preuveForm, setPreuveForm] = useState(emptyPreuveForm());
+  const [projets, setProjets] = useState([]);
+  const [instrumentaux, setInstrumentaux] = useState([]);
   const [msg, setMsg] = useState('');
+  const [preuveBusy, setPreuveBusy] = useState(false);
+  const [chargement, setChargement] = useState(true);
+  const [erreur, setErreur] = useState('');
+
+  async function loadCompetences() {
+    const comps = await apiGet(`/competences?arc=${arc}`);
+    if (!Array.isArray(comps)) throw new Error('réponse /competences invalide');
+    setCompetences(comps);
+    return comps;
+  }
 
   useEffect(() => {
-    apiGet(`/chapitres?arc=${arc}`).then(setChapitres).catch(() => setChapitres([]));
-    apiGet(`/quetes?type=${arc}`).then(setQuetes).catch(() => setQuetes([]));
-    apiGet(`/competences?arc=${arc}`).then(async (list) => {
-      setCompetences(list || []);
-      const map = {};
-      await Promise.all((list || []).slice(0, 40).map(async (c) => {
-        try {
-          const detail = await apiGet(`/competences/${c.id}`);
-          map[c.id] = detail.preuves || [];
-        } catch {
-          map[c.id] = [];
+    let cancelled = false;
+    setChargement(true);
+    setErreur('');
+    setChapitres([]);
+    setQuetes([]);
+    setCompetences([]);
+    setExpandedId(null);
+
+    (async () => {
+      try {
+        const [chaps, qs, comps] = await Promise.all([
+          apiGet(`/chapitres?arc=${arc}`),
+          apiGet(`/quetes?type=${arc}`),
+          apiGet(`/competences?arc=${arc}`),
+        ]);
+        if (cancelled) return;
+        if (!Array.isArray(comps)) throw new Error('réponse /competences invalide');
+        setChapitres(Array.isArray(chaps) ? chaps : []);
+        setQuetes(Array.isArray(qs) ? qs : []);
+        setCompetences(comps);
+
+        // Catalogue pour lier preuves repo/track (best-effort)
+        const [projs, instrus] = await Promise.all([
+          apiGet('/projets').catch(() => []),
+          apiGet('/instrumentaux').catch(() => []),
+        ]);
+        if (!cancelled) {
+          setProjets(Array.isArray(projs) ? projs : []);
+          setInstrumentaux(Array.isArray(instrus) ? instrus : []);
         }
-      }));
-      setPreuvesMap(map);
-    }).catch(() => setCompetences([]));
+      } catch (err) {
+        if (!cancelled) {
+          setErreur(err.message || 'échec chargement arc');
+          setChapitres([]);
+          setQuetes([]);
+          setCompetences([]);
+        }
+      } finally {
+        if (!cancelled) setChargement(false);
+      }
+    })();
+
+    return () => { cancelled = true; };
   }, [arc]);
+
+  const byId = useMemo(() => {
+    const map = {};
+    for (const c of competences) map[c.id] = c;
+    return map;
+  }, [competences]);
+
+  const prouveeIds = useMemo(() => {
+    const set = new Set();
+    for (const c of competences) {
+      if ((c.preuves || []).length > 0 || c.prouvee) set.add(c.id);
+    }
+    return set;
+  }, [competences]);
+
+  function isUnlocked(c) {
+    const prereqs = c.prerequis || [];
+    if (!prereqs.length) return true;
+    return prereqs.every((id) => prouveeIds.has(id));
+  }
+
+  function isProuvee(c) {
+    return (c.preuves || []).length > 0 || !!c.prouvee;
+  }
+
+  const sortedCompetences = useMemo(() => {
+    return [...competences].sort((a, b) => {
+      const [wa, ca] = roadmapOrder(a.source_roadmap);
+      const [wb, cb] = roadmapOrder(b.source_roadmap);
+      if (wa !== wb) return wa - wb;
+      if (ca !== cb) return ca - cb;
+      return String(a.titre).localeCompare(String(b.titre));
+    });
+  }, [competences]);
 
   const parChapitre = useMemo(() => {
     const map = {};
@@ -52,30 +144,42 @@ export default function ArcDetail() {
 
   const faites = quetes.filter((q) => q.statut === 'fait').length;
   const sansObjectif = quetes.filter((q) => q.statut !== 'fait' && !q.ere_objectif_id).length;
+  const prouveesCount = competences.filter(isProuvee).length;
 
-  const parNiveau = useMemo(() => {
-    const g = { initiation: [], pratique: [], maitrise: [], autre: [] };
-    for (const c of competences) {
-      const k = g[c.niveau_requis] ? c.niveau_requis : 'autre';
-      g[k].push(c);
+  function toggleExpand(c) {
+    if (expandedId === c.id) {
+      setExpandedId(null);
+      return;
     }
-    return g;
-  }, [competences]);
+    setExpandedId(c.id);
+    setPreuveForm(emptyPreuveForm(c.id));
+    setMsg('');
+  }
 
   async function ajouterPreuve(e) {
     e.preventDefault();
     setMsg('');
+    setPreuveBusy(true);
     try {
-      await apiPost(`/competences/${preuveForm.competence_id}/preuves`, {
-        type: preuveForm.type,
-        url: preuveForm.url || null,
-      });
-      const detail = await apiGet(`/competences/${preuveForm.competence_id}`);
-      setPreuvesMap((m) => ({ ...m, [preuveForm.competence_id]: detail.preuves || [] }));
-      setPreuveForm({ ...preuveForm, url: '' });
-      setMsg('Preuve enregistrée');
+      const payload = { type: preuveForm.type };
+      if (preuveForm.type === 'cert_externe') {
+        if (!preuveForm.url?.trim()) throw new Error('URL requise pour une cert externe');
+        payload.url = preuveForm.url.trim();
+      } else {
+        if (!preuveForm.reference_id) {
+          throw new Error(preuveForm.type === 'repo' ? 'Choisis un projet (repo)' : 'Choisis un instrumental (track)');
+        }
+        payload.reference_id = preuveForm.reference_id;
+        if (preuveForm.url?.trim()) payload.url = preuveForm.url.trim();
+      }
+      await apiPost(`/competences/${preuveForm.competence_id}/preuves`, payload);
+      await loadCompetences();
+      setPreuveForm(emptyPreuveForm(preuveForm.competence_id));
+      setMsg('Preuve enregistrée — compétence prouvée');
     } catch (err) {
       setMsg(err.message);
+    } finally {
+      setPreuveBusy(false);
     }
   }
 
@@ -89,8 +193,17 @@ export default function ArcDetail() {
       <OsHeader
         kicker={`OS · ARC · ${String(arc || '').toUpperCase()}`}
         title={String(arc || 'ARC').toUpperCase()}
-        meta={`${faites}/${quetes.length} quêtes · ${competences.length} compétences`}
+        meta={chargement
+          ? 'chargement…'
+          : `${faites}/${quetes.length} quêtes · ${prouveesCount}/${competences.length} compétences prouvées`}
       />
+
+      {chargement && (
+        <p className="compteur" style={{ marginBottom: 12 }}>› chargement API (/competences?arc=…)…</p>
+      )}
+      {erreur && (
+        <p className="annotation-manuscrite" style={{ marginBottom: 12 }}>API — {erreur}</p>
+      )}
 
       {sansObjectif > 0 && (
         <p className="annotation-manuscrite" style={{ marginBottom: 12 }}>
@@ -101,77 +214,241 @@ export default function ArcDetail() {
       <section className="os-panel chrome-edge blueprint-grid" style={{ marginBottom: 24, maxWidth: 720 }}>
         <div className="os-panel__bar">
           <span>ARBRE DE COMPÉTENCES</span>
-          <span className="compteur-dot">ROADMAP</span>
+          <span className="compteur-dot">{chargement ? '…' : 'API'}</span>
         </div>
         <div className="os-panel__body">
-          {!competences.length && (
-            <p className="compteur">Aucune compétence seedée pour cet arc</p>
+          {!chargement && !erreur && (
+            <p className="compteur" style={{ marginBottom: 12 }}>
+              Clique une ligne · acquise seulement avec ≥1 preuve · × = prérequis non prouvés
+            </p>
           )}
-          {['initiation', 'pratique', 'maitrise', 'autre'].map((niv) => (
-            parNiveau[niv]?.length ? (
-              <div key={niv} style={{ marginBottom: 16 }}>
-                <p className="compteur" style={{ marginBottom: 6 }}>{niv.toUpperCase()}</p>
-                <ul className="os-list">
-                  {parNiveau[niv].map((c) => {
-                    const preuves = preuvesMap[c.id] || [];
-                    const url = extractFirstUrl(c.description);
-                    return (
-                      <li key={c.id} style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 4 }}>
-                        <span>
-                          <span style={{ color: preuves.length ? 'var(--jaune)' : 'var(--text-muted)' }}>
-                            {preuves.length ? '●' : '○'}
-                          </span>
-                          {' '}{c.titre}
-                          {c.source_roadmap && (
-                            <span className="compteur" style={{ marginLeft: 8 }}>{c.source_roadmap}</span>
-                          )}
-                        </span>
+          {!chargement && !erreur && !sortedCompetences.length && (
+            <p className="compteur">Aucune compétence en base pour cet arc (table competences)</p>
+          )}
+          <ul className="os-list">
+            {sortedCompetences.map((c, idx) => {
+              const preuves = c.preuves || [];
+              const prouvee = isProuvee(c);
+              const unlocked = isUnlocked(c);
+              const open = expandedId === c.id;
+              const url = extractFirstUrl(c.description);
+              const prereqList = (c.prerequis || []).map((id) => byId[id]).filter(Boolean);
+              const prev = idx > 0 ? sortedCompetences[idx - 1] : null;
+              const connected = prev && (c.prerequis || []).includes(prev.id);
+
+              return (
+                <li
+                  key={c.id}
+                  style={{
+                    flexDirection: 'column',
+                    alignItems: 'stretch',
+                    gap: 0,
+                    opacity: unlocked ? 1 : 0.72,
+                    paddingLeft: connected ? 14 : 0,
+                    borderLeft: connected ? '2px solid rgba(255,255,255,0.12)' : undefined,
+                    marginLeft: connected ? 6 : 0,
+                  }}
+                >
+                  <button
+                    type="button"
+                    onClick={() => toggleExpand(c)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      gap: 10,
+                      width: '100%',
+                      textAlign: 'left',
+                      background: 'transparent',
+                      border: 'none',
+                      padding: '4px 0',
+                      cursor: 'pointer',
+                      color: 'inherit',
+                      font: 'inherit',
+                    }}
+                    aria-expanded={open}
+                  >
+                    <span
+                      style={{
+                        flexShrink: 0,
+                        marginTop: 1,
+                        color: !unlocked ? 'var(--text-muted)' : prouvee ? 'var(--jaune)' : 'var(--text-muted)',
+                      }}
+                      aria-hidden
+                    >
+                      {!unlocked ? '×' : prouvee ? '●' : '○'}
+                    </span>
+                    <span style={{ flex: 1, minWidth: 0 }}>
+                      <span style={{ color: prouvee ? 'var(--jaune)' : 'var(--text)' }}>
+                        {c.titre}
+                      </span>
+                      <span className="compteur" style={{ display: 'block', marginTop: 2 }}>
+                        {prouvee ? 'prouvée' : 'listée'}
+                        {!unlocked && ' · verrouillée'}
+                        {c.niveau_requis && ` · ${c.niveau_requis}`}
+                        {c.source_roadmap && ` · ${c.source_roadmap}`}
+                      </span>
+                    </span>
+                    <span className="compteur" style={{ flexShrink: 0 }}>
+                      {open ? '▴' : '▾'}
+                    </span>
+                  </button>
+
+                  {open && (
+                    <div
+                      style={{
+                        marginTop: 8,
+                        marginBottom: 4,
+                        padding: '12px 12px 10px',
+                        background: 'rgba(255,255,255,0.03)',
+                        border: '1px solid rgba(255,255,255,0.08)',
+                        display: 'grid',
+                        gap: 10,
+                      }}
+                    >
+                      {c.description && (
+                        <p style={{
+                          margin: 0,
+                          fontFamily: 'var(--font-body)',
+                          fontSize: '0.85rem',
+                          lineHeight: 1.45,
+                          color: 'var(--text)',
+                          whiteSpace: 'pre-wrap',
+                        }}
+                        >
+                          {c.description}
+                        </p>
+                      )}
+
+                      <div className="compteur" style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                        {c.source_roadmap && <span>source: {c.source_roadmap}</span>}
                         {url && (
-                          <a href={url} target="_blank" rel="noreferrer" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                            ressource roadmap
+                          <a href={url} target="_blank" rel="noreferrer" style={{ color: 'var(--jaune)' }}>
+                            ressource roadmap ↗
                           </a>
                         )}
-                        {preuves.length > 0 && (
-                          <span className="compteur">{preuves.length} preuve(s)</span>
-                        )}
-                      </li>
-                    );
-                  })}
-                </ul>
-              </div>
-            ) : null
-          ))}
+                      </div>
 
-          {competences.length > 0 && (
-            <form onSubmit={ajouterPreuve} style={{ display: 'grid', gap: 8, marginTop: 12 }}>
-              <p className="compteur">AJOUTER UNE PREUVE</p>
-              <select
-                required
-                value={preuveForm.competence_id}
-                onChange={(e) => setPreuveForm({ ...preuveForm, competence_id: e.target.value })}
-              >
-                <option value="">Compétence…</option>
-                {competences.map((c) => (
-                  <option key={c.id} value={c.id}>{c.titre}</option>
-                ))}
-              </select>
-              <select
-                value={preuveForm.type}
-                onChange={(e) => setPreuveForm({ ...preuveForm, type: e.target.value })}
-              >
-                <option value="cert_externe">Cert externe (URL)</option>
-                <option value="repo">Repo (UUID projet)</option>
-                <option value="track">Track (UUID instru)</option>
-              </select>
-              <input
-                placeholder="URL preuve"
-                value={preuveForm.url}
-                onChange={(e) => setPreuveForm({ ...preuveForm, url: e.target.value })}
-              />
-              <button type="submit" className="btn-ghost">Enregistrer preuve</button>
-              {msg && <p className="compteur">{msg}</p>}
-            </form>
-          )}
+                      <div>
+                        <p className="compteur" style={{ marginBottom: 4 }}>PRÉREQUIS</p>
+                        {!prereqList.length ? (
+                          <p className="compteur" style={{ opacity: 0.7 }}>Aucun — point d&apos;entrée</p>
+                        ) : (
+                          <ul style={{ margin: 0, paddingLeft: 16, fontFamily: 'var(--font-body)', fontSize: '0.85rem' }}>
+                            {prereqList.map((p) => {
+                              const ok = prouveeIds.has(p.id);
+                              return (
+                                <li key={p.id} style={{ marginBottom: 4 }}>
+                                  <button
+                                    type="button"
+                                    className="btn-ghost"
+                                    style={{ padding: '2px 8px', fontSize: '0.75rem' }}
+                                    onClick={() => {
+                                      setExpandedId(p.id);
+                                      setPreuveForm(emptyPreuveForm(p.id));
+                                    }}
+                                  >
+                                    {ok ? '●' : '○'} {p.titre}
+                                  </button>
+                                  <span className="compteur" style={{ marginLeft: 6 }}>
+                                    {ok ? 'prouvée' : 'manquante'}
+                                  </span>
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        )}
+                      </div>
+
+                      <div>
+                        <p className="compteur" style={{ marginBottom: 4 }}>
+                          PREUVES ({preuves.length}) — obligatoire pour « prouvée »
+                        </p>
+                        {!preuves.length ? (
+                          <p className="compteur" style={{ opacity: 0.7 }}>Aucune preuve — statut listée</p>
+                        ) : (
+                          <ul style={{ margin: 0, paddingLeft: 16, fontFamily: 'var(--font-body)', fontSize: '0.85rem' }}>
+                            {preuves.map((pr) => (
+                              <li key={pr.id} style={{ marginBottom: 4 }}>
+                                <span className="compteur">{pr.type}</span>
+                                {' '}
+                                {pr.url ? (
+                                  <a href={pr.url} target="_blank" rel="noreferrer" style={{ color: 'var(--jaune)' }}>
+                                    {pr.url}
+                                  </a>
+                                ) : (
+                                  <span>{pr.reference_id?.slice(0, 8)}…</span>
+                                )}
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+
+                      <form onSubmit={ajouterPreuve} style={{ display: 'grid', gap: 8 }}>
+                        <p className="compteur">AJOUTER UNE PREUVE</p>
+                        <select
+                          value={preuveForm.type}
+                          onChange={(e) => setPreuveForm({
+                            ...preuveForm,
+                            type: e.target.value,
+                            reference_id: '',
+                            url: '',
+                          })}
+                        >
+                          <option value="cert_externe">Cert externe (URL)</option>
+                          {arc !== 'beatmaker' && <option value="repo">Repo (projet_dev)</option>}
+                          {arc !== 'dev' && <option value="track">Track (instrumental)</option>}
+                        </select>
+
+                        {preuveForm.type === 'cert_externe' && (
+                          <input
+                            required
+                            type="url"
+                            placeholder="https://…"
+                            value={preuveForm.url}
+                            onChange={(e) => setPreuveForm({ ...preuveForm, url: e.target.value })}
+                          />
+                        )}
+
+                        {preuveForm.type === 'repo' && (
+                          <select
+                            required
+                            value={preuveForm.reference_id}
+                            onChange={(e) => setPreuveForm({ ...preuveForm, reference_id: e.target.value })}
+                          >
+                            <option value="">Projet…</option>
+                            {projets.map((p) => (
+                              <option key={p.id} value={p.id}>{p.titre || p.id}</option>
+                            ))}
+                          </select>
+                        )}
+
+                        {preuveForm.type === 'track' && (
+                          <select
+                            required
+                            value={preuveForm.reference_id}
+                            onChange={(e) => setPreuveForm({ ...preuveForm, reference_id: e.target.value })}
+                          >
+                            <option value="">Instrumental…</option>
+                            {instrumentaux.map((t) => (
+                              <option key={t.id} value={t.id}>{t.titre || t.id}</option>
+                            ))}
+                          </select>
+                        )}
+
+                        <button type="submit" className="btn-ghost" disabled={preuveBusy}>
+                          {preuveBusy ? 'Enregistrement…' : 'Enregistrer preuve'}
+                        </button>
+                        {msg && preuveForm.competence_id === c.id && (
+                          <p className="compteur">{msg}</p>
+                        )}
+                      </form>
+                    </div>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
         </div>
       </section>
 
@@ -218,7 +495,7 @@ export default function ArcDetail() {
             </div>
           </section>
         ))}
-        {!parChapitre.length && (
+        {!parChapitre.length && !chargement && (
           <div className="empty-wall" style={{ display: 'grid', placeItems: 'center', textAlign: 'center' }}>
             <p className="compteur">CHAPITRES</p>
             <h2 style={{ margin: '12px 0' }}>Pas encore de chapitre</h2>

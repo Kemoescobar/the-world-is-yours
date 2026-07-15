@@ -139,3 +139,32 @@ Objectifs: Analyser tous les sons vendus / placés : qu''est-ce qui a marché et
 Skills: Analytics, Community, Scale, Legacy
 Projet: 🏆 Bilan complet des 6 mois : stats de ventes, placements obtenus, sons produits, audience. Roadmap Year 2 rédigée.
 Ressources: Music Producer Year in Review — What to Analyze <https://www.youtube.com/watch?v=d6JPhFJUPm8>; Building a Music Producer Community — ConvertKit Guide <https://convertkit.com/resources/blog/musician-email-list>; Going From Bedroom Producer to Industry — Manny Music <https://www.youtube.com/watch?v=MsOuI5wLpgg>; Claude : "Analyse mon parcours de 6 mois et aide-moi à planifier l''année 2" <https://claude.ai>', '{}', 'maitrise', 'Beatmaker-P80-SS21-24', now());
+
+-- Chaîne de prérequis depuis l'ordre roadmap (S1 → S2 → … ; C1 → C2 dans la même semaine)
+with ranked as (
+  select
+    id,
+    arc_id,
+    coalesce(
+      (regexp_match(source_roadmap, 'LearnByDoing-S([0-9]+)'))[1]::int,
+      (regexp_match(source_roadmap, 'SS([0-9]+)'))[1]::int,
+      0
+    ) as week_num,
+    coalesce((regexp_match(source_roadmap, '-C([0-9]+)$'))[1]::int, 0) as course_num
+  from public.competences
+  where source_roadmap is not null
+),
+with_prev as (
+  select
+    id,
+    lag(id) over (
+      partition by arc_id
+      order by week_num, course_num, id
+    ) as prev_id
+  from ranked
+)
+update public.competences c
+set prerequis = array[w.prev_id]
+from with_prev w
+where c.id = w.id
+  and w.prev_id is not null;

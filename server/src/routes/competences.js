@@ -8,11 +8,24 @@ const router = express.Router();
 router.use(requireAuth);
 
 router.get('/', async (req, res) => {
-  let query = supabase.from('competences').select('*').order('source_roadmap', { ascending: true });
+  let query = supabase
+    .from('competences')
+    .select('*, competences_preuves(id, type, reference_id, url, date_validation)')
+    .order('source_roadmap', { ascending: true });
   if (req.query.arc) query = query.eq('arc_id', req.query.arc);
   const { data, error } = await query;
   if (error) return res.status(500).json({ error: error.message });
-  res.json(data);
+  // Normaliser : preuves + statut dérivé (prouvée = ≥1 preuve)
+  const normalized = (data || []).map((c) => {
+    const preuves = c.competences_preuves || [];
+    const { competences_preuves: _embed, ...rest } = c;
+    return {
+      ...rest,
+      preuves,
+      prouvee: preuves.length > 0,
+    };
+  });
+  res.json(normalized);
 });
 
 router.get('/:id', async (req, res) => {
@@ -23,7 +36,8 @@ router.get('/:id', async (req, res) => {
     .select('*')
     .eq('competence_id', req.params.id)
     .order('date_validation', { ascending: false });
-  res.json({ ...data, preuves: preuves.data || [] });
+  const list = preuves.data || [];
+  res.json({ ...data, preuves: list, prouvee: list.length > 0 });
 });
 
 router.get('/:id/preuves', async (req, res) => {
