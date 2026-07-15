@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Roadmap Beatmaker Legend</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0805;
+    --bg2: #110e08;
+    --bg3: #1a1510;
+    --border: rgba(255,180,60,0.08);
+    --border2: rgba(255,180,60,0.18);
+    --text: #f0e8d8;
+    --muted: #8a7560;
+    --accent: #ff9d00;
+    --accent2: #ff4f4f;
+    --accent3: #ffe066;
+    --accent4: #ff6b6b;
+    --accent5: #c084fc;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* HEADER */
+  .header {
+    padding: 3rem 2rem 2rem;
+    text-align: center;
+    border-bottom: 0.5px solid var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+  .header::before {
+    content: '';
+    position: absolute;
+    top: -60px; left: 50%; transform: translateX(-50%);
+    width: 700px; height: 350px;
+    background: radial-gradient(ellipse, rgba(255,157,0,0.12) 0%, rgba(255,79,79,0.06) 40%, transparent 70%);
+    pointer-events: none;
+  }
+  .header-tag {
+    display: inline-block;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    border: 0.5px solid var(--accent);
+    padding: 3px 10px;
+    border-radius: 20px;
+    margin-bottom: 1rem;
+    letter-spacing: 0.08em;
+  }
+  .header h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(2rem, 5vw, 3.2rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    margin-bottom: 0.75rem;
+  }
+  .header h1 span { color: var(--accent); }
+  .header p {
+    color: var(--muted);
+    font-size: 14px;
+    max-width: 500px;
+    margin: 0 auto 1.5rem;
+  }
+  .waveform {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 3px;
+    margin-bottom: 1.5rem;
+    height: 24px;
+  }
+  .waveform-bar {
+    width: 3px;
+    border-radius: 2px;
+    background: var(--accent);
+    opacity: 0.5;
+    animation: wave 1.2s ease-in-out infinite;
+  }
+  @keyframes wave {
+    0%, 100% { transform: scaleY(1); }
+    50% { transform: scaleY(2.5); }
+  }
+
+  /* STATS BAR */
+  .stats-bar {
+    display: flex; gap: 0;
+    justify-content: center; flex-wrap: wrap;
+  }
+  .stat {
+    padding: 0.5rem 1.5rem;
+    border-right: 0.5px solid var(--border);
+    text-align: center;
+  }
+  .stat:last-child { border-right: none; }
+  .stat-n {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.4rem; font-weight: 700;
+    color: var(--accent);
+  }
+  .stat-l { font-size: 11px; color: var(--muted); }
+
+  /* PROGRESS */
+  .progress-wrap {
+    padding: 1.25rem 2rem;
+    border-bottom: 0.5px solid var(--border);
+    background: var(--bg2);
+    position: sticky; top: 0; z-index: 100;
+  }
+  .progress-row { display: flex; align-items: center; gap: 1rem; }
+  .progress-track {
+    flex: 1; height: 4px;
+    background: var(--bg3); border-radius: 10px; overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius: 10px;
+    transition: width 0.4s ease;
+    width: 0%;
+  }
+  .progress-text {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px; color: var(--muted); white-space: nowrap;
+  }
+  .xp-badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px; color: var(--accent3);
+    border: 0.5px solid var(--accent3);
+    padding: 2px 8px; border-radius: 20px;
+  }
+
+  /* LAYOUT */
+  .container { display: flex; min-height: calc(100vh - 180px); }
+
+  /* SIDEBAR */
+  .sidebar {
+    width: 220px; flex-shrink: 0;
+    border-right: 0.5px solid var(--border);
+    padding: 1.5rem 0;
+    position: sticky; top: 60px;
+    height: calc(100vh - 60px);
+    overflow-y: auto;
+    background: var(--bg2);
+  }
+  .sidebar-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px; color: var(--muted);
+    letter-spacing: 0.1em;
+    padding: 0 1.25rem; margin-bottom: 0.75rem;
+    text-transform: uppercase;
+  }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 0.6rem 1.25rem; cursor: pointer;
+    transition: all 0.15s;
+    border-left: 2px solid transparent;
+    font-size: 13px; color: var(--muted);
+  }
+  .nav-item:hover { background: var(--bg3); color: var(--text); }
+  .nav-item.active { border-left-color: var(--accent); color: var(--text); background: rgba(255,157,0,0.07); }
+  .nav-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--border2); flex-shrink: 0;
+    transition: background 0.2s;
+  }
+  .nav-item.active .nav-dot { background: var(--accent); }
+  .nav-item.done .nav-dot { background: var(--accent3); }
+  .nav-weeks {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px; color: var(--muted); margin-left: auto;
+  }
+
+  /* MAIN */
+  .main { flex: 1; padding: 2rem; overflow-y: auto; }
+
+  /* PHASE */
+  .phase { display: none; }
+  .phase.active { display: block; animation: fadeIn 0.3s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  .phase-header {
+    display: flex; align-items: flex-start; gap: 1.25rem;
+    margin-bottom: 2rem; padding-bottom: 1.5rem;
+    border-bottom: 0.5px solid var(--border);
+  }
+  .phase-icon {
+    width: 48px; height: 48px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; flex-shrink: 0;
+  }
+  .phase-meta { flex: 1; }
+  .phase-num {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px; color: var(--muted); margin-bottom: 4px;
+  }
+  .phase-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.4rem; font-weight: 700;
+    line-height: 1.2; margin-bottom: 6px;
+  }
+  .phase-desc { color: var(--muted); font-size: 13px; max-width: 520px; }
+  .phase-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+  .tag {
+    font-size: 11px; padding: 3px 10px; border-radius: 20px;
+    font-family: 'DM Mono', monospace;
+  }
+
+  /* WEEKS GRID */
+  .weeks-grid { display: flex; flex-direction: column; gap: 1rem; }
+
+  .week-card {
+    background: var(--bg2);
+    border: 0.5px solid var(--border);
+    border-radius: 12px; overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .week-card:hover { border-color: var(--border2); }
+  .week-card.completed { border-color: rgba(255,224,102,0.25); }
+
+  .week-header {
+    display: flex; align-items: center; gap: 12px;
+    padding: 1rem 1.25rem; cursor: pointer; user-select: none;
+  }
+  .week-check {
+    width: 20px; height: 20px; border-radius: 6px;
+    border: 1.5px solid var(--border2);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; cursor: pointer;
+    transition: all 0.2s; font-size: 12px;
+  }
+  .week-check.done { background: rgba(255,224,102,0.15); border-color: var(--accent3); color: var(--accent3); }
+  .week-title { font-family: 'Syne', sans-serif; font-weight: 600; font-size: 15px; flex: 1; }
+  .week-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px; color: var(--muted); white-space: nowrap;
+  }
+  .week-toggle { color: var(--muted); font-size: 16px; transition: transform 0.2s; }
+  .week-card.open .week-toggle { transform: rotate(180deg); }
+
+  .week-body {
+    display: none; padding: 0 1.25rem 1.25rem;
+    border-top: 0.5px solid var(--border);
+  }
+  .week-card.open .week-body { display: block; }
+
+  .goal-list {
+    margin: 1rem 0; display: flex; flex-direction: column; gap: 6px;
+  }
+  .goal {
+    display: flex; align-items: flex-start; gap: 8px;
+    font-size: 13px; color: var(--muted);
+  }
+  .goal::before { content: '→'; color: var(--accent); flex-shrink: 0; margin-top: 1px; }
+
+  /* RESOURCES */
+  .res-section { margin-top: 1rem; }
+  .res-section-title {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px; color: var(--muted);
+    letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 8px;
+  }
+  .res-grid { display: flex; flex-direction: column; gap: 6px; }
+  .res-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 12px; background: var(--bg3);
+    border-radius: 8px; border: 0.5px solid var(--border);
+    text-decoration: none; color: var(--text);
+    transition: all 0.15s; font-size: 13px;
+  }
+  .res-item:hover { border-color: var(--border2); background: rgba(255,255,255,0.03); }
+  .res-type {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px; padding: 2px 7px;
+    border-radius: 4px; flex-shrink: 0; font-weight: 500;
+  }
+  .type-video { background: rgba(255,79,79,0.12); color: #ff6b6b; }
+  .type-doc { background: rgba(192,132,252,0.12); color: #c084fc; }
+  .type-cours { background: rgba(255,157,0,0.12); color: #ff9d00; }
+  .type-track { background: rgba(255,224,102,0.12); color: #ffe066; }
+  .type-plugin { background: rgba(255,157,0,0.08); color: #ffb347; }
+  .type-llm { background: rgba(111,255,176,0.10); color: #6fffb0; }
+  .res-name { flex: 1; }
+  .res-link { color: var(--muted); font-size: 12px; }
+
+  .project-box {
+    margin-top: 1rem; padding: 1rem;
+    background: rgba(255,157,0,0.05);
+    border: 0.5px solid rgba(255,157,0,0.2);
+    border-radius: 10px;
+  }
+  .project-box-title {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px; color: var(--accent);
+    margin-bottom: 6px; letter-spacing: 0.06em;
+  }
+  .project-box p { font-size: 13px; color: var(--muted); }
+
+  .skills-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 0.75rem; }
+  .skill-pill {
+    font-size: 11px; padding: 3px 9px;
+    border-radius: 20px; border: 0.5px solid var(--border2);
+    color: var(--muted); font-family: 'DM Mono', monospace;
+  }
+
+  .nav-footer {
+    display: flex; gap: 10px; margin-top: 2rem;
+    padding-top: 1.5rem; border-top: 0.5px solid var(--border);
+  }
+  .btn {
+    padding: 8px 18px; border-radius: 8px;
+    border: 0.5px solid var(--border2);
+    background: transparent; color: var(--text);
+    cursor: pointer; font-family: 'DM Sans', sans-serif;
+    font-size: 13px; transition: all 0.15s;
+  }
+  .btn:hover { background: var(--bg3); }
+  .btn-primary {
+    background: var(--accent); border-color: var(--accent); color: #0a0805;
+    font-weight: 600;
+  }
+  .btn-primary:hover { background: #e08a00; }
+  .btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  @media(max-width: 700px) {
+    .sidebar { display: none; }
+    .main { padding: 1.25rem; }
+    .phase-header { flex-direction: column; gap: 0.75rem; }
+    .header { padding: 2rem 1rem 1.5rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-tag">BEATMAKER INTERMÉDIAIRE → LÉGENDE</div>
+  <h1>Ta roadmap <span>Beatmaker</span><br>de confirmé à légendaire</h1>
+  <div class="waveform" id="waveform"></div>
+  <p>6 mois intensifs · FL Studio · Trap, R&B, Dancehall · depuis Madagascar — vers le monde entier.</p>
+  <div class="stats-bar">
+    <div class="stat"><div class="stat-n">5</div><div class="stat-l">Phases</div></div>
+    <div class="stat"><div class="stat-n">24</div><div class="stat-l">Semaines</div></div>
+    <div class="stat"><div class="stat-n">24</div><div class="stat-l">Projets</div></div>
+    <div class="stat"><div class="stat-n">70+</div><div class="stat-l">Ressources</div></div>
+  </div>
+</div>
+
+<div class="progress-wrap">
+  <div class="progress-row">
+    <span class="progress-text" id="prog-txt">0 / 24 semaines</span>
+    <div class="progress-track"><div class="progress-fill" id="prog-fill"></div></div>
+    <span class="xp-badge" id="xp-txt">0 XP</span>
+  </div>
+</div>
+
+<div class="container">
+  <div class="sidebar">
+    <div class="sidebar-label">Phases</div>
+    <div id="sidebar-nav"></div>
+  </div>
+  <div class="main" id="main-content"></div>
+</div>
+
+<script>
+// Waveform animation
+const wf = document.getElementById('waveform');
+const heights = [8,14,20,28,16,24,10,18,26,12,22,30,16,20,10,24,18,14,28,12];
+heights.forEach((h, i) => {
+  const bar = document.createElement('div');
+  bar.className = 'waveform-bar';
+  bar.style.height = h + 'px';
+  bar.style.animationDelay = (i * 0.07) + 's';
+  wf.appendChild(bar);
+});
+
+const phases = [
+  {
+    id: 0,
+    icon: '🎹',
+    iconBg: 'rgba(255,157,0,0.12)',
+    color: '#ff9d00',
+    title: 'Arrangement & Structure',
+    subtitle: 'Développer tes idées · Pas de drop plat',
+    desc: 'Tu sais commencer un banger. Maintenant on apprend à le finir. Cette phase cible ton point faible principal : enrichir une idée de départ pour que l\'auditeur reste accroché du début à la fin.',
+    tags: ['Arrangement', 'Tension', 'Drop', 'Variation'],
+    tagColor: 'rgba(255,157,0,0.12)',
+    tagTextColor: '#ff9d00',
+    weeks: [
+      {
+        title: 'Anatomie d\'un hit — déconstruire pour comprendre',
+        label: 'S1',
+        goals: [
+          'Déconstruire 5 sons référence (Trap, R&B, Dancehall) dans FL Studio',
+          'Identifier chaque section : intro, verse, pre-hook, hook, bridge, outro',
+          'Repérer les techniques de tension/release utilisées',
+          'Cartographier l\'énergie d\'un son sur une timeline (haut/bas/pivot)'
+        ],
+        resources: [
+          { type: 'video', name: 'How to Arrange a Beat Like a Pro — Busy Works Beats', url: 'https://www.youtube.com/watch?v=9mR2wFaE9Oo' },
+          { type: 'video', name: 'Song Structure For Beatmakers — Curtiss King TV', url: 'https://www.youtube.com/watch?v=GE4oijS5zZ8' },
+          { type: 'cours', name: 'FL Studio Arrangement View — Guide complet', url: 'https://www.image-line.com/fl-studio-learning/fl-studio-online-manual/html/arranger.htm' },
+          { type: 'track', name: 'Référence : "Knife Talk" de Drake — analyse structure', url: 'https://www.youtube.com/watch?v=HxbFAP-YMBo' },
+        ],
+        project: 'Importer 3 sons référence dans FL Studio et annoter chaque section dans l\'Arrangement View. Exporter un screenshot commenté.',
+        skills: ['Arrangement View', 'Song Structure', 'Référencement', 'Analyse sonore']
+      },
+      {
+        title: 'Les 7 techniques d\'enrichissement de mélodie',
+        label: 'S2',
+        goals: [
+          'Technique 1 : Call & Response — mélodie qui "répond" à elle-même',
+          'Technique 2 : Variation rythmique — même notes, timing différent',
+          'Technique 3 : Octave jump — monter ou descendre d\'une octave pour intensité',
+          'Technique 4 : Contre-mélodie — 2e ligne mélodique qui complète la 1ère',
+          'Technique 5 : Fill de transition — 2-4 notes avant le changement de section',
+          'Technique 6 : Silence stratégique — le vide comme élément musical',
+          'Technique 7 : Modulation de vélocité pour l\'expression'
+        ],
+        resources: [
+          { type: 'video', name: 'How To Make Your Melodies More Interesting — ADSR Sounds', url: 'https://www.youtube.com/watch?v=XcSrqtAA3_Y' },
+          { type: 'video', name: 'Counter Melody Tutorial FL Studio — Underbelly', url: 'https://www.youtube.com/watch?v=9E1Y3nEMqY4' },
+          { type: 'cours', name: 'Melodic Development — Coursera Berklee', url: 'https://www.coursera.org/learn/music-production' },
+          { type: 'track', name: 'Écoute : "Essence" de Wizkid — contre-mélodie parfaite', url: 'https://www.youtube.com/watch?v=YNJUMbFZuqA' },
+        ],
+        project: 'Prendre une de tes mélodies existantes et appliquer 4 techniques différentes. Exporter 4 versions et comparer.',
+        skills: ['Call & Response', 'Counter Melody', 'Velocity', 'Fills']
+      },
+      {
+        title: 'Progression harmonique & changements de section',
+        label: 'S3',
+        goals: [
+          'Maîtriser les progressions classiques : i–VI–III–VII, ii–V–I, 1–4–5',
+          'Changer la progression entre verse et hook pour créer une surprise émotionnelle',
+          'Utiliser les modes (dorien, phrygien) pour la couleur exotique Afro/Dancehall',
+          'Créer un pré-hook qui monte en tension avant l\'explosion du drop'
+        ],
+        resources: [
+          { type: 'video', name: 'Chord Progressions for Trap & R&B — Manny Music', url: 'https://www.youtube.com/watch?v=6IfGBpuNIlA' },
+          { type: 'cours', name: 'Hook Theory — théorie musicale interactive', url: 'https://www.hooktheory.com/theorytab' },
+          { type: 'video', name: 'Phrygian Mode for Caribbean/Afro beats — explanation', url: 'https://www.youtube.com/watch?v=dDqVZe9EAHU' },
+          { type: 'llm', name: 'Claude : "Génère 5 progressions d\'accords en mode dorien pour un beat afro"', url: 'https://claude.ai' },
+        ],
+        project: 'Créer un beat complet (2 min min.) avec au moins 2 progressions différentes entre verse et hook.',
+        skills: ['Progressions', 'Modes', 'Harmonie', 'Pre-hook']
+      },
+      {
+        title: 'Dynamique & énergie sur toute la durée',
+        label: 'S4',
+        goals: [
+          'Appliquer le principe "high point" : chaque son doit avoir un climax identifiable',
+          'Techniques de build-up : filter sweep, riser, mute progressif des éléments',
+          'Le breakdown : enlever des éléments pour créer de l\'espace et de l\'anticipation',
+          'Automatisation de paramètres pour une prod vivante (volume, reverb send, pan)'
+        ],
+        resources: [
+          { type: 'video', name: 'How to Build Energy in Your Beats — Underbelly', url: 'https://www.youtube.com/watch?v=eZ1U3N8pJLQ' },
+          { type: 'video', name: 'FL Studio Automation Tutorial — Busy Works Beats', url: 'https://www.youtube.com/watch?v=JQpfPpXUkuQ' },
+          { type: 'video', name: 'Build-up & Breakdown techniques — In The Mix', url: 'https://www.youtube.com/watch?v=Mj0KH3ZBVZQ' },
+          { type: 'track', name: 'Référence : "What\'s Luv" — architecture sonore parfaite', url: 'https://www.youtube.com/watch?v=kBPiWa0yWzQ' },
+        ],
+        project: 'Terminer un beat complet de 2min30 avec intro / build / drop / breakdown / final drop. Automatiser au moins 4 paramètres.',
+        skills: ['Automation', 'Build-up', 'Breakdown', 'Dynamique']
+      }
+    ]
+  },
+  {
+    id: 1,
+    icon: '🥁',
+    iconBg: 'rgba(255,79,79,0.12)',
+    color: '#ff4f4f',
+    title: 'Drums & Groove Avancés',
+    subtitle: 'Pocket · Humanisation · Fills · Swing',
+    desc: 'Un bon drum pattern, c\'est la colonne vertébrale d\'un son qui fait bouger. On va au-delà des patterns basiques pour créer des grooves qui ont une identité propre — Trap, R&B, Dancehall.',
+    tags: ['Drum Design', 'Groove', 'Swing', 'Humanisation'],
+    tagColor: 'rgba(255,79,79,0.12)',
+    tagTextColor: '#ff6b6b',
+    weeks: [
+      {
+        title: 'Pattern & pocket — faire groover le kick et la snare',
+        label: 'S5',
+        goals: [
+          'Comprendre le concept de "pocket" — jouer légèrement avant ou après le temps',
+          'Humaniser les velocities dans le Step Sequencer de FL Studio',
+          'Créer des variations de snare (ghost notes, rolls, snare flam)',
+          'Comparer et analyser des drum patterns de Murda Beatz, Southside, Rvssian'
+        ],
+        resources: [
+          { type: 'video', name: 'How to Make Your Drums Groove — Zen Music Group', url: 'https://www.youtube.com/watch?v=fZOt0mXN5bY' },
+          { type: 'video', name: 'Ghost Notes & Humanization FL Studio — Busy Works Beats', url: 'https://www.youtube.com/watch?v=bHfQE8LQbBg' },
+          { type: 'cours', name: 'Trap Drum Programming — Produce Like The Pros', url: 'https://www.youtube.com/watch?v=1gBUhHUf30k' },
+          { type: 'track', name: 'Déconstruction : drums de "SICKO MODE" — Travis Scott', url: 'https://www.youtube.com/watch?v=y_mcHWxp4iY' },
+        ],
+        project: 'Créer 3 drum patterns différents (Trap, R&B laid back, Dancehall) avec humanisation des velocities. Tous en 8 bars minimum.',
+        skills: ['Step Sequencer', 'Velocity', 'Ghost Notes', 'Pocket']
+      },
+      {
+        title: 'Drum Design — créer tes propres 808s et snares',
+        label: 'S6',
+        goals: [
+          'Comprendre la synthèse d\'un 808 : pitch slide, decay, saturation dans FL Studio',
+          'Designer une snare signature à partir de zéro avec des samples layerisés',
+          'Tuner tes 808s en fonction de la tonalité de la mélodie',
+          'Créer un hi-hat pattern afro/dancehall avec le swing et le "chuga chuga"'
+        ],
+        resources: [
+          { type: 'video', name: '808 Design From Scratch FL Studio — BrainDead Beats', url: 'https://www.youtube.com/watch?v=dR7O5Ah9mGc' },
+          { type: 'video', name: 'Tune Your 808 to Your Melody — In The Mix', url: 'https://www.youtube.com/watch?v=0UmFdQZK2k8' },
+          { type: 'video', name: 'Dancehall Hi-Hat Patterns FL Studio — Yaadcore', url: 'https://www.youtube.com/results?search_query=dancehall+drum+pattern+fl+studio' },
+          { type: 'plugin', name: 'Plugin : Gross Beat pour les effets rythmiques', url: 'https://www.image-line.com/plugins/Effects/Gross+Beat/' },
+        ],
+        project: 'Designer un 808 custom, une snare custom, et un pattern hi-hat afro. Créer un beat qui showcase les 3.',
+        skills: ['808 Design', 'Snare Layering', 'Tuning', 'Afro Hi-Hat']
+      },
+      {
+        title: 'Fills, transitions et drum storytelling',
+        label: 'S7',
+        goals: [
+          'Créer des drum fills qui annoncent un changement de section sans le casser',
+          'Technique : muter le kick sur le dernier temps avant le drop pour de l\'anticipation',
+          'Reverse cymbal + riser sur les transitions',
+          'Utiliser Gross Beat pour les stutter effects et les crash intentionnels'
+        ],
+        resources: [
+          { type: 'video', name: 'Drum Transitions & Fills FL Studio — Busy Works Beats', url: 'https://www.youtube.com/watch?v=ZfQFroV8_8o' },
+          { type: 'video', name: 'Gross Beat Stutter Effect Tutorial — BrainDead Beats', url: 'https://www.youtube.com/watch?v=lPdgF_oCyGI' },
+          { type: 'video', name: 'Reverse Cymbal Technique — Underbelly', url: 'https://www.youtube.com/watch?v=t8zWiMG5R8E' },
+          { type: 'llm', name: 'Claude : "Décris 5 types de drum fills pour transitions Trap vs R&B"', url: 'https://claude.ai' },
+        ],
+        project: 'Créer un beat de 2 min avec au minimum 4 transitions distinctes, chacune avec une technique différente.',
+        skills: ['Drum Fills', 'Stutter FX', 'Gross Beat', 'Transitions']
+      },
+      {
+        title: 'Live drums feel & groove hybride',
+        label: 'S8',
+        goals: [
+          'Combiner drums samples de kit live avec des drum machines pour un son hybride',
+          'Appliquer un swing global sur un pattern dans FL Studio',
+          'Comprendre la différence de groove : Trap US vs Afrobeats vs Dancehall',
+          'Créer ton propre groove "signature" reconnaissable'
+        ],
+        resources: [
+          { type: 'video', name: 'Swing & Groove Settings FL Studio — Busy Works Beats', url: 'https://www.youtube.com/watch?v=YIl6UD_OJXE' },
+          { type: 'video', name: 'Afrobeats Drum Pattern From Scratch — KassBeats', url: 'https://www.youtube.com/watch?v=yz_GhJSe8uk' },
+          { type: 'cours', name: 'Hybrid Drum Production — Splice Blog', url: 'https://splice.com/blog/hybrid-drums-production-tips/' },
+          { type: 'track', name: 'Écoute : Burna Boy — "On The Low" (groove afro reference)', url: 'https://www.youtube.com/watch?v=YE70-pWOECk' },
+        ],
+        project: 'Produire un beat hybride qui mixe éléments Trap et Afro/Dancehall avec ton groove signature. 2 min minimum.',
+        skills: ['Swing', 'Groove Hybride', 'Live Drums', 'Signature sonore']
+      }
+    ]
+  },
+  {
+    id: 2,
+    icon: '🎚️',
+    iconBg: 'rgba(192,132,252,0.12)',
+    color: '#c084fc',
+    title: 'Mixage Compétitif',
+    subtitle: 'Fréquences · Compression · Loudness · Référencement',
+    desc: 'Ton mix actuel n\'est pas compétitif — c\'est le point à corriger le plus urgent pour te vendre. Cette phase te donne les outils pour avoir un son professionnel qui se défend sur toutes les playlists.',
+    tags: ['EQ', 'Compression', 'Saturation', 'Mastering'],
+    tagColor: 'rgba(192,132,252,0.12)',
+    tagTextColor: '#c084fc',
+    weeks: [
+      {
+        title: 'Les bases du mix — espace, balance & fréquences',
+        label: 'S9',
+        goals: [
+          'Comprendre le spectre fréquentiel (sub, bass, mids, highs) et l\'espace de chaque élément',
+          'Faire une balance de gain propre avant tout EQ ou compression',
+          'High-pass filter sur tous les éléments qui ne font pas partie des basses',
+          'Sidechaining kick → 808 pour que les deux coexistent sans conflit'
+        ],
+        resources: [
+          { type: 'video', name: 'Mixing For Beginners — In The Mix (complet)', url: 'https://www.youtube.com/watch?v=MEJmMeOKPKg' },
+          { type: 'video', name: 'Frequency Spectrum Explained — FabFilter Tutorial', url: 'https://www.youtube.com/watch?v=pLu9FeaXvUE' },
+          { type: 'cours', name: 'FL Studio Mixer — guide officiel Image-Line', url: 'https://www.image-line.com/fl-studio-learning/fl-studio-online-manual/html/mixer.htm' },
+          { type: 'plugin', name: 'Plugin : Parametric EQ 2 (natif FL) — maîtriser ses courbes', url: 'https://www.image-line.com/plugins/Effects/Parametric+EQ+2/' },
+        ],
+        project: 'Reprendre ton dernier beat et nettoyer entièrement le mix : gain staging + HPF sur tous les éléments + sidechain.',
+        skills: ['Gain Staging', 'EQ', 'High-Pass Filter', 'Sidechain']
+      },
+      {
+        title: 'Compression — contrôle & punch',
+        label: 'S10',
+        goals: [
+          'Comprendre Attack, Release, Ratio, Threshold, Knee',
+          'Compression sur les drums pour le punch : attaque lente, release rapide',
+          'Parallel compression (New York style) : compresser fort sur une copie, blender',
+          'Multiband compression pour contrôler les basses sans affecter les aigus'
+        ],
+        resources: [
+          { type: 'video', name: 'Compression Explained Simply — Produce Like The Pros', url: 'https://www.youtube.com/watch?v=H6BPF2OMeCo' },
+          { type: 'video', name: 'Parallel Compression Tutorial FL Studio — BrainDead Beats', url: 'https://www.youtube.com/watch?v=6GtHrA2_Z5c' },
+          { type: 'video', name: 'How To Mix 808s Properly — In The Mix', url: 'https://www.youtube.com/watch?v=0bW8JrBJN9Y' },
+          { type: 'plugin', name: 'Plugin : Fruity Peak Controller pour sidechain dynamique', url: 'https://www.image-line.com/plugins/Effects/Peak+Controller/' },
+        ],
+        project: 'Appliquer compression + parallel compression sur les drums d\'un beat. Comparer avant/après. Documenter les réglages.',
+        skills: ['Compression', 'Parallel Comp', 'Attack/Release', 'Multiband']
+      },
+      {
+        title: 'Saturation, harmoniques & largeur stéréo',
+        label: 'S11',
+        goals: [
+          'Saturation pour ajouter de la chaleur sur la mélodie et les samples',
+          'Stéréo widening sans phase issues : Haas effect, mid-side EQ',
+          'Reverb & delay : espace et profondeur sans noyer le mix',
+          'Référencer ton mix avec des sons compétitifs sur Soundcloud / Apple Music'
+        ],
+        resources: [
+          { type: 'video', name: 'Saturation Tutorial — Everything You Need To Know', url: 'https://www.youtube.com/watch?v=YbgMlO-3G8A' },
+          { type: 'video', name: 'Stereo Width Without Phase Issues — In The Mix', url: 'https://www.youtube.com/watch?v=H3OuQkAsHkg' },
+          { type: 'video', name: 'Reverb & Delay for Beatmakers — Underbelly', url: 'https://www.youtube.com/watch?v=E5F1y5lzOzY' },
+          { type: 'plugin', name: 'Plugin : Fruity Stereo Shaper (natif) pour la largeur', url: 'https://www.image-line.com/plugins/Effects/Stereo+Shaper/' },
+        ],
+        project: 'Ajouter saturation + stéréo widening sur une mélodie et comparer avec un son de référence sur les mêmes enceintes.',
+        skills: ['Saturation', 'Stereo Width', 'Reverb', 'Référencement']
+      },
+      {
+        title: 'Loudness & mastering à l\'export',
+        label: 'S12',
+        goals: [
+          'Cibler -14 LUFS pour streaming, -9 LUFS pour placements agressifs',
+          'Limiter sans distorsion : True Peak limiter en fin de chaîne',
+          'Exporter en WAV 24bit / 44.1kHz proprement depuis FL Studio',
+          'A/B test de ton master avec 3 sons compétitifs du même genre'
+        ],
+        resources: [
+          { type: 'video', name: 'Mastering For Streaming — Youlean Loudness Tutorial', url: 'https://www.youtube.com/watch?v=j7P8zFxbOA4' },
+          { type: 'video', name: 'FL Studio Export Settings For Beats — 2024', url: 'https://www.youtube.com/watch?v=9LRGPhQeYaU' },
+          { type: 'plugin', name: 'Plugin : Maximus (natif FL) pour le mastering final', url: 'https://www.image-line.com/plugins/Effects/Maximus/' },
+          { type: 'cours', name: 'Loudness Standards — Spotify, Apple Music, YouTube', url: 'https://www.loudnesspenalty.com/' },
+        ],
+        project: 'Mastering complet d\'un de tes beats. Comparer le LUFS avant/après avec Youlean Loudness Meter. Export final propre.',
+        skills: ['LUFS', 'True Peak', 'Mastering', 'Export FL Studio']
+      }
+    ]
+  },
+  {
+    id: 3,
+    icon: '🌍',
+    iconBg: 'rgba(255,224,102,0.12)',
+    color: '#ffe066',
+    title: 'Identité & Style Signature',
+    subtitle: 'Sampling · Sound Design · Originalité · Niche',
+    desc: 'Tu as déjà une originalité — il faut l\'amplifier et la rendre reconnaissable. Cette phase construit ton identité sonore unique : un mélange de Trap, R&B, Dancehall, avec la couleur Madagascar.',
+    tags: ['Sound Design', 'Sampling', 'Identity', 'Niche'],
+    tagColor: 'rgba(255,224,102,0.12)',
+    tagTextColor: '#ffe066',
+    weeks: [
+      {
+        title: 'Sound design — créer des sons que personne d\'autre a',
+        label: 'S13',
+        goals: [
+          'Synthèse de base dans FL : comprendre wavetable, FM, subtractive dans Harmor/Sytrus',
+          'Créer 3 textures uniques : un pad atmosphérique, un lead gritty, un pluck perlé',
+          'Transformer un son naturel (voix, objet) en instrument via sampling créatif',
+          'Construire une banque de 20 sons custom — ta bibliothèque signature'
+        ],
+        resources: [
+          { type: 'video', name: 'Sound Design From Scratch FL Studio Sytrus — BrainDead', url: 'https://www.youtube.com/watch?v=w5PVWVQ0oaY' },
+          { type: 'video', name: 'Harmor Sound Design Tutorial — In The Mix', url: 'https://www.youtube.com/watch?v=bfJGFNkp-RU' },
+          { type: 'video', name: 'Creative Sampling — Turn Anything Into A Beat', url: 'https://www.youtube.com/watch?v=vPuvdDI1fCY' },
+          { type: 'llm', name: 'Claude : "Donne-moi 10 idées de sons à synthétiser pour un beat afro-trap unique"', url: 'https://claude.ai' },
+        ],
+        project: 'Designer 5 sons 100% originaux dans Sytrus ou Harmor. Les assembler dans un beat pour démontrer leur cohérence.',
+        skills: ['Sytrus', 'Harmor', 'Wavetable', 'Sound Design']
+      },
+      {
+        title: 'Sampling avancé & crate digging digital',
+        label: 'S14',
+        goals: [
+          'Crate digging intelligent : musiques traditionnelles malgaches, afro, jamaïcaines',
+          'Chop et pitch des samples dans le Edison Recorder de FL Studio',
+          'Timestretching créatif pour créer des textures inhabituelles',
+          'Comprendre le copyright et comment clearer ou éviter les problèmes légaux'
+        ],
+        resources: [
+          { type: 'video', name: 'How To Sample Properly FL Studio — Busy Works Beats', url: 'https://www.youtube.com/watch?v=Xb-TxuU_Bak' },
+          { type: 'video', name: 'Creative Sampling Techniques — Sampling Like Kanye', url: 'https://www.youtube.com/watch?v=6E-rkSN79_s' },
+          { type: 'cours', name: 'Sample Clearance 101 — Complete Guide for Producers', url: 'https://www.musicgateway.com/blog/how-to/sample-clearance' },
+          { type: 'track', name: 'Écoute : "Runaway" de Kanye — sampling sublimé', url: 'https://www.youtube.com/watch?v=Bm5iA4Zupek' },
+        ],
+        project: 'Créer un beat entièrement basé sur un sample d\'une musique malgache ou caribéenne transformée de façon méconnaissable.',
+        skills: ['Edison', 'Timestretch', 'Crate Digging', 'Copyright']
+      },
+      {
+        title: 'Définir ta niche et ton identité de marque',
+        label: 'S15',
+        goals: [
+          'Identifier les 3 mots qui définissent TON son (ex: dark / mélodique / caribbean)',
+          'Créer un "moodboard" sonore : 10 sons référence qui représentent ton identité',
+          'Nommer ta niche : Trap Malgache, Caribbean Dark Trap, Afro-R&B Océan Indien...',
+          'Écrire ta biographie de producteur en 100 mots pour les placements'
+        ],
+        resources: [
+          { type: 'video', name: 'How To Find Your Sound As A Producer — Curtiss King TV', url: 'https://www.youtube.com/watch?v=L5dN4FmvxeA' },
+          { type: 'video', name: 'Building a Producer Brand in 2024 — Busy Works Beats', url: 'https://www.youtube.com/watch?v=XY3H3Pu0X5A' },
+          { type: 'cours', name: 'Music Producer Branding — DIY Musician (CD Baby)', url: 'https://diymusician.cdbaby.com/music-promotion/music-producer-branding/' },
+          { type: 'llm', name: 'Claude : "Aide-moi à définir ma niche de beatmaker avec ces influences : [tes influences]"', url: 'https://claude.ai' },
+        ],
+        project: 'Créer un pack de 3 beats cohérents qui définissent ton identité sonore. Écrire les notes de présentation de chaque son.',
+        skills: ['Branding', 'Moodboard', 'Niche', 'Identity']
+      },
+      {
+        title: 'Construire ta banque de sons & templates',
+        label: 'S16',
+        goals: [
+          'Organiser ta bibliothèque de samples et presets dans FL Studio proprement',
+          'Créer un template de projet FL Studio avec ta chaîne de mix déjà paramétrée',
+          'Constituer une banque de loops, fills et transitions signature réutilisables',
+          'Versionner tes projets avec un système de naming clair'
+        ],
+        resources: [
+          { type: 'video', name: 'FL Studio Template Setup For Faster Workflow — Underbelly', url: 'https://www.youtube.com/watch?v=9Jf3OqPNKiM' },
+          { type: 'video', name: 'Organizing Your Sample Library — Produce Like The Pros', url: 'https://www.youtube.com/watch?v=G9_Q_paqBuA' },
+          { type: 'cours', name: 'FL Studio Project Organization — Image-Line Guide', url: 'https://www.image-line.com/fl-studio-learning/' },
+          { type: 'plugin', name: 'Plugin : Patcher dans FL pour créer des effets chaînés custom', url: 'https://www.image-line.com/plugins/Synths/Patcher/' },
+        ],
+        project: 'Créer et documenter ton template FL Studio complet. Produire un beat entier en moins de 2h en partant de ce template.',
+        skills: ['Templates', 'Workflow', 'Organisation', 'Productivité']
+      }
+    ]
+  },
+  {
+    id: 4,
+    icon: '💰',
+    iconBg: 'rgba(255,157,0,0.12)',
+    color: '#ff9d00',
+    title: 'Monétisation depuis Madagascar',
+    subtitle: 'Placements · Licences · Réseaux · Revenu récurrent',
+    desc: 'Vivre de ta passion depuis Mada, c\'est possible — mais ça demande une stratégie. Cette phase transforme tes sons en revenus réels et internationaux depuis chez toi.',
+    tags: ['BeatStars', 'Licensing', 'Networking', 'Content'],
+    tagColor: 'rgba(255,157,0,0.12)',
+    tagTextColor: '#ff9d00',
+    weeks: [
+      {
+        title: 'Plateforme de vente — setup BeatStars & Traktrain',
+        label: 'S17',
+        goals: [
+          'Créer et optimiser ta page BeatStars (bio, tags, artwork, prix)',
+          'Comprendre les types de licences : non-exclusive, exclusive, unlimited',
+          'Définir ta grille tarifaire adaptée au marché international',
+          'Uploader tes 10 meilleurs sons avec tags SEO optimisés pour la recherche'
+        ],
+        resources: [
+          { type: 'video', name: 'BeatStars Setup Guide 2024 — Busy Works Beats', url: 'https://www.youtube.com/watch?v=XNyeEV5yDyQ' },
+          { type: 'cours', name: 'Beat Licensing Explained — Music Lawyer Breakdown', url: 'https://www.youtube.com/watch?v=OkPkYH_7wV4' },
+          { type: 'video', name: 'How to Price Your Beats — Curtiss King', url: 'https://www.youtube.com/watch?v=FH5dCKb0Lio' },
+          { type: 'llm', name: 'Claude : "Aide-moi à écrire 5 descriptions SEO pour mes beats Afro-Trap"', url: 'https://claude.ai' },
+        ],
+        project: 'Page BeatStars complète avec 10 sons uploadés, tags SEO, prix définis, et bio de producteur.',
+        skills: ['BeatStars', 'SEO Tags', 'Licensing', 'Pricing']
+      },
+      {
+        title: 'Content & réseaux sociaux pour beatmakers',
+        label: 'S18',
+        goals: [
+          'Stratégie contenu : TikTok beats, YouTube playback, Instagram reels',
+          'Format "making-of" : filmer ton processus de prod en time-lapse',
+          'Créer une série de posts hebdomadaires : "Beat of the Week"',
+          'Engager la communauté francophone ET anglophone d\'artistes'
+        ],
+        resources: [
+          { type: 'video', name: 'TikTok Marketing For Beatmakers — Treyton Woodruff', url: 'https://www.youtube.com/watch?v=5VauvhTTuFE' },
+          { type: 'video', name: 'YouTube Channel For Beats — Setup & Growth Tips', url: 'https://www.youtube.com/watch?v=LzKMVMUhiN4' },
+          { type: 'cours', name: 'Social Media for Music Producers — SubmitHub Blog', url: 'https://blog.submithub.com/producers-social-media' },
+          { type: 'llm', name: 'Claude : "Crée un calendrier de contenu 30j pour un beatmaker avec ma niche"', url: 'https://claude.ai' },
+        ],
+        project: 'Publier 15 posts en 3 semaines (5 TikTok, 5 Instagram, 5 YouTube Shorts). Analyser les stats.',
+        skills: ['TikTok', 'YouTube Shorts', 'Content Calendar', 'Engagement']
+      },
+      {
+        title: 'Placements & networking avec les artistes',
+        label: 'S19',
+        goals: [
+          'Identifier 50 artistes francophone/créole/anglophone dans ta niche à démarcher',
+          'Envoyer des beats personnalisés : "J\'ai fait ce beat en pensant à toi"',
+          'Rejoindre les communautés Discord et Reddit de producers et d\'artistes',
+          'Collaborer avec des artistes malgaches et de l\'Océan Indien pour construire ton réseau local'
+        ],
+        resources: [
+          { type: 'video', name: 'How To Get Placements — Reach Out Strategy — Busy Works Beats', url: 'https://www.youtube.com/watch?v=kLbI5PJmS_c' },
+          { type: 'cours', name: 'Reddit r/WeAreTheMusicMakers — communauté de producteurs', url: 'https://www.reddit.com/r/WeAreTheMusicMakers/' },
+          { type: 'video', name: 'Instagram DM Strategy For Getting Placements — Treyton', url: 'https://www.youtube.com/watch?v=9mGPu_bHY7c' },
+          { type: 'llm', name: 'Claude : "Écris un message de démarchage professionnel pour envoyer un beat à un artiste"', url: 'https://claude.ai' },
+        ],
+        project: 'Envoyer 30 beats personnalisés à 30 artistes différents. Documenter les réponses et affiner le message.',
+        skills: ['Cold Outreach', 'Networking', 'Placement', 'Discord']
+      },
+      {
+        title: 'Revenu récurrent — packs, exclusivités & retainers',
+        label: 'S20',
+        goals: [
+          'Créer et vendre des sample packs avec ton son signature sur Splice ou BeatStars',
+          'Proposer des contrats de producteur exclusif à 1-2 artistes qui cartonnent',
+          'Monétiser tes YouTube beats avec Content ID via DistroKid ou TuneCore',
+          'Objectif : atteindre 200$/mois de revenus passifs dans les 6 mois'
+        ],
+        resources: [
+          { type: 'video', name: 'How to Sell Sample Packs on Splice — Full Guide', url: 'https://www.youtube.com/watch?v=HNKchR0xnW0' },
+          { type: 'cours', name: 'Content ID for Beats — DistroKid vs TuneCore', url: 'https://www.youtube.com/watch?v=yg1v2nEdFss' },
+          { type: 'video', name: 'Passive Income as a Music Producer 2024 — Curtiss King', url: 'https://www.youtube.com/watch?v=VcnrT9vRlLk' },
+          { type: 'llm', name: 'Claude : "Aide-moi à créer une offre de retainer pour un artiste : contenu, prix, conditions"', url: 'https://claude.ai' },
+        ],
+        project: '🎯 Lancer ton premier sample pack (20 sons minimum) sur une plateforme. Objectif : 5 premières ventes.',
+        skills: ['Sample Packs', 'Content ID', 'Passive Income', 'Retainer']
+      },
+      {
+        title: 'Consolidation — analyse, scale & legacy',
+        label: 'S21-24',
+        goals: [
+          'Analyser tous les sons vendus / placés : qu\'est-ce qui a marché et pourquoi ?',
+          'Doubler la production sur les formats et styles les plus performants',
+          'Créer une newsletter ou communauté privée pour tes clients et fans',
+          'Planifier l\'année 2 : collaboration internationale, prod trip, label propre ?',
+          'Documenter ta progression : tu es passé de "les gens se lassent" à référence'
+        ],
+        resources: [
+          { type: 'video', name: 'Music Producer Year in Review — What to Analyze', url: 'https://www.youtube.com/watch?v=d6JPhFJUPm8' },
+          { type: 'cours', name: 'Building a Music Producer Community — ConvertKit Guide', url: 'https://convertkit.com/resources/blog/musician-email-list' },
+          { type: 'video', name: 'Going From Bedroom Producer to Industry — Manny Music', url: 'https://www.youtube.com/watch?v=MsOuI5wLpgg' },
+          { type: 'llm', name: 'Claude : "Analyse mon parcours de 6 mois et aide-moi à planifier l\'année 2"', url: 'https://claude.ai' },
+        ],
+        project: '🏆 Bilan complet des 6 mois : stats de ventes, placements obtenus, sons produits, audience. Roadmap Year 2 rédigée.',
+        skills: ['Analytics', 'Community', 'Scale', 'Legacy']
+      }
+    ]
+  }
+];
+
+let checked = new Set();
+
+function xpTotal() { return checked.size * 50; }
+function weeksDone() { return checked.size; }
+function totalWeeks() {
+  let t = 0;
+  phases.forEach(p => t += p.weeks.length);
+  return t;
+}
+
+function updateProgress() {
+  const done = weeksDone();
+  const total = totalWeeks();
+  const pct = total ? (done / total * 100) : 0;
+  document.getElementById('prog-fill').style.width = pct + '%';
+  document.getElementById('prog-txt').textContent = done + ' / ' + total + ' semaines';
+  document.getElementById('xp-txt').textContent = xpTotal() + ' XP';
+}
+
+function renderSidebar() {
+  const nav = document.getElementById('sidebar-nav');
+  nav.innerHTML = phases.map((p, i) => {
+    const done = p.weeks.every((_, wi) => checked.has(i + '-' + wi));
+    const cls = (currentPhase === i ? 'active ' : '') + (done ? 'done' : '');
+    const firstW = p.weeks[0].label;
+    const lastW = p.weeks[p.weeks.length - 1].label;
+    return `<div class="nav-item ${cls}" onclick="switchPhase(${i})">
+      <div class="nav-dot"></div>
+      <span style="flex:1">${p.title}</span>
+      <span class="nav-weeks">${firstW}-${lastW}</span>
+    </div>`;
+  }).join('');
+}
+
+function typeLabel(t) {
+  const map = { video:'VIDEO', doc:'DOC', cours:'COURS', track:'TRACK', plugin:'PLUGIN', llm:'CLAUDE PROMPT' };
+  return map[t] || t.toUpperCase();
+}
+
+function renderPhase(idx) {
+  const p = phases[idx];
+  return `<div class="phase active" id="phase-${idx}">
+    <div class="phase-header">
+      <div class="phase-icon" style="background:${p.iconBg}">${p.icon}</div>
+      <div class="phase-meta">
+        <div class="phase-num">PHASE ${idx + 1} / ${phases.length}</div>
+        <div class="phase-title">${p.title}</div>
+        <div class="phase-desc">${p.desc}</div>
+        <div class="phase-tags">
+          ${p.tags.map(t => `<span class="tag" style="background:${p.tagColor};color:${p.tagTextColor}">${t}</span>`).join('')}
+        </div>
+      </div>
+    </div>
+    <div class="weeks-grid">
+      ${p.weeks.map((w, wi) => renderWeek(p, idx, w, wi)).join('')}
+    </div>
+    <div class="nav-footer">
+      <button class="btn" onclick="prevPhase()" ${idx === 0 ? 'disabled' : ''}>← Précédent</button>
+      <button class="btn btn-primary" onclick="nextPhase()" ${idx === phases.length - 1 ? 'disabled' : ''}>Phase suivante →</button>
+    </div>
+  </div>`;
+}
+
+function renderWeek(p, pi, w, wi) {
+  const id = pi + '-' + wi;
+  const isChecked = checked.has(id);
+  return `<div class="week-card ${isChecked ? 'completed' : ''}" id="week-card-${id}">
+    <div class="week-header" onclick="toggleWeek('${id}')">
+      <div class="week-check ${isChecked ? 'done' : ''}" id="chk-${id}" onclick="event.stopPropagation();toggleCheck('${id}')">
+        ${isChecked ? '✓' : ''}
+      </div>
+      <div class="week-title">${w.title}</div>
+      <span class="week-label">${w.label}</span>
+      <span class="week-toggle">▾</span>
+    </div>
+    <div class="week-body" id="body-${id}">
+      <div class="goal-list">
+        ${w.goals.map(g => `<div class="goal">${g}</div>`).join('')}
+      </div>
+      <div class="res-section">
+        <div class="res-section-title">Ressources</div>
+        <div class="res-grid">
+          ${w.resources.map(r => `
+            <a class="res-item" href="${r.url}" target="_blank">
+              <span class="res-type type-${r.type}">${typeLabel(r.type)}</span>
+              <span class="res-name">${r.name}</span>
+              <span class="res-link">↗</span>
+            </a>`).join('')}
+        </div>
+      </div>
+      <div class="project-box">
+        <div class="project-box-title">🎯 PROJET SEMAINE</div>
+        <p>${w.project}</p>
+      </div>
+      <div class="skills-row">
+        ${w.skills.map(s => `<span class="skill-pill">${s}</span>`).join('')}
+      </div>
+    </div>
+  </div>`;
+}
+
+function toggleWeek(id) {
+  const card = document.getElementById('week-card-' + id);
+  card.classList.toggle('open');
+}
+
+function toggleCheck(id) {
+  if (checked.has(id)) checked.delete(id);
+  else checked.add(id);
+  const el = document.getElementById('chk-' + id);
+  const card = document.getElementById('week-card-' + id);
+  if (checked.has(id)) {
+    el.classList.add('done'); el.textContent = '✓';
+    card.classList.add('completed');
+  } else {
+    el.classList.remove('done'); el.textContent = '';
+    card.classList.remove('completed');
+  }
+  updateProgress(); renderSidebar();
+}
+
+let currentPhase = 0;
+
+function switchPhase(idx) {
+  currentPhase = idx;
+  document.getElementById('main-content').innerHTML = renderPhase(idx);
+  renderSidebar();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function nextPhase() { if (currentPhase < phases.length - 1) switchPhase(currentPhase + 1); }
+function prevPhase() { if (currentPhase > 0) switchPhase(currentPhase - 1); }
+
+renderSidebar();
+switchPhase(0);
+updateProgress();
+</script>
+</body>
+</html>

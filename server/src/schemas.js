@@ -1,10 +1,12 @@
 import { z } from 'zod';
 
 export const TYPE_FAIT = z.enum([
-  'commit', 'certif', 'session_prod', 'sport', 'proposal', 'instru', 'projet', 'quete',
+  'commit', 'certif', 'session_prod', 'sport', 'proposal', 'instru', 'projet', 'quete', 'bilan_ere',
 ]);
 
 export const ARC_ID = z.enum(['dev', 'beatmaker', 'croisement']);
+
+const optionalUrl = z.union([z.string().url(), z.literal('')]).optional().nullable();
 
 export const createEntreeSchema = z.object({
   type_fait: TYPE_FAIT,
@@ -21,6 +23,8 @@ export const createQueteSchema = z.object({
   lien_note_obsidian: z.string().max(1000).optional().nullable(),
   date_prevue: z.string().optional().nullable(),
   date_faite: z.string().optional().nullable(),
+  ere_objectif_id: z.string().uuid().optional().nullable(),
+  competence_id: z.string().uuid().optional().nullable(),
 });
 
 export const patchQueteSchema = z.object({
@@ -30,9 +34,96 @@ export const patchQueteSchema = z.object({
   date_prevue: z.string().optional().nullable(),
   date_faite: z.string().optional().nullable(),
   type: z.enum(['dev', 'beatmaker', 'croisement', 'freelance', 'routine']).optional(),
+  ere_objectif_id: z.string().uuid().optional().nullable(),
+  competence_id: z.string().uuid().optional().nullable(),
 }).strict();
 
-const optionalUrl = z.union([z.string().url(), z.literal('')]).optional().nullable();
+const ereObjectifSchema = z.object({
+  id: z.string().uuid().optional(),
+  titre: z.string().trim().min(1).max(300),
+  description: z.string().max(2000).optional().nullable(),
+  metrique_cible: z.union([z.number(), z.string()]).optional().nullable(),
+  metrique_actuelle: z.union([z.number(), z.string()]).optional().nullable(),
+});
+
+export const createEreSchema = z.object({
+  nom: z.string().trim().min(1).max(300),
+  date_debut: z.string().min(4),
+  date_fin: z.string().min(4),
+  objectifs: z.array(ereObjectifSchema).optional(),
+  statut: z.enum(['active', 'cloturee']).optional(),
+});
+
+export const patchEreSchema = z.object({
+  nom: z.string().trim().min(1).max(300).optional(),
+  date_debut: z.string().min(4).optional(),
+  date_fin: z.string().min(4).optional(),
+  objectifs: z.array(ereObjectifSchema).optional(),
+  statut: z.enum(['active', 'cloturee']).optional(),
+}).strict();
+
+export const createApprentissageSchema = z.object({
+  arc_id: ARC_ID.optional().nullable(),
+  entree_id: z.string().uuid().optional().nullable(),
+  titre: z.string().trim().min(1).max(300),
+  contenu: z.string().trim().min(1).max(8000),
+  type: z.enum(['blocage_resolu', 'declic', 'principe']),
+  tags: z.array(z.string()).optional(),
+  publie: z.boolean().optional(),
+});
+
+export const patchApprentissageSchema = z.object({
+  titre: z.string().trim().min(1).max(300).optional(),
+  contenu: z.string().trim().min(1).max(8000).optional(),
+  type: z.enum(['blocage_resolu', 'declic', 'principe']).optional(),
+  tags: z.array(z.string()).optional(),
+  publie: z.boolean().optional(),
+  reutilise_count: z.number().int().optional(),
+}).strict();
+
+export const createCompetenceSchema = z.object({
+  arc_id: ARC_ID.optional().nullable(),
+  titre: z.string().trim().min(1).max(300),
+  description: z.string().max(8000).optional().nullable(),
+  prerequis: z.array(z.string().uuid()).optional(),
+  niveau_requis: z.enum(['initiation', 'pratique', 'maitrise']).optional().nullable(),
+  source_roadmap: z.string().max(200).optional().nullable(),
+});
+
+export const patchCompetenceSchema = createCompetenceSchema.partial().strict();
+
+export const createPreuveSchema = z.object({
+  type: z.enum(['repo', 'track', 'cert_externe']),
+  reference_id: z.string().uuid().optional().nullable(),
+  url: z.union([z.string().url(), z.literal('')]).optional().nullable(),
+});
+
+export const createRayonnementSchema = z.object({
+  type: z.enum(['article', 'repo_etoile', 'ecoute_milestone', 'prise_de_parole', 'contribution_open_source']),
+  titre: z.string().trim().min(1).max(300),
+  url: optionalUrl,
+  arc_id: ARC_ID.optional().nullable(),
+  metrique: z.number().int().optional().nullable(),
+  date_evenement: z.string().min(4),
+}).transform((v) => ({
+  ...v,
+  url: v.url || null,
+  arc_id: v.arc_id || null,
+}));
+
+export const createSuggestionSchema = z.object({
+  declencheur_type: z.enum([
+    'quete_bloquee', 'streak_casse', 'auto_eval_basse', 'correlation_insights', 'mot_friction_checkin',
+  ]),
+  declencheur_ref: z.string().uuid(),
+  competence_id: z.string().uuid().optional().nullable(),
+  ressource_titre: z.string().trim().min(1).max(300),
+  ressource_url: optionalUrl,
+});
+
+export const feedbackSuggestionSchema = z.object({
+  statut: z.enum(['utile', 'pas_utile']),
+});
 
 export const createInstrumentalSchema = z.object({
   titre: z.string().trim().min(1).max(300),

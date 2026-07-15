@@ -23,6 +23,8 @@ const Revue = lazy(() => import('./pages/Revue.jsx'));
 const Parametres = lazy(() => import('./pages/Parametres.jsx'));
 const MentionsLegales = lazy(() => import('./pages/MentionsLegales.jsx'));
 const Confidentialite = lazy(() => import('./pages/Confidentialite.jsx'));
+const Ere = lazy(() => import('./pages/Ere.jsx'));
+const Rayonnement = lazy(() => import('./pages/Rayonnement.jsx'));
 
 function Prive({ children }) {
   return (
@@ -82,6 +84,8 @@ export default function App() {
             <Route path="/drops" element={<Prive><Drops /></Prive>} />
             <Route path="/drops/:id" element={<Prive><DropDetail /></Prive>} />
             <Route path="/streaks" element={<Prive><Streaks /></Prive>} />
+            <Route path="/rayonnement" element={<Prive><Rayonnement /></Prive>} />
+            <Route path="/ere" element={<Prive><Ere /></Prive>} />
             <Route path="/insights" element={<Prive><Insights /></Prive>} />
             <Route path="/analytics" element={<Prive><Analytics /></Prive>} />
             <Route path="/freelance" element={<Prive><Freelance /></Prive>} />

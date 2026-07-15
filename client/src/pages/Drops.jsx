@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import OsHeader from '../components/OsHeader.jsx';
 import { apiGet } from '../lib/api.js';
 
-const DROP_TYPES = new Set(['certif', 'instru', 'projet', 'quete']);
+const DROP_TYPES = new Set(['certif', 'instru', 'projet', 'quete', 'bilan_ere']);
 
 export default function Drops() {
   const [items, setItems] = useState([]);

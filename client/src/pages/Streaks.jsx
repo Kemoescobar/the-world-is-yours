@@ -6,6 +6,7 @@ const PISTES = [
   { id: 'dev', label: 'Dev' },
   { id: 'miprod', label: 'Miprod' },
   { id: 'sport', label: 'Sport' },
+  { id: 'rayonnement', label: 'Rayonnement' },
 ];
 
 function joursBack(n = 84) {
@@ -37,6 +38,7 @@ export default function Streaks() {
       if (piste === 'dev') return e.arc_id === 'dev' || e.type_fait === 'commit' || e.type_fait === 'projet';
       if (piste === 'miprod') return e.arc_id === 'beatmaker' || e.type_fait === 'session_prod' || e.type_fait === 'instru';
       if (piste === 'sport') return e.type_fait === 'sport';
+      if (piste === 'rayonnement') return e.type_fait === 'bilan_ere';
       return false;
     }).length;
     return Math.min(4, count);

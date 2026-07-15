@@ -30,6 +30,22 @@ router.patch('/:id', validateBody(patchQueteSchema), async (req, res) => {
     return res.status(404).json({ error: 'quête introuvable' });
   }
 
+  // Compétence liée : ne passer en « fait » que s'il existe au moins une preuve
+  const competenceCible = req.body.competence_id ?? before.data.competence_id;
+  const veutValider = req.body.statut === 'fait' && before.data.statut !== 'fait';
+  if (veutValider && competenceCible) {
+    const { data: preuves } = await supabase
+      .from('competences_preuves')
+      .select('id')
+      .eq('competence_id', competenceCible)
+      .limit(1);
+    if (!preuves?.length) {
+      return res.status(400).json({
+        error: 'preuve requise : ajoute une preuve (repo/track/cert) avant de valider cette compétence',
+      });
+    }
+  }
+
   const { data, error } = await supabase
     .from('quetes')
     .update(req.body)

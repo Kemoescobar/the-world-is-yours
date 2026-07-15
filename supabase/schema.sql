@@ -163,3 +163,92 @@ create table config (
 insert into config (cle, valeur) values ('taux_usd_mga', '4500');
 
 create index idx_portefeuille_date on portefeuille_mouvements(date_mouvement);
+
+-- —— 5 modules (2026-07-15) — voir aussi migrations/20260715_cinq_modules.sql ——
+
+create table if not exists apprentissages (
+  id uuid primary key default gen_random_uuid(),
+  arc_id text references arcs(id),
+  entree_id uuid references entrees(id),
+  titre text not null,
+  contenu text not null,
+  type text not null check (type in ('blocage_resolu','declic','principe')),
+  tags text[] default '{}',
+  reutilise_count int default 0,
+  publie boolean default false,
+  cree_le timestamptz default now()
+);
+
+create table if not exists eres (
+  id uuid primary key default gen_random_uuid(),
+  nom text not null,
+  date_debut date not null,
+  date_fin date not null,
+  objectifs jsonb not null default '[]'::jsonb,
+  statut text not null default 'active' check (statut in ('active','cloturee')),
+  bilan_drop_id uuid references entrees(id),
+  cree_le timestamptz default now()
+);
+
+alter table chapitres add column if not exists ere_id uuid references eres(id);
+alter table quetes add column if not exists ere_objectif_id uuid;
+alter table quetes add column if not exists competence_id uuid;
+
+create table if not exists competences (
+  id uuid primary key default gen_random_uuid(),
+  arc_id text references arcs(id),
+  titre text not null,
+  description text,
+  prerequis uuid[] default '{}',
+  niveau_requis text check (niveau_requis in ('initiation','pratique','maitrise')),
+  source_roadmap text,
+  cree_le timestamptz default now()
+);
+
+create table if not exists competences_preuves (
+  id uuid primary key default gen_random_uuid(),
+  competence_id uuid not null references competences(id) on delete cascade,
+  type text not null check (type in ('repo','track','cert_externe')),
+  reference_id uuid,
+  url text,
+  date_validation timestamptz default now()
+);
+
+alter table quetes
+  drop constraint if exists quetes_competence_id_fkey;
+alter table quetes
+  add constraint quetes_competence_id_fkey
+  foreign key (competence_id) references competences(id);
+
+create table if not exists rayonnement_evenements (
+  id uuid primary key default gen_random_uuid(),
+  type text not null check (type in (
+    'article','repo_etoile','ecoute_milestone','prise_de_parole','contribution_open_source'
+  )),
+  titre text not null,
+  url text,
+  arc_id text references arcs(id),
+  metrique int,
+  date_evenement date not null,
+  cree_le timestamptz default now()
+);
+
+insert into streaks (id, jours_consecutifs, record)
+values ('rayonnement', 0, 0)
+on conflict (id) do nothing;
+
+create table if not exists suggestions_contremaitre (
+  id uuid primary key default gen_random_uuid(),
+  declencheur_type text not null check (declencheur_type in (
+    'quete_bloquee','streak_casse','auto_eval_basse','correlation_insights','mot_friction_checkin'
+  )),
+  declencheur_ref uuid not null,
+  competence_id uuid references competences(id),
+  ressource_titre text not null,
+  ressource_url text,
+  statut text not null default 'proposee'
+    check (statut in ('proposee','utile','pas_utile','ignoree_2x')),
+  date_proposition timestamptz default now(),
+  date_feedback timestamptz
+);
+

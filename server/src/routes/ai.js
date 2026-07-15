@@ -43,21 +43,43 @@ router.post('/revue', async (req, res) => {
   try {
     const ctx = await contexteSemaine();
     const faites = ctx.quetes.filter((q) => q.statut === 'fait');
+
+    const debut = new Date();
+    debut.setDate(debut.getDate() - 7);
+    const { data: apprentissages } = await supabase
+      .from('apprentissages')
+      .select('*')
+      .gte('cree_le', debut.toISOString())
+      .order('cree_le', { ascending: false });
+
+    const { data: suggestion } = await supabase
+      .from('suggestions_contremaitre')
+      .select('*')
+      .eq('statut', 'proposee')
+      .maybeSingle();
+
     const { text } = await askClaude(
       `Tu es le rédacteur des Chroniques TWIY (THE WORLD IS YOURS).
 Tone: direct, culturel, pas corporate. Français.
-Structure: titre de semaine + 6 points (cert/commit, Dev, Beatmaker, freelance proposals, LinkedIn/post, délais) + 1 leçon.
+Structure: titre de semaine + 6 points (cert/commit, Dev, Beatmaker, freelance proposals, LinkedIn/post, délais) + 1 leçon + section "ce que tu as appris" si apprentissages fournis.
 Mémoire coaching à respecter:\n${ctx.memoire}`,
       `Données 7 jours:\n${JSON.stringify({
         entrees: ctx.entrees.slice(0, 40),
         quetes_faites: faites.length,
         quetes_total: ctx.quetes.length,
         streaks: ctx.streaks,
+        apprentissages: apprentissages || [],
+        contremaitre: suggestion || null,
         proposals: (ctx.prospects || []).filter((p) => p.statut === 'proposal_envoye').length,
       }, null, 2)}\n\nRédige la revue dominicale.`,
-      1000,
+      1100,
     );
-    res.json({ ok: true, revue: text });
+    res.json({
+      ok: true,
+      revue: text,
+      apprentissages: apprentissages || [],
+      contremaitre: suggestion || null,
+    });
   } catch (err) {
     res.status(err.code === 'NO_KEY' ? 503 : 500).json({ error: err.message });
   }
@@ -88,11 +110,12 @@ router.post('/checkin', async (req, res) => {
   try {
     const { text } = await askClaude(
       `Tu transformes un check-in libre en faits Chroniques TWIY.
-Réponds UNIQUEMENT en JSON valide: {"entrees":[{"type_fait":"commit|session_prod|sport|proposal|instru|projet|certif|quete","detail":"...","arc_id":"dev|beatmaker|croisement|null"}],"lecon":"optionnel"}
+Réponds UNIQUEMENT en JSON valide: {"entrees":[{"type_fait":"commit|session_prod|sport|proposal|instru|projet|certif|quete","detail":"...","arc_id":"dev|beatmaker|croisement|null"}],"lecon":"optionnel","apprentissages_brouillon":[{"titre":"...","contenu":"...","type":"blocage_resolu|declic|principe","arc_id":"dev|beatmaker|croisement|null","tags":[]}]}
 Types autorisés stricts. arc_id null si sport/proposal générique.
+Si tu detects un blocage résolu ou un déclic, remplis apprentissages_brouillon (max 2) — JAMAIS auto-créés, brouillons seulement.
 Mémoire:\n${lireMemoire()}`,
       texte,
-      700,
+      900,
     );
 
     let parsed;
@@ -120,7 +143,12 @@ Mémoire:\n${lireMemoire()}`,
 
     if (parsed.lecon) appendLecon(parsed.lecon);
 
-    res.json({ ok: true, suggestion: parsed, creees });
+    // Brouillons apprentissages — jamais auto-insert
+    const brouillons = Array.isArray(parsed.apprentissages_brouillon)
+      ? parsed.apprentissages_brouillon.slice(0, 2)
+      : [];
+
+    res.json({ ok: true, suggestion: parsed, creees, apprentissages_brouillon: brouillons });
   } catch (err) {
     res.status(err.code === 'NO_KEY' ? 503 : 500).json({ error: err.message });
   }
@@ -222,6 +250,137 @@ router.post('/routines-jour', async (req, res) => {
     }
 
     res.json({ ok: true, jour, creees });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * Message du matin : routines + Contremaître (max 1 suggestion) + apprentissages récents.
+ * Auth JWT ou x-api-key (n8n cron).
+ */
+router.post('/message-matin', async (req, res) => {
+  try {
+    const ctx = await contexteSemaine();
+    const { data: activeSug } = await supabase
+      .from('suggestions_contremaitre')
+      .select('*')
+      .eq('statut', 'proposee')
+      .maybeSingle();
+
+    let suggestion = activeSug;
+    if (!suggestion) {
+      // Déclencher scan Contremaître (même règles : max 1, déclencheur réel)
+      const { data: quetes } = await supabase
+        .from('quetes')
+        .select('*')
+        .eq('statut', 'en_cours')
+        .order('cree_le', { ascending: true })
+        .limit(20);
+      const auj = new Date().toISOString().slice(0, 10);
+      const bloquee = (quetes || []).find((q) => q.date_prevue && q.date_prevue < auj);
+
+      if (bloquee) {
+        let competenceId = bloquee.competence_id;
+        let ressourceTitre = null;
+        let ressourceUrl = null;
+        if (competenceId) {
+          const { data: comp } = await supabase.from('competences').select('*').eq('id', competenceId).maybeSingle();
+          if (comp?.description) {
+            const urlM = comp.description.match(/<([^>\s]+)>/) || comp.description.match(/(https?:\/\/[^\s;]+)/);
+            const nameM = comp.description.match(/Ressources:\s*([^;<]+)/);
+            ressourceUrl = urlM ? urlM[1] : null;
+            ressourceTitre = nameM ? nameM[1].trim() : comp.titre;
+          }
+        }
+        if (!ressourceTitre) {
+          const { data: comps } = await supabase
+            .from('competences')
+            .select('*')
+            .not('source_roadmap', 'is', null)
+            .limit(30);
+          const withUrl = (comps || []).find((c) => /https?:\/\//.test(c.description || ''));
+          if (withUrl) {
+            competenceId = withUrl.id;
+            const urlM = withUrl.description.match(/<([^>\s]+)>/) || withUrl.description.match(/(https?:\/\/[^\s;]+)/);
+            const nameM = withUrl.description.match(/Ressources:\s*([^;<]+)/);
+            ressourceUrl = urlM ? urlM[1] : null;
+            ressourceTitre = nameM ? nameM[1].trim() : withUrl.titre;
+          }
+        }
+        if (ressourceTitre) {
+          const { data: created } = await supabase
+            .from('suggestions_contremaitre')
+            .insert({
+              declencheur_type: 'quete_bloquee',
+              declencheur_ref: bloquee.id,
+              competence_id: competenceId || null,
+              ressource_titre: ressourceTitre,
+              ressource_url: ressourceUrl,
+              statut: 'proposee',
+            })
+            .select()
+            .single();
+          suggestion = created || null;
+        }
+      }
+    }
+
+    const { data: apprentissages } = await supabase
+      .from('apprentissages')
+      .select('id, titre, type, arc_id')
+      .order('cree_le', { ascending: false })
+      .limit(3);
+
+    const { data: dispersion } = await supabase
+      .from('eres')
+      .select('id, nom')
+      .eq('statut', 'active')
+      .limit(1)
+      .maybeSingle();
+
+    let message = null;
+    if (anthropicConfigured()) {
+      try {
+        const { text } = await askClaude(
+          `Message du matin TWIY — Contremaître. Français, 4–6 lignes max, direct.
+Inclure : focus du jour, 1 rappel streak si pertinent, Contremaître s'il y a une suggestion (utile/pas utile plus tard).
+Pas de motivational fluff.
+Mémoire:\n${lireMemoire()}`,
+          JSON.stringify({
+            streaks: ctx.streaks,
+            suggestion,
+            apprentissages: apprentissages || [],
+            ere: dispersion,
+          }),
+          400,
+        );
+        message = text;
+      } catch {
+        message = null;
+      }
+    }
+
+    if (!message) {
+      const parts = ['Contremaître — matin.'];
+      if (suggestion) {
+        parts.push(`Suggestion : ${suggestion.ressource_titre}${suggestion.ressource_url ? ` → ${suggestion.ressource_url}` : ''}`);
+      } else {
+        parts.push('Aucune friction détectée — pas de suggestion.');
+      }
+      if ((apprentissages || []).length) {
+        parts.push(`Apprentissages récents : ${(apprentissages || []).map((a) => a.titre).join(' · ')}`);
+      }
+      message = parts.join('\n');
+    }
+
+    res.json({
+      ok: true,
+      message,
+      contremaitre: suggestion || null,
+      apprentissages: apprentissages || [],
+      ia: Boolean(anthropicConfigured() && message),
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

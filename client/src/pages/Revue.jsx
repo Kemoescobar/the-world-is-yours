@@ -6,6 +6,8 @@ export default function Revue() {
   const [entrees, setEntrees] = useState([]);
   const [quetes, setQuetes] = useState([]);
   const [streaks, setStreaks] = useState([]);
+  const [apprentissages, setApprentissages] = useState([]);
+  const [contremaitre, setContremaitre] = useState(null);
   const [revue, setRevue] = useState('');
   const [statut, setStatut] = useState('idle');
   const [erreur, setErreur] = useState('');
@@ -14,6 +16,10 @@ export default function Revue() {
     apiGet('/entrees').then(setEntrees).catch(() => setEntrees([]));
     apiGet('/quetes').then(setQuetes).catch(() => setQuetes([]));
     apiGet('/streaks').then(setStreaks).catch(() => setStreaks([]));
+    const debut = new Date();
+    debut.setDate(debut.getDate() - 7);
+    apiGet(`/apprentissages?depuis=${debut.toISOString()}`).then(setApprentissages).catch(() => setApprentissages([]));
+    apiGet('/contremaitre/active').then(setContremaitre).catch(() => setContremaitre(null));
   }, []);
 
   const semaine = useMemo(() => {
@@ -28,9 +34,10 @@ export default function Revue() {
         `Cette semaine : ${recentes.length} faits capturés.`,
         `Quêtes closes : ${faites.length}/${quetes.length}.`,
         `Streaks — ${streaks.map((s) => `${s.id}:${s.jours_consecutifs}j`).join(' · ') || 'n/a'}.`,
+        `Apprentissages : ${apprentissages.length}.`,
       ],
     };
-  }, [entrees, quetes, streaks]);
+  }, [entrees, quetes, streaks, apprentissages]);
 
   async function generer() {
     setStatut('gen');
@@ -38,10 +45,22 @@ export default function Revue() {
     try {
       const data = await apiPost('/ai/revue', {});
       setRevue(data.revue || '');
+      if (data.apprentissages) setApprentissages(data.apprentissages);
+      if (data.contremaitre !== undefined) setContremaitre(data.contremaitre);
       setStatut('ok');
     } catch (err) {
       setErreur(err.message);
       setStatut('idle');
+    }
+  }
+
+  async function feedback(statutFb) {
+    if (!contremaitre?.id) return;
+    try {
+      await apiPost(`/contremaitre/${contremaitre.id}/feedback`, { statut: statutFb });
+      setContremaitre(null);
+    } catch (err) {
+      setErreur(err.message);
     }
   }
 
@@ -50,7 +69,7 @@ export default function Revue() {
       <OsHeader
         kicker="OS · REVUE"
         title="REVUE"
-        meta="Hebdo · Claude (Phase 3)"
+        meta="Hebdo · apprentissages · Contremaître"
         actions={(
           <button type="button" className="btn-poster" onClick={generer} disabled={statut === 'gen'}>
             {statut === 'gen' ? 'Génération…' : '› Générer la revue IA'}
@@ -58,6 +77,27 @@ export default function Revue() {
         )}
       />
       {erreur && <p className="annotation-manuscrite" style={{ marginTop: -8, marginBottom: 16 }}>{erreur}</p>}
+
+      {contremaitre && (
+        <article className="os-panel chrome-edge" style={{ marginBottom: 16 }}>
+          <div className="os-panel__bar">
+            <span>CONTREMAÎTRE</span>
+            <span className="compteur-dot">{contremaitre.declencheur_type}</span>
+          </div>
+          <div className="os-panel__body">
+            <p style={{ marginBottom: 8 }}>{contremaitre.ressource_titre}</p>
+            {contremaitre.ressource_url && (
+              <a href={contremaitre.ressource_url} target="_blank" rel="noreferrer" className="compteur">
+                {contremaitre.ressource_url}
+              </a>
+            )}
+            <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+              <button type="button" className="btn-ghost" onClick={() => feedback('utile')}>Utile</button>
+              <button type="button" className="btn-ghost" onClick={() => feedback('pas_utile')}>Pas utile</button>
+            </div>
+          </div>
+        </article>
+      )}
 
       <article className="os-panel chrome-edge blueprint-grid">
         <div className="os-panel__bar">
@@ -70,6 +110,19 @@ export default function Revue() {
           ))}
         </div>
       </article>
+
+      <h2 style={{ marginTop: 'var(--space-4)', marginBottom: 8, fontSize: '1.1rem', textTransform: 'uppercase' }}>
+        Ce que tu as appris
+      </h2>
+      <ul className="os-list">
+        {apprentissages.map((a) => (
+          <li key={a.id}>
+            <span style={{ color: 'var(--jaune)' }}>›</span>
+            <span>{a.type} · {a.titre}</span>
+          </li>
+        ))}
+        {!apprentissages.length && <li>Aucun apprentissage cette semaine — check-in IA peut proposer des brouillons</li>}
+      </ul>
 
       <h2 style={{ marginTop: 'var(--space-4)', marginBottom: 8, fontSize: '1.1rem', textTransform: 'uppercase' }}>
         Faits récents

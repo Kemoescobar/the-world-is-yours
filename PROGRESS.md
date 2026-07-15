@@ -8,25 +8,18 @@
 
 ## Audit pre-launch — remediation ✅ (code + suivi)
 
-- Allowlist `OWNER_USER_ID` / `ALLOWED_USER_IDS` sur routes privées + export
-- Catalogues : JWT vérifié avant levée filtre showcase/shippé
-- Rate-limit webhooks + `/api/ai` + export ; cooldown login client
-- Mentions légales + confidentialité (`/mentions`, `/confidentialite`)
-- Fonts self-host (@fontsource), lazy routes, `prefers-reduced-motion`, `:focus-visible`
-- Migration RLS owner + indexes FK (`supabase/migrations/20260714_…`)
-- Sitemap / robots / OG en URLs absolues prod
-- Storage listing public retiré + grants `is_app_owner` (`20260715_…`)
-- Suivi : `docs/audit-followups.md` · auth : `docs/auth-hardening.md`
-- n8n local Docker (`n8n/docker-compose.yml`) + workflows importables CLI
+## 5 modules (Apprentissages · Ère · Compétences · Rayonnement · Contremaître) ✅ code+DB
 
-**Déjà fait côté toi** : `OWNER_USER_ID` Railway + insert `app_owners` + `.env` local.
+- Migration `20260715_cinq_modules` appliquée (Supabase `gunjokreeewcvlprgljg`) + streak `rayonnement`
+- Seed compétences : **29 Dev** (BigFis PDF) + **21 Beatmaker** (HTML) — S13/S15 BigFis = sprints sans cert → non inventés (`docs/roadmaps/`)
+- API : `/apprentissages`, `/eres`, `/competences`, `/rayonnement`, `/contremaitre` + `POST /ai/message-matin` + brouillons apprentissages au check-in
+- UI : `/ere`, `/rayonnement`, arbre compétences dans ArcDetail, Revue + bandeau Contremaître Chantier, Drops `bilan_ere`
+- n8n : workflow `message-matin.json` (à importer/activer)
 
-**Encore Dashboard Auth** : fermer signup public + activer HaveIBeenPwned (pas d’API MCP ; Management API possible avec un access token — voir `docs/audit-followups.md`).
-
-**Toi seulement (hors code)** : clearance samples / droits brand, contraste WCAG. **Pas** de `ANTHROPIC_API_KEY` tant que tu n’as qu’un abonnement Claude Pro (pas de clé Console).
+**Toi** : créer 1ère Ère dans `/ere` · Anthropic Console si drafts IA · désactiver signup Auth si encore ouvert · importer cron matin n8n
 
 ### Code
-- `POST/GET /api/ai/*` — revue, insights, check-in, titre chapitre, routines-jour
+- `POST/GET /api/ai/*` — revue, insights, check-in, titre chapitre, routines-jour, **message-matin**
 - Claude via fetch Anthropic (`server/src/lib/claude.js`)
 - Mémoire coaching `server/data/coaching-memory.md`
 - `POST /chapitres/:id/cloturer` avec titre IA
@@ -35,9 +28,9 @@
 ### À activer (toi)
 1. Anthropic Console → clé → Railway `ANTHROPIC_API_KEY` → Redeploy (sinon IA soft-off)
 2. Tester Revue / Insights / Check-in **après** la clé
-3. n8n : si premier lancement, créer le compte owner UI → activer les 4 workflows (import CLI déjà documenté)
+3. n8n : importer `message-matin.json` + activer (avec les 4 autres si pas encore)
 
-Doc : `docs/phase-3.md`
+Doc : `docs/phase-3.md` · roadmaps : `docs/roadmaps/README.md`
 
 ## Relancer local
 ```powershell

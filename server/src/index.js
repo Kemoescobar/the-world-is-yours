@@ -14,6 +14,11 @@ import webhooksRouter from './routes/webhooks.js';
 import portefeuilleRouter from './routes/portefeuille.js';
 import exportRouter from './routes/export.js';
 import aiRouter from './routes/ai.js';
+import apprentissagesRouter from './routes/apprentissages.js';
+import eresRouter from './routes/eres.js';
+import competencesRouter from './routes/competences.js';
+import rayonnementRouter from './routes/rayonnement.js';
+import contremaitreRouter from './routes/contremaitre.js';
 
 const app = express();
 
@@ -52,6 +57,11 @@ app.use('/api/portefeuille', portefeuilleRouter);
 app.use('/api', webhooksRouter);
 app.use('/api/export', exportRouter);
 app.use('/api/ai', aiRouter);
+app.use('/api/apprentissages', apprentissagesRouter);
+app.use('/api/eres', eresRouter);
+app.use('/api/competences', competencesRouter);
+app.use('/api/rayonnement', rayonnementRouter);
+app.use('/api/contremaitre', contremaitreRouter);
 
 app.get('/', (req, res) => {
   res.json({

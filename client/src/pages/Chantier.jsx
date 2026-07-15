@@ -5,6 +5,7 @@ import { fetchArcs } from '../store/slices/arcsSlice.js';
 import { fetchQuetes, validerQuete } from '../store/slices/questsSlice.js';
 import ArcCard from '../components/ArcCard.jsx';
 import OsHeader from '../components/OsHeader.jsx';
+import ContremaitreBanner from '../components/ContremaitreBanner.jsx';
 import { apiGet } from '../lib/api.js';
 
 const streakParArc = { dev: 'dev', beatmaker: 'miprod', croisement: null };
@@ -31,6 +32,7 @@ export default function Chantier() {
   const quetes = useSelector((s) => s.quetes.items);
   const [streaks, setStreaks] = useState([]);
   const [chapitres, setChapitres] = useState([]);
+  const [dispersion, setDispersion] = useState(null);
   const actuel = blocRoutineActuel();
 
   useEffect(() => {
@@ -38,6 +40,7 @@ export default function Chantier() {
     dispatch(fetchQuetes());
     apiGet('/streaks').then(setStreaks).catch(() => setStreaks([]));
     apiGet('/chapitres').then(setChapitres).catch(() => setChapitres([]));
+    apiGet('/eres/dispersion?jours=14').then(setDispersion).catch(() => setDispersion(null));
   }, [dispatch]);
 
   const aujourdhui = jourISO();
@@ -86,6 +89,15 @@ export default function Chantier() {
         title="CHANTIER"
         meta={`${titreGlobal.toUpperCase()} · ${aujourdhui}`}
       />
+
+      <ContremaitreBanner />
+
+      {dispersion?.dispersion && (
+        <p className="annotation-manuscrite" style={{ marginBottom: 12 }}>
+          Dispersion — {dispersion.sans_objectif?.length || 0} quête(s) hors objectif d’ère (14j).{' '}
+          <Link to="/ere" style={{ color: 'inherit' }}>Voir Ère</Link>
+        </p>
+      )}
 
       <div className="os-stat-rail" aria-label="Compteurs chantier">
         <div>

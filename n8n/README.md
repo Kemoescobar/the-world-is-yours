@@ -56,6 +56,7 @@ cd C:\twiy\n8n
 docker compose exec n8n n8n import:workflow --input=/workflows/sync-obsidian-supabase.json
 docker compose exec n8n n8n import:workflow --input=/workflows/alerte-streak-soir.json
 docker compose exec n8n n8n import:workflow --input=/workflows/revue-dominicale.json
+docker compose exec n8n n8n import:workflow --input=/workflows/message-matin.json
 docker compose exec n8n n8n import:workflow --input=/workflows/backup-hebdo.json
 ```
 
@@ -64,7 +65,7 @@ Les workflows importés restent **inactifs** par défaut. Activation CLI après 
 ```powershell
 docker compose exec n8n n8n list:workflow
 docker compose exec n8n n8n publish:workflow --id=twiy-alerte-streak-soir
-# ids : twiy-sync-obsidian-supabase | twiy-alerte-streak-soir | twiy-revue-dominicale | twiy-backup-hebdo
+# ids : twiy-sync-obsidian-supabase | twiy-alerte-streak-soir | twiy-revue-dominicale | twiy-message-matin | twiy-backup-hebdo
 ```
 
 Sinon : UI → ouvrir chaque workflow → toggle **Active**.
@@ -99,6 +100,7 @@ Le nœud « Notifier » d’`alerte-streak-soir.json` crée une entrée via `/ap
 | `sync-obsidian-supabase.json` | Toutes les heures | Frontmatter du vault (`02-Projets`) → table `quetes` |
 | `alerte-streak-soir.json` | Chaque soir 21h | Repère les streaks non alimentés aujourd'hui, notifie |
 | `revue-dominicale.json` | Dimanche 8h | `POST /ai/revue` (x-api-key) → écrit la revue dans Obsidian |
+| `message-matin.json` | Chaque jour 6h | `POST /ai/message-matin` — Contremaître (max 1) |
 | `backup-hebdo.json` | Lundi 4h | Exporte toutes les tables Supabase (`/api/export`) vers le vault |
 
 ## Workflows à assembler toi-même (même schéma)

@@ -7,9 +7,11 @@ const primaire = [
   { to: '/studio/projets', label: 'Projets' },
   { to: '/drops', label: 'Drops' },
   { to: '/streaks', label: 'Streaks' },
+  { to: '/rayonnement', label: 'Rayonnement' },
 ];
 
 const outils = [
+  { to: '/ere', label: 'Ère' },
   { to: '/freelance', label: 'Freelance' },
   { to: '/portefeuille', label: 'Portefeuille' },
   { to: '/insights', label: 'Insights' },
