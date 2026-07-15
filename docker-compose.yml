@@ -1,0 +1,94 @@
+# THE WORLD IS YOURS — local / prod-like stack
+# Usage (PowerShell, repo root):
+#   Copy-Item .env.example .env   # then fill secrets
+#   docker compose up --build
+# Optional n8n: docker compose --profile n8n up --build
+#
+# Supabase stays external (cloud). No Postgres service here.
+
+services:
+  api:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: twiy-api
+    restart: unless-stopped
+    ports:
+      - "${API_PORT:-4000}:4000"
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      PORT: "4000"
+      NODE_ENV: ${NODE_ENV:-production}
+      TZ: ${TZ:-Indian/Antananarivo}
+      # Must match the browser origin of `web` (default http://localhost:8080)
+      CLIENT_URL: ${CLIENT_URL:-http://localhost:8080}
+      SUPABASE_URL: ${SUPABASE_URL}
+      SUPABASE_SERVICE_KEY: ${SUPABASE_SERVICE_KEY}
+      OWNER_USER_ID: ${OWNER_USER_ID:-}
+      ALLOWED_USER_IDS: ${ALLOWED_USER_IDS:-}
+      WEBHOOK_API_KEY: ${WEBHOOK_API_KEY:-}
+      GITHUB_WEBHOOK_SECRET: ${GITHUB_WEBHOOK_SECRET:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      ANTHROPIC_MODEL: ${ANTHROPIC_MODEL:-}
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:4000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  web:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+      args:
+        # Browser calls host ports — not Docker DNS names
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:4000/api}
+        VITE_SUPABASE_URL: ${VITE_SUPABASE_URL}
+        VITE_SUPABASE_ANON_KEY: ${VITE_SUPABASE_ANON_KEY}
+    container_name: twiy-web
+    restart: unless-stopped
+    ports:
+      - "${WEB_PORT:-8080}:80"
+    depends_on:
+      api:
+        condition: service_healthy
+
+  # Optional automation — same image/settings as n8n/docker-compose.yml
+  # Reach API via Docker DNS: http://api:4000/api
+  n8n:
+    profiles: ["n8n"]
+    image: n8nio/n8n:latest
+    container_name: twiy-n8n
+    restart: unless-stopped
+    ports:
+      - "${N8N_PORT:-5678}:5678"
+    env_file:
+      - path: n8n/.env
+        required: false
+    environment:
+      N8N_HOST: localhost
+      N8N_PORT: "5678"
+      N8N_PROTOCOL: http
+      WEBHOOK_URL: http://localhost:5678/
+      GENERIC_TIMEZONE: ${GENERIC_TIMEZONE:-Indian/Antananarivo}
+      TZ: ${TZ:-Indian/Antananarivo}
+      N8N_SECURE_COOKIE: "false"
+      TWIY_API_URL: ${TWIY_API_URL:-http://api:4000/api}
+      # Prefer TWIY_WEBHOOK_KEY; otherwise reuse WEBHOOK_API_KEY from root .env
+      TWIY_WEBHOOK_KEY: ${TWIY_WEBHOOK_KEY:-}
+      OBSIDIAN_API_KEY: ${OBSIDIAN_API_KEY:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ./n8n:/workflows:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  n8n_data:

@@ -70,7 +70,8 @@ app.get('/health', async (req, res) => {
   });
 });
 
-const port = process.env.PORT || 4000;
-app.listen(port, () => {
-  console.log(`Server up on :${port} (TZ=${process.env.TZ || 'Indian/Antananarivo'})`);
+const port = Number(process.env.PORT) || 4000;
+// Bind all interfaces so Docker / reverse-proxies can reach the process
+app.listen(port, '0.0.0.0', () => {
+  console.log(`Server up on 0.0.0.0:${port} (TZ=${process.env.TZ || 'Indian/Antananarivo'})`);
 });

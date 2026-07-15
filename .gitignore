@@ -4,6 +4,7 @@ dist/
 client/.env
 server/.env
 n8n/.env
+# Root compose secrets (keep .env.example)
 
 *.log
 .DS_Store
