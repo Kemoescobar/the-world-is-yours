@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import OsHeader from '../components/OsHeader.jsx';
 import { apiGet, apiPost } from '../lib/api.js';
 
 export default function Revue() {
@@ -45,30 +46,42 @@ export default function Revue() {
   }
 
   return (
-    <div style={{ padding: 'var(--space-4)', maxWidth: 720 }}>
-      <h1>Revue</h1>
-      <p className="compteur" style={{ marginTop: 8 }}>Hebdo · Claude (Phase 3)</p>
+    <div className="os-page" style={{ maxWidth: 720 }}>
+      <OsHeader
+        kicker="OS · REVUE"
+        title="REVUE"
+        meta="Hebdo · Claude (Phase 3)"
+        actions={(
+          <button type="button" className="btn-poster" onClick={generer} disabled={statut === 'gen'}>
+            {statut === 'gen' ? 'Génération…' : '› Générer la revue IA'}
+          </button>
+        )}
+      />
+      {erreur && <p className="annotation-manuscrite" style={{ marginTop: -8, marginBottom: 16 }}>{erreur}</p>}
 
-      <div style={{ display: 'flex', gap: 10, marginTop: 'var(--space-3)', flexWrap: 'wrap' }}>
-        <button type="button" className="btn-poster" onClick={generer} disabled={statut === 'gen'}>
-          {statut === 'gen' ? 'Génération…' : '› Générer la revue IA'}
-        </button>
-      </div>
-      {erreur && <p className="annotation-manuscrite" style={{ marginTop: 12 }}>{erreur}</p>}
-
-      <article className="poster-panel blueprint-grid" style={{ padding: 'var(--space-4)', marginTop: 'var(--space-4)' }}>
-        {(revue ? revue.split('\n') : semaine.resumeLocal).map((l, i) => (
-          <p key={`${i}-${l.slice(0, 24)}`} style={{ marginBottom: 12, lineHeight: 1.55, whiteSpace: 'pre-wrap' }}>{l}</p>
-        ))}
+      <article className="os-panel chrome-edge blueprint-grid">
+        <div className="os-panel__bar">
+          <span>{revue ? 'REVUE IA' : 'RÉSUMÉ LOCAL'}</span>
+          <span className="compteur-dot">HEBDO</span>
+        </div>
+        <div className="os-panel__body">
+          {(revue ? revue.split('\n') : semaine.resumeLocal).map((l, i) => (
+            <p key={`${i}-${l.slice(0, 24)}`} style={{ marginBottom: 12, lineHeight: 1.55, whiteSpace: 'pre-wrap' }}>{l}</p>
+          ))}
+        </div>
       </article>
 
-      <h2 style={{ marginTop: 'var(--space-4)' }}>Faits récents</h2>
-      <ul style={{ listStyle: 'none', padding: 0 }}>
+      <h2 style={{ marginTop: 'var(--space-4)', marginBottom: 8, fontSize: '1.1rem', textTransform: 'uppercase' }}>
+        Faits récents
+      </h2>
+      <ul className="os-list">
         {semaine.recentes.slice(0, 12).map((e) => (
-          <li key={e.id} className="compteur" style={{ marginBottom: 8 }}>
-            {String(e.cree_le).slice(0, 10)} · {e.type_fait} · {e.detail}
+          <li key={e.id}>
+            <span style={{ color: 'var(--jaune)' }}>›</span>
+            <span>{String(e.cree_le).slice(0, 10)} · {e.type_fait} · {e.detail}</span>
           </li>
         ))}
+        {!semaine.recentes.length && <li>Aucun fait cette semaine</li>}
       </ul>
     </div>
   );

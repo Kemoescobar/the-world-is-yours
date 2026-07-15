@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { fetchArcs } from '../store/slices/arcsSlice.js';
 import { fetchQuetes, validerQuete } from '../store/slices/questsSlice.js';
 import ArcCard from '../components/ArcCard.jsx';
+import OsHeader from '../components/OsHeader.jsx';
 import { apiGet } from '../lib/api.js';
 
 const streakParArc = { dev: 'dev', beatmaker: 'miprod', croisement: null };
@@ -75,22 +76,31 @@ export default function Chantier() {
     return c0?.titre || 'Chapitre 0 — Amorçage';
   }, [chapitres]);
 
+  const faites = quetes.filter((q) => q.statut === 'fait').length;
+  const totalStreak = streaks.reduce((acc, s) => acc + (s.jours_consecutifs || 0), 0);
+
   return (
-    <div style={{ padding: 'var(--space-4)' }}>
-      <p
-        style={{
-          fontFamily: 'var(--font-display)',
-          fontWeight: 800,
-          fontSize: 'clamp(1.5rem, 4vw, 2.2rem)',
-          letterSpacing: '-0.03em',
-          marginBottom: 4,
-        }}
-      >
-        Chantier
-      </p>
-      <p className="compteur" style={{ marginBottom: 'var(--space-3)' }}>
-        {titreGlobal.toUpperCase()}
-      </p>
+    <div className="os-page">
+      <OsHeader
+        kicker="OS · CHANTIER"
+        title="CHANTIER"
+        meta={`${titreGlobal.toUpperCase()} · ${aujourdhui}`}
+      />
+
+      <div className="os-stat-rail" aria-label="Compteurs chantier">
+        <div>
+          <p className="compteur">ARCS</p>
+          <p className="os-stat-rail__n">{arcs.length || 0}</p>
+        </div>
+        <div>
+          <p className="compteur">QUÊTES</p>
+          <p className="os-stat-rail__n">{faites}/{quetes.length || 0}</p>
+        </div>
+        <div>
+          <p className="compteur">STREAK Σ</p>
+          <p className="os-stat-rail__n">{totalStreak}</p>
+        </div>
+      </div>
 
       <div className="routine-frise" aria-label="Routine du jour">
         {ROUTINES.map((label, i) => (
@@ -100,13 +110,7 @@ export default function Chantier() {
         ))}
       </div>
 
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-          gap: 'var(--space-3)',
-        }}
-      >
+      <div className="os-arcs">
         {arcs.map((a) => {
           const liste = quetesPourArc(a.id);
           const chap = chapitrePourArc(a.id);
@@ -123,17 +127,8 @@ export default function Chantier() {
                 badge={rompu ? 'rompu' : reprise ? 'reprise' : null}
                 onValider={(id) => dispatch(validerQuete(id))}
               />
-              <Link
-                to={`/chantier/${a.id}`}
-                style={{
-                  display: 'inline-block',
-                  marginTop: 8,
-                  color: 'var(--text-muted)',
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: '0.75rem',
-                }}
-              >
-                Voir l’arc →
+              <Link to={`/chantier/${a.id}`} className="arc-console__link">
+                › Voir l’arc
               </Link>
             </div>
           );

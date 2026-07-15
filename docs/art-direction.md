@@ -38,3 +38,10 @@ Frames analysées → voir [`moodboard-videos.md`](./moodboard-videos.md).
 - Split catalogue street (bleu plein / panneaux) sans crème de fond site
 - Grain / scanlines / iridescent edge intensifiés  
 Palette identité **bleu nuit · rouge · jaune** inchangée.
+
+## Private OS pass
+Privé = même ADN que le public, en **console HUD** (pas admin SaaS) :
+- Shell `layout-os` : void grid, bloom, grain/scanlines, coins HUD, chrome nav
+- Pages : `OsHeader` (ghost title + kicker mono), rails archive, panels chrome (`os-panel`), forms `os-input`
+- Surfaces : Chantier / arcs, Streaks, Drops, Revue, Insights, Analytics, Freelance, Portefeuille, Paramètres, QuickCapture
+- Usability : validation quêtes restée dense et lisible ; `prefers-reduced-motion` respecté via tokens existants

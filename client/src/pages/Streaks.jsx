@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import OsHeader from '../components/OsHeader.jsx';
 import { apiGet } from '../lib/api.js';
 
 const PISTES = [
@@ -42,39 +43,50 @@ export default function Streaks() {
   }
 
   return (
-    <div style={{ padding: 'var(--space-4)' }}>
-      <h1>Streaks</h1>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 'var(--space-3)', margin: 'var(--space-4) 0' }}>
+    <div className="os-page">
+      <OsHeader
+        kicker="OS · STREAKS"
+        title="STREAKS"
+        meta="Pistes · heatmaps 12 semaines · archive mono"
+      />
+
+      <div className="os-stat-rail">
         {PISTES.map((p) => {
           const s = streaks.find((x) => x.id === p.id) || { jours_consecutifs: 0, record: 0 };
           return (
-            <div key={p.id} className="blueprint-grid" style={{ background: 'var(--bg-1)', padding: 'var(--space-3)', borderRadius: 4 }}>
+            <div key={p.id}>
               <p className="compteur">{p.label}</p>
-              <p style={{ fontFamily: 'var(--font-display)', fontSize: '2.4rem' }}>{s.jours_consecutifs}j</p>
-              <p className="compteur">record {s.record}j</p>
+              <p className="os-stat-rail__n">{s.jours_consecutifs}j</p>
+              <p className="compteur" style={{ marginTop: 6 }}>record {s.record}j</p>
             </div>
           );
         })}
       </div>
 
-      {PISTES.map((p) => (
-        <section key={p.id} style={{ marginBottom: 'var(--space-4)' }}>
-          <p className="compteur" style={{ marginBottom: 8 }}>{p.label} — 12 semaines</p>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(28, 1fr)', gap: 3, overflowX: 'auto' }}>
-            {jours.map((d) => {
-              const level = intensite(d, p.id);
-              const alpha = [0.12, 0.28, 0.45, 0.7, 1][level];
-              return (
-                <div
-                  key={`${p.id}-${d}`}
-                  title={`${d} · ${level}`}
-                  style={{ aspectRatio: '1', borderRadius: 2, background: `rgba(255, 210, 63, ${alpha})`, minWidth: 8 }}
-                />
-              );
-            })}
-          </div>
-        </section>
-      ))}
+      <div className="os-stack">
+        {PISTES.map((p) => (
+          <section key={p.id} className="os-panel chrome-edge">
+            <div className="os-panel__bar">
+              <span>{p.label} · 12 semaines</span>
+              <span className="compteur-dot">HEAT</span>
+            </div>
+            <div className="os-heat" aria-label={`Heatmap ${p.label}`}>
+              {jours.map((d) => {
+                const level = intensite(d, p.id);
+                const alpha = [0.12, 0.28, 0.45, 0.7, 1][level];
+                return (
+                  <div
+                    key={`${p.id}-${d}`}
+                    className="os-heat__cell"
+                    title={`${d} · ${level}`}
+                    style={{ background: `rgba(255, 210, 63, ${alpha})` }}
+                  />
+                );
+              })}
+            </div>
+          </section>
+        ))}
+      </div>
     </div>
   );
 }

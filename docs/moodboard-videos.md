@@ -45,3 +45,10 @@ Sources analysées via frames ffmpeg → `tmp/moodboard-frames/{360,480,1440}/`.
 3. **Texture** — grain + scanlines + halftone plus marqués ; grille void.
 4. **Motion** — chrome-shimmer · title-ghost · atmosphere-breathe (+ reduced-motion).
 5. **Composition** — brand hero first · panes CODE/SOUND comme sleeves · stats en frise technique fine.
+
+## Private OS pass
+Traduction spiral/lookbook côté **authentifié** (shell + pages) :
+- Void + grille + coins HUD + barre chrome sticky
+- Compteurs archive (`os-stat-rail`) · panels chrome (pas card-grid SaaS)
+- Capture FAB clip-path rouge · modal chrome-edge
+- Voir aussi note « Private OS pass » dans [`art-direction.md`](./art-direction.md).

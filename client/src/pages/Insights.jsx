@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import OsHeader from '../components/OsHeader.jsx';
 import { apiGet, apiPost } from '../lib/api.js';
 
 export default function Insights() {
@@ -39,41 +40,56 @@ export default function Insights() {
   }
 
   return (
-    <div style={{ padding: 'var(--space-4)', maxWidth: 800 }}>
-      <h1>Insights</h1>
-      <p className="compteur" style={{ marginTop: 8 }}>Corrélations · Claude (Phase 3)</p>
+    <div className="os-page" style={{ maxWidth: 800 }}>
+      <OsHeader
+        kicker="OS · INSIGHTS"
+        title="INSIGHTS"
+        meta="Corrélations · Claude (Phase 3)"
+        actions={(
+          <button type="button" className="btn-poster" onClick={generer} disabled={statut === 'gen'}>
+            {statut === 'gen' ? 'Analyse…' : '› Corrélations IA'}
+          </button>
+        )}
+      />
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 'var(--space-3)', marginTop: 'var(--space-4)' }}>
-        <div className="poster-panel blueprint-grid" style={{ padding: 'var(--space-3)' }}>
+      <div className="os-stat-rail">
+        <div>
           <p className="compteur">Entrées</p>
-          <p style={{ fontSize: '2rem', fontFamily: 'var(--font-display)', margin: 0 }}>{stats.totalEntrees}</p>
+          <p className="os-stat-rail__n">{stats.totalEntrees}</p>
         </div>
-        <div className="poster-panel blueprint-grid" style={{ padding: 'var(--space-3)' }}>
+        <div>
           <p className="compteur">Quêtes faites</p>
-          <p style={{ fontSize: '2rem', fontFamily: 'var(--font-display)', margin: 0 }}>{stats.faites}</p>
+          <p className="os-stat-rail__n">{stats.faites}</p>
         </div>
-        <div className="poster-panel blueprint-grid" style={{ padding: 'var(--space-3)' }}>
+        <div>
           <p className="compteur">Restantes</p>
-          <p style={{ fontSize: '2rem', fontFamily: 'var(--font-display)', margin: 0 }}>{stats.restantes}</p>
+          <p className="os-stat-rail__n">{stats.restantes}</p>
         </div>
       </div>
 
-      <button type="button" className="btn-poster" style={{ marginTop: 'var(--space-4)' }} onClick={generer} disabled={statut === 'gen'}>
-        {statut === 'gen' ? 'Analyse…' : '› Corrélations IA'}
-      </button>
-      {erreur && <p className="annotation-manuscrite" style={{ marginTop: 12 }}>{erreur}</p>}
+      {erreur && <p className="annotation-manuscrite" style={{ marginBottom: 12 }}>{erreur}</p>}
 
       {texte && (
-        <article className="poster-panel" style={{ padding: 'var(--space-4)', marginTop: 'var(--space-3)', whiteSpace: 'pre-wrap', lineHeight: 1.55 }}>
-          {texte}
+        <article className="os-panel chrome-edge" style={{ marginBottom: 'var(--space-4)' }}>
+          <div className="os-panel__bar">
+            <span>CORRÉLATIONS IA</span>
+            <span className="compteur-dot">OK</span>
+          </div>
+          <div className="os-panel__body" style={{ whiteSpace: 'pre-wrap', lineHeight: 1.55 }}>
+            {texte}
+          </div>
         </article>
       )}
 
-      <h2 style={{ marginTop: 'var(--space-4)' }}>Types de faits</h2>
-      <ul style={{ listStyle: 'none', padding: 0 }}>
+      <h2 style={{ marginBottom: 8, fontSize: '1.1rem', textTransform: 'uppercase' }}>Types de faits</h2>
+      <ul className="os-list">
         {stats.topTypes.map(([type, n]) => (
-          <li key={type} className="compteur" style={{ marginBottom: 8 }}>{type} — {n}</li>
+          <li key={type}>
+            <span style={{ color: 'var(--jaune)' }}>•</span>
+            <span>{type} — {n}</span>
+          </li>
         ))}
+        {!stats.topTypes.length && <li>Aucune entrée encore</li>}
       </ul>
     </div>
   );

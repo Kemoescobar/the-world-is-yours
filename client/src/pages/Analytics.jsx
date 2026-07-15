@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import OsHeader from '../components/OsHeader.jsx';
 import { apiGet } from '../lib/api.js';
 
 export default function Analytics() {
@@ -27,25 +28,37 @@ export default function Analytics() {
   }, {});
 
   return (
-    <div style={{ padding: 'var(--space-4)' }}>
-      <h1>Analytics</h1>
-      <p className="compteur">21 derniers jours d'activité</p>
-      <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6, height: 160, marginTop: 'var(--space-4)', overflowX: 'auto' }}>
-        {parJour.map(([jour, n]) => (
-          <div key={jour} title={`${jour}: ${n}`} style={{ flex: 1, minWidth: 18, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', alignItems: 'center', gap: 4 }}>
-            <div style={{ width: '100%', height: `${(n / max) * 120}px`, background: 'var(--jaune)', borderRadius: 2, minHeight: 4 }} />
-            <span className="compteur" style={{ fontSize: '0.55rem' }}>{jour.slice(5)}</span>
-          </div>
-        ))}
-        {!parJour.length && <p className="compteur">Pas encore de données.</p>}
-      </div>
+    <div className="os-page">
+      <OsHeader
+        kicker="OS · ANALYTICS"
+        title="ANALYTICS"
+        meta="21 derniers jours · pipeline freelance"
+      />
 
-      <h2 style={{ marginTop: 'var(--space-4)' }}>Pipeline freelance</h2>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 10, marginTop: 12 }}>
+      <section className="os-panel chrome-edge">
+        <div className="os-panel__bar">
+          <span>ACTIVITÉ</span>
+          <span className="compteur-dot">{entrees.length} ENTRÉES</span>
+        </div>
+        <div className="os-chart">
+          {parJour.map(([jour, n]) => (
+            <div key={jour} className="os-chart__bar" title={`${jour}: ${n}`}>
+              <div className="os-chart__fill" style={{ height: `${(n / max) * 120}px` }} />
+              <span className="compteur" style={{ fontSize: '0.55rem' }}>{jour.slice(5)}</span>
+            </div>
+          ))}
+          {!parJour.length && <p className="compteur">Pas encore de données.</p>}
+        </div>
+      </section>
+
+      <h2 style={{ marginTop: 'var(--space-4)', marginBottom: 12, fontSize: '1.1rem', textTransform: 'uppercase' }}>
+        Pipeline freelance
+      </h2>
+      <div className="os-stat-rail">
         {['prospect', 'proposal_envoye', 'client', 'paye'].map((s) => (
-          <div key={s} className="blueprint-grid" style={{ background: 'var(--bg-1)', padding: 'var(--space-3)', borderRadius: 4 }}>
+          <div key={s}>
             <p className="compteur">{s}</p>
-            <p style={{ fontFamily: 'var(--font-display)', fontSize: '1.6rem' }}>{pipeline[s] || 0}</p>
+            <p className="os-stat-rail__n">{pipeline[s] || 0}</p>
           </div>
         ))}
       </div>

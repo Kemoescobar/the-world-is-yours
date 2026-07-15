@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../auth/AuthContext.jsx';
+import OsHeader from '../components/OsHeader.jsx';
 import { apiGet, apiPost } from '../lib/api.js';
 
 const rawApi = (import.meta.env.VITE_API_URL || '').trim();
@@ -92,27 +93,30 @@ export default function Parametres() {
   }
 
   return (
-    <div style={{ padding: 'var(--space-4)', maxWidth: 720 }}>
-      <h1>Paramètres</h1>
-      <p className="compteur" style={{ marginTop: 8 }}>Connexions · IA · Export</p>
+    <div className="os-page" style={{ maxWidth: 720 }}>
+      <OsHeader
+        kicker="OS · PARAMÈTRES"
+        title="PARAMÈTRES"
+        meta="Connexions · IA · Export"
+      />
 
-      <div style={{ display: 'grid', gap: 10, marginTop: 'var(--space-4)' }}>
+      <div className="os-stack">
         {connexions.map((c) => (
-          <div
-            key={c.nom}
-            className="poster-panel blueprint-grid"
-            style={{ padding: 'var(--space-3)', display: 'flex', justifyContent: 'space-between', gap: 12 }}
-          >
+          <div key={c.nom} className="os-row blueprint-grid">
             <div>
-              <p style={{ margin: 0 }}>{c.nom}</p>
+              <p style={{ margin: 0, fontFamily: 'var(--font-display)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.03em' }}>
+                {c.nom}
+              </p>
               <p className="compteur" style={{ marginTop: 6 }}>{c.detail}</p>
             </div>
-            <span style={{
-              color: c.ok ? 'var(--jaune)' : (c.detail === 'probe…' ? 'var(--text-muted)' : 'var(--rouge)'),
-              fontFamily: 'var(--font-mono)',
-              fontSize: '0.75rem',
-              alignSelf: 'center',
-            }}>
+            <span
+              style={{
+                color: c.ok ? 'var(--jaune)' : (c.detail === 'probe…' ? 'var(--text-muted)' : 'var(--rouge)'),
+                fontFamily: 'var(--font-mono)',
+                fontSize: '0.75rem',
+                letterSpacing: '0.12em',
+              }}
+            >
               {c.detail === 'probe…' ? '…' : (c.ok ? 'OK' : '—')}
             </span>
           </div>

@@ -2,7 +2,9 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { validerQuete } from '../store/slices/questsSlice.js';
+import OsHeader from '../components/OsHeader.jsx';
 import { apiGet } from '../lib/api.js';
+import { playTick } from '../lib/sounds.js';
 
 export default function ArcDetail() {
   const { arc } = useParams();
@@ -25,37 +27,62 @@ export default function ArcDetail() {
     return Object.values(map).sort((a, b) => String(a.chapitre.semaine).localeCompare(String(b.chapitre.semaine)));
   }, [chapitres, quetes]);
 
-  return (
-    <div className="blueprint-grid" style={{ padding: 'var(--space-4)', minHeight: '80vh' }}>
-      <p className="compteur"><Link to="/chantier" style={{ color: 'var(--text-muted)' }}>← Chantier</Link></p>
-      <h1 style={{ textTransform: 'uppercase' }}>{arc}</h1>
-      <p className="compteur">{quetes.filter((q) => q.statut === 'fait').length}/{quetes.length} quêtes</p>
+  const faites = quetes.filter((q) => q.statut === 'fait').length;
 
-      <div style={{ display: 'grid', gap: 'var(--space-3)', marginTop: 'var(--space-4)', maxWidth: 720 }}>
+  return (
+    <div className="os-page">
+      <p className="compteur" style={{ marginBottom: 8 }}>
+        <Link to="/chantier" style={{ color: 'var(--text-muted)', textDecoration: 'none' }}>
+          ← Chantier
+        </Link>
+      </p>
+      <OsHeader
+        kicker={`OS · ARC · ${String(arc || '').toUpperCase()}`}
+        title={String(arc || 'ARC').toUpperCase()}
+        meta={`${faites}/${quetes.length} quêtes closes`}
+      />
+
+      <div className="os-stack" style={{ maxWidth: 720 }}>
         {parChapitre.map(({ chapitre, quetes: qs }) => (
-          <section key={chapitre.id} style={{ background: 'var(--bg-1)', padding: 'var(--space-3)', borderRadius: 4 }}>
-            <p className="compteur">{chapitre.semaine} · {chapitre.statut}</p>
-            <h2 style={{ fontSize: '1.2rem' }}>{chapitre.titre || 'Sans titre'}</h2>
-            <ul style={{ listStyle: 'none', padding: 0, marginTop: 12 }}>
-              {qs.map((q) => (
-                <li key={q.id} style={{ display: 'flex', gap: 8, marginBottom: 8, opacity: q.statut === 'fait' ? 0.5 : 1 }}>
-                  <input
-                    type="checkbox"
-                    checked={q.statut === 'fait'}
-                    disabled={q.statut === 'fait'}
-                    onChange={async () => {
-                      await dispatch(validerQuete(q.id));
-                      setQuetes(await apiGet(`/quetes?type=${arc}`));
-                    }}
-                  />
-                  <span>{q.titre}</span>
-                </li>
-              ))}
-              {!qs.length && <li className="compteur">Aucune quête</li>}
-            </ul>
+          <section key={chapitre.id} className="os-panel chrome-edge blueprint-grid">
+            <div className="os-panel__bar">
+              <span>{chapitre.semaine} · {chapitre.statut}</span>
+              <span className="compteur-dot">{qs.filter((q) => q.statut === 'fait').length}/{qs.length}</span>
+            </div>
+            <div className="os-panel__body">
+              <h2 style={{ fontSize: '1.2rem', textTransform: 'uppercase', letterSpacing: '0.02em' }}>
+                {chapitre.titre || 'Sans titre'}
+              </h2>
+              <ul className="os-list" style={{ marginTop: 8, fontFamily: 'var(--font-body)', fontSize: '0.9rem' }}>
+                {qs.map((q) => (
+                  <li key={q.id} style={{ opacity: q.statut === 'fait' ? 0.5 : 1, color: 'var(--text)', letterSpacing: 0 }}>
+                    <input
+                      type="checkbox"
+                      className="quest-check"
+                      checked={q.statut === 'fait'}
+                      disabled={q.statut === 'fait'}
+                      onChange={async () => {
+                        playTick();
+                        await dispatch(validerQuete(q.id));
+                        setQuetes(await apiGet(`/quetes?type=${arc}`));
+                      }}
+                      style={{ accentColor: 'var(--jaune)' }}
+                    />
+                    <span style={{ textDecoration: q.statut === 'fait' ? 'line-through' : 'none' }}>{q.titre}</span>
+                  </li>
+                ))}
+                {!qs.length && <li className="compteur">Aucune quête</li>}
+              </ul>
+            </div>
           </section>
         ))}
-        {!parChapitre.length && <p className="compteur">Pas encore de chapitre pour cet arc.</p>}
+        {!parChapitre.length && (
+          <div className="empty-wall" style={{ display: 'grid', placeItems: 'center', textAlign: 'center' }}>
+            <p className="compteur">CHAPITRES</p>
+            <h2 style={{ margin: '12px 0' }}>Pas encore de chapitre</h2>
+            <span className="annotation-manuscrite">vide pour l’instant</span>
+          </div>
+        )}
       </div>
     </div>
   );

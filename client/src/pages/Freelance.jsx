@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import OsHeader from '../components/OsHeader.jsx';
 import { apiGet, apiPost, apiPatch } from '../lib/api.js';
 
 const COLONNES = [
@@ -50,37 +51,54 @@ export default function Freelance() {
   }
 
   return (
-    <div style={{ padding: 'var(--space-4)' }}>
-      <h1>Freelance</h1>
-      <form onSubmit={creer} style={{ display: 'flex', gap: 10, margin: 'var(--space-4) 0', flexWrap: 'wrap' }}>
-        <input value={nom} onChange={(e) => setNom(e.target.value)} placeholder="Nom prospect" required
-          style={{ flex: 1, minWidth: 180, padding: 10, background: 'var(--bg-1)', color: 'var(--text)', border: '1px solid var(--bg-3)', borderRadius: 4 }} />
-        <input value={montant} onChange={(e) => setMontant(e.target.value)} placeholder="Montant" type="number"
-          style={{ width: 140, padding: 10, background: 'var(--bg-1)', color: 'var(--text)', border: '1px solid var(--bg-3)', borderRadius: 4 }} />
-        <button type="submit" style={{ padding: '10px 14px', border: 'none', borderRadius: 4, background: 'var(--jaune)', color: '#060a1a', fontWeight: 700, cursor: 'pointer' }}>
-          Ajouter
-        </button>
+    <div className="os-page">
+      <OsHeader
+        kicker="OS · FREELANCE"
+        title="FREELANCE"
+        meta="Pipeline · prospect → payé · clic pour avancer"
+      />
+
+      <form onSubmit={creer} className="os-form--inline" style={{ marginBottom: 'var(--space-4)' }}>
+        <input
+          className="os-input"
+          value={nom}
+          onChange={(e) => setNom(e.target.value)}
+          placeholder="Nom prospect"
+          required
+        />
+        <input
+          className="os-input"
+          style={{ flex: '0 0 140px', minWidth: 120 }}
+          value={montant}
+          onChange={(e) => setMontant(e.target.value)}
+          placeholder="Montant"
+          type="number"
+        />
+        <button type="submit" className="btn-poster">Ajouter</button>
       </form>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 'var(--space-3)' }}>
+
+      <div className="os-pipeline chrome-edge">
         {COLONNES.map((col) => (
-          <section key={col.id} className="blueprint-grid" style={{ background: 'var(--bg-1)', padding: 'var(--space-3)', borderRadius: 4, minHeight: 280 }}>
-            <p className="compteur">{col.label} · {parCol[col.id].length}</p>
-            <div style={{ display: 'grid', gap: 8, marginTop: 12 }}>
+          <section key={col.id} className="os-pipeline__col blueprint-grid">
+            <p className="compteur">
+              {col.label} · {parCol[col.id].length}
+            </p>
+            <div>
               {parCol[col.id].map((p) => (
                 <button
                   key={p.id}
                   type="button"
+                  className="os-pipeline__item"
                   onClick={() => avancer(p)}
                   title="Avancer d'une colonne"
-                  style={{
-                    textAlign: 'left', padding: 10, borderRadius: 4, cursor: 'pointer',
-                    background: 'var(--bg-2)', border: '1px solid var(--bg-3)', color: 'var(--text)',
-                  }}
                 >
-                  <div>{p.nom}</div>
-                  <div className="compteur">{p.montant ? `${p.montant}` : '—'}</div>
+                  <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700 }}>{p.nom}</div>
+                  <div className="compteur" style={{ marginTop: 4 }}>{p.montant ? `${p.montant}` : '—'}</div>
                 </button>
               ))}
+              {!parCol[col.id].length && (
+                <p className="compteur" style={{ marginTop: 16, opacity: 0.6 }}>vide</p>
+              )}
             </div>
           </section>
         ))}
