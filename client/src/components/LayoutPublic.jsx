@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, NavLink } from 'react-router-dom';
 import { useSecretLoginClick } from '../lib/useSecretLoginClick.js';
 
 /** Layout vitrine — pas de QuickCapture, pas de nav dashboard. */
@@ -10,51 +10,36 @@ export default function LayoutPublic({ children }) {
       <div className="halftone-overlay halftone-live" />
       <div className="grain grain-live" style={{ position: 'fixed', opacity: 0.12, zIndex: 1 }} aria-hidden />
       <nav
-        className="nav-chrome chrome-specular"
-        style={{
-          display: 'flex',
-          gap: 18,
-          padding: 'var(--space-3) var(--space-4)',
-          fontFamily: 'var(--font-mono)',
-          fontSize: '0.72rem',
-          textTransform: 'uppercase',
-          alignItems: 'center',
-          position: 'relative',
-          zIndex: 2,
-        }}
+        className="nav-chrome nav-public chrome-specular"
+        aria-label="Navigation publique"
       >
-        <Link to="/" className="nav-brand">
-          TWIY
+        <div className="chrome-bar--nav" aria-hidden style={{ top: 0, bottom: 'auto' }} />
+        <Link to="/" className="nav-brand nav-public__brand">
+          <span className="nav-os__brand-mark">TWIY</span>
+          <span className="nav-os__brand-full">THE WORLD IS YOURS</span>
         </Link>
-        <span className="compteur" style={{ color: 'rgba(138,149,184,0.55)', fontSize: '0.58rem' }}>
+        <span className="nav-os__tick" aria-hidden>
           › PUBLIC
         </span>
-        <Link to="/catalogue/projets" style={{ color: 'var(--text-muted)', textDecoration: 'none' }}>
-          Code
-        </Link>
-        <span aria-hidden style={{ color: 'rgba(255,210,63,0.35)' }}>•</span>
-        <Link to="/catalogue/instrus" style={{ color: 'var(--text-muted)', textDecoration: 'none' }}>
-          Sound
-        </Link>
-        <div className="chrome-bar--nav" aria-hidden />
+        <span className="nav-os__sep" aria-hidden>
+          •
+        </span>
+        <div className="nav-public__rail">
+          <NavLink to="/catalogue/projets" className="nav-os__link">
+            Code
+          </NavLink>
+          <span className="nav-os__sep" aria-hidden>
+            •
+          </span>
+          <NavLink to="/catalogue/instrus" className="nav-os__link">
+            Sound
+          </NavLink>
+        </div>
+        <div className="chrome-bar--nav chrome-bar--thin" aria-hidden />
       </nav>
       <main style={{ position: 'relative', zIndex: 1, flex: 1 }}>{children}</main>
       <footer
-        className="nav-chrome"
-        style={{
-          position: 'relative',
-          zIndex: 2,
-          padding: 'var(--space-3) var(--space-4)',
-          borderTop: '1px solid rgba(200,220,255,0.12)',
-          borderBottom: 'none',
-          fontFamily: 'var(--font-mono)',
-          fontSize: '0.68rem',
-          textTransform: 'uppercase',
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: 16,
-          color: 'var(--text-muted)',
-        }}
+        className="nav-chrome nav-public__foot"
       >
         <span
           onClick={onSecretLogin}
@@ -62,11 +47,13 @@ export default function LayoutPublic({ children }) {
         >
           THE WORLD IS YOURS
         </span>
-        <span style={{ color: 'rgba(255,210,63,0.35)' }} aria-hidden>•</span>
-        <Link to="/mentions" style={{ color: 'var(--text-muted)', textDecoration: 'none' }}>
+        <span className="nav-os__sep" aria-hidden>
+          •
+        </span>
+        <Link to="/mentions" className="nav-os__link">
           Mentions légales
         </Link>
-        <Link to="/confidentialite" style={{ color: 'var(--text-muted)', textDecoration: 'none' }}>
+        <Link to="/confidentialite" className="nav-os__link">
           Confidentialité
         </Link>
       </footer>
