@@ -58,5 +58,6 @@ Préférer appeler **`POST /ai/revue`** depuis n8n (auth `x-api-key`) plutôt qu
 1. `ANTHROPIC_API_KEY` sur Railway → Redeploy  
 2. Paramètres → Claude OK  
 3. Revue → Générer  
-4. (Optionnel) Importer `n8n/*.json` + activer cron  
-5. Routines du jour chaque matin (bouton ou cron n8n)
+4. (Optionnel) Importer `n8n/*.json` + activer cron — copy-paste dans `n8n/README.md`  
+5. Routines du jour chaque matin (bouton ou cron n8n)  
+6. Sans clé Anthropic Console : endpoints `/api/ai/*` restent soft-off (Claude Pro seul ne suffit pas)

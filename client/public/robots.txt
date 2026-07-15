@@ -15,4 +15,4 @@ Disallow: /analytics
 Disallow: /drops
 Disallow: /streaks
 
-Sitemap: /sitemap.xml
+Sitemap: https://the-world-is-yours-seven.vercel.app/sitemap.xml

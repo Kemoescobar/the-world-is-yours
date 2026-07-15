@@ -1,44 +1,62 @@
-# Audit pre-launch — suivi humain (hors code)
+# Audit pre-launch — suivi
 
-Actions à faire toi-même avant une ouverture publique large. Le code a déjà traité les bloquants automatisables (owner allowlist API, bypass Bearer catalogues, rate-limit, pages légales, fonts self-host, lazy routes, a11y motion/focus).
+Le code a déjà traité les bloquants automatisables (owner allowlist API, bypass Bearer catalogues, rate-limit, pages légales, fonts self-host, lazy routes, a11y motion/focus, sitemap absolu, OG absolus, policies storage listing).
 
-## Sécurité (Dashboard Supabase)
+## Fait (infra / code / SQL)
 
-- [ ] **Désactiver le signup public** — Authentication → Providers → Email → *Disable new user signups* (ou équivalent). Un seul compte owner.
-- [ ] **Insérer ton UUID dans `app_owners`** après la migration :
-  ```sql
-  insert into public.app_owners (user_id) values ('<uuid-auth>');
-  ```
-  UUID : Authentication → Users → copier l’id. Même valeur que `OWNER_USER_ID` sur Railway.
-- [ ] **HaveIBeenPwned** — Auth → settings → activer leaked password protection (advisor).
-- [ ] **Storage listing** — vérifier que les buckets publics (`instrumentaux`, `captures`) n’exposent pas un listing directory trop large (advisor `public_bucket_allows_listing`). Les lectures objet individuelles restent OK pour la vitrine.
+- [x] `OWNER_USER_ID` sur Railway + redeploy
+- [x] `insert into app_owners` (UUID owner)
+- [x] `OWNER_USER_ID` local dans `server/.env`
+- [x] Migration RLS owner + indexes (`20260714_…`)
+- [x] Sitemap + robots avec base absolue `https://the-world-is-yours-seven.vercel.app`
+- [x] Meta OG / Twitter / canonical en URLs absolues (`client/index.html`)
+- [x] Storage : policies SELECT publiques trop larges retirées + SELECT owner unifié (`20260715_…`)
+- [x] `REVOKE EXECUTE` de `is_app_owner()` pour `anon` / `public` (RPC anon fermé)
 
-## Railway / Vercel
+## Bloqué côté Dashboard (MCP / API Management non dispo)
 
-- [ ] `OWNER_USER_ID=<ton-uuid>` (ou `ALLOWED_USER_IDS=uuid1,uuid2`) sur Railway — **obligatoire en production** (sinon 503 sur routes privées).
-- [ ] `CLIENT_URL` = URL Vercel exacte (CORS).
-- [ ] Confirmer présence / absence de `ANTHROPIC_API_KEY` selon ton choix soft-launch.
+Ces réglages Auth ne passent **pas** par le MCP Supabase ni un outil versionné dans ce repo. À faire dans le Dashboard :
 
-## Légal / assets (hors repo)
+### 1. Désactiver le signup public
 
-- [ ] Clearance samples audio avant showcase public large des instrumentaux.
-- [ ] Confirmer droits sur `globe-hand.png` et captures uploadées.
-- [ ] Si monetisation plus tard : CGV + enrichir privacy.
+1. Ouvre [Supabase Dashboard](https://supabase.com/dashboard) → projet **The World Is Yours**
+2. **Authentication** → **Providers** → **Email**
+3. Désactive **Enable sign ups** / *Allow new users to sign up* (libellé selon UI)
+4. Save
 
-## Accessibilité / qualité
+Un seul compte owner : `fisandratajohnson@gmail.com`.
 
-- [ ] Mesurer contraste `--text-muted` (#8a95b8) sur `--bg-0` (#060a1a) avec un outil WCAG ; remonter la luminosité si &lt; 4.5:1.
-- [ ] Parcourir au clavier (Tab) les pages publiques après deploy — outlines `:focus-visible` jaunes.
-- [ ] Tester `prefers-reduced-motion` (OS) : halftone/grain/scanlines calmes.
+### 2. HaveIBeenPwned (leaked password protection)
 
-## SEO / PWA
+1. Même projet → **Authentication** → **Settings** (ou **Password**)
+2. Active **Leaked password protection** (HaveIBeenPwned)
+3. Save
 
-- [ ] Remplacer les URLs relatives du `sitemap.xml` par l’URL absolue de prod quand le domaine final est fixe.
-- [ ] Clarifier mentalement : PWA installable ≠ offline métier (pas de cache API Chroniques).
+Advisor : `auth_leaked_password_protection`.
 
-## Appliquer la migration SQL
+## Toi seulement (hors code — ne pas confondre avec « fait »)
 
-Fichier versionné : `supabase/migrations/20260714_owner_rls_and_indexes.sql`
+### Railway / IA
 
-- Via MCP / SQL Editor Supabase, ou CLI `supabase db push` si configuré.
-- Puis `insert into app_owners` + `OWNER_USER_ID` Railway + redeploy.
+- [ ] `ANTHROPIC_API_KEY` — **non posé** (Claude Pro ≠ clé API). Poser seulement si tu prends une clé Anthropic Console ; sinon Revue / Insights restent soft-disabled.
+- [ ] Confirmer `CLIENT_URL` = `https://the-world-is-yours-seven.vercel.app` (CORS)
+
+### n8n (optionnel)
+
+- [ ] Lancer n8n (Docker ou cloud) + importer `n8n/*.json` — voir **`n8n/README.md`** (étapes copy-paste). Pas obligatoire pour la vitrine.
+
+### Légal / assets
+
+- [ ] Clearance samples audio avant showcase public large des instrumentaux
+- [ ] Confirmer droits sur `globe-hand.png` et captures uploadées
+- [ ] Si monetisation plus tard : CGV + enrichir privacy
+
+### Accessibilité / qualité
+
+- [ ] Mesurer contraste `--text-muted` (#8a95b8) sur `--bg-0` (#060a1a) (WCAG) ; remonter la luminosité si &lt; 4.5:1
+- [ ] Parcourir au clavier (Tab) les pages publiques après deploy — outlines `:focus-visible` jaunes
+- [ ] Tester `prefers-reduced-motion` (OS) : halftone/grain/scanlines calmes
+
+### SEO mental
+
+- [ ] PWA installable ≠ offline métier (pas de cache API Chroniques)
