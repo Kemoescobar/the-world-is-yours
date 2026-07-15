@@ -13,9 +13,9 @@ Références repo : [`audit-followups.md`](./audit-followups.md) (section Légal
 
 | Fichier | Usage code | Signal risque (observation) |
 |---------|------------|-----------------------------|
-| `globe-hand.png` | SoundGate ; fallback sleeve Catalogue Projets ; favicon + OG/Twitter (`client/index.html`) | Capture type réseau social (UI mute visible) + motif corps/globe — **vérifier origine avant public large** |
-| `globe-youth.png` | Home (atmosphère bas-centre) | Collage (figure, globe, texte arabe, logos) — **vérifier si DA tierce / moodboard téléchargé** |
-| `vinyl-chrome.png` | Home pane SOUND ; fallback vinyl Catalogue Instrus | Texte « PROMT » + crédit « MADE BY » → **très probablement IA** ; crop / ToS outil à vérifier |
+| `globe-hand.png` | SoundGate ; fallback sleeve Catalogue Projets ; favicon + OG/Twitter (`client/index.html`) | **Remplacé 2026-07-15** — image générée IA (Cursor), sans UI tierce / watermark |
+| `globe-youth.png` | Home (atmosphère bas-centre) | **Remplacé 2026-07-15** — image générée IA (Cursor), sans logos / texte marque |
+| `vinyl-chrome.png` | Home pane SOUND ; fallback vinyl Catalogue Instrus | **Remplacé 2026-07-15** — image générée IA (Cursor), vinyle chrome sans watermark |
 
 ### Hors `public/` (OK pour DA privée, pas pour ship)
 
@@ -40,20 +40,19 @@ Références repo : [`audit-followups.md`](./audit-followups.md) (section Légal
 
 Pour chaque fichier, note la **source** (photo perso / IA + outil / stock + licence / téléchargement tiers) et la **décision** (OK public · remplacer · retirer).
 
-- [ ] `client/public/brand/globe-hand.png`  
-  - Source : _______________  
-  - Décision : _______________  
-  - Si doute : remplacer (favicon + OG inclus) avant showcase large
+- [x] `client/public/brand/globe-hand.png`  
+  - Source : IA Cursor (génération 2026-07-15)  
+  - Décision : remplacé — OK pour soft-launch ; revalider ToS plateforme si ouverture commerciale large
 
-- [ ] `client/public/brand/globe-youth.png`  
-  - Source : _______________  
-  - Décision : _______________  
+- [x] `client/public/brand/globe-youth.png`  
+  - Source : IA Cursor (génération 2026-07-15)  
+  - Décision : remplacé
 
-- [ ] `client/public/brand/vinyl-chrome.png`  
-  - Outil IA / date / compte : _______________  
-  - ToS commercial / affichage public OK ? oui / non / inconnu  
-  - Crop watermark « PROMT / MADE BY » si tu le gardes : fait / à faire  
-  - Décision : _______________  
+- [x] `client/public/brand/vinyl-chrome.png`  
+  - Outil IA / date : Cursor, 2026-07-15  
+  - ToS commercial / affichage public OK ? à confirmer côté plateforme si monétisation  
+  - Watermark : aucun sur le nouveau rendu  
+  - Décision : remplacé
 
 ---
 
