@@ -68,8 +68,10 @@ Note : HIBP est souvent réservé au **plan Pro** et plus. Advisor : `auth_leake
 
 ### Légal / assets
 
+Checklist détaillée (à cocher) : [`clearance-checklist.md`](./clearance-checklist.md)
+
 - [ ] Clearance samples audio avant showcase public large des instrumentaux
-- [ ] Confirmer droits sur `globe-hand.png` et captures uploadées
+- [ ] Confirmer droits sur `globe-hand.png` / `globe-youth.png` / `vinyl-chrome.png` et captures uploadées
 - [ ] Si monetisation plus tard : CGV + enrichir privacy
 
 ### Accessibilité / qualité
