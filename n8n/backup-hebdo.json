@@ -1,5 +1,6 @@
 {
   "name": "TWIY — Sauvegarde hebdomadaire",
+  "id": "twiy-backup-hebdo",
   "nodes": [
     {
       "parameters": { "rule": { "interval": [{ "field": "cronExpression", "expression": "0 4 * * 1" }] } },
@@ -10,7 +11,14 @@
       "position": [200, 300]
     },
     {
-      "parameters": { "url": "={{$env.TWIY_API_URL}}/export", "method": "GET" },
+      "parameters": {
+        "url": "={{$env.TWIY_API_URL}}/export",
+        "method": "GET",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [{ "name": "x-api-key", "value": "={{$env.TWIY_WEBHOOK_KEY}}" }]
+        }
+      },
       "id": "get-export",
       "name": "Exporter toutes les tables",
       "type": "n8n-nodes-base.httpRequest",
@@ -19,7 +27,7 @@
     },
     {
       "parameters": {
-        "url": "=http://127.0.0.1:27123/vault/00-Veille/Backups/twiy-{{$now.format('yyyy-MM-dd')}}.json",
+        "url": "=http://host.docker.internal:27123/vault/00-Veille/Backups/twiy-{{$now.format('yyyy-MM-dd')}}.json",
         "method": "PUT",
         "headerParameters": { "parameters": [{ "name": "Authorization", "value": "Bearer {{$env.OBSIDIAN_API_KEY}}" }] },
         "sendBody": true,

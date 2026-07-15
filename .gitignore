@@ -3,6 +3,8 @@ dist/
 .env
 client/.env
 server/.env
+n8n/.env
+
 *.log
 .DS_Store
 tmp/

@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import { supabase } from '../supabaseClient.js';
 
 /**
@@ -16,6 +17,14 @@ export function isOwnerUserId(userId) {
   const allowed = getAllowedUserIds();
   if (!allowed.length) return false;
   return allowed.includes(userId);
+}
+
+function timingSafeEqualString(a, b) {
+  if (typeof a !== 'string' || typeof b !== 'string') return false;
+  const ba = Buffer.from(a);
+  const bb = Buffer.from(b);
+  if (ba.length !== bb.length) return false;
+  return crypto.timingSafeEqual(ba, bb);
 }
 
 /**
@@ -53,6 +62,16 @@ export async function requireAuth(req, res, next) {
   req.user = data.user;
   req.accessToken = token;
   next();
+}
+
+/** JWT utilisateur OU clé n8n (x-api-key = WEBHOOK_API_KEY). */
+export function requireAuthOrApiKey(req, res, next) {
+  const cle = req.header('x-api-key');
+  if (cle && timingSafeEqualString(cle, process.env.WEBHOOK_API_KEY || '')) {
+    req.authMode = 'apiKey';
+    return next();
+  }
+  return requireAuth(req, res, next);
 }
 
 /**

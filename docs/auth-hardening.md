@@ -22,15 +22,21 @@ L’API Express utilise `SUPABASE_SERVICE_KEY` (service_role) → **bypass RLS**
 | UUID dans Railway `OWNER_USER_ID` + redeploy | ✅ fait |
 | `insert into public.app_owners` | ✅ fait |
 | `OWNER_USER_ID` local `server/.env` | ✅ fait |
-| Auth → **désactiver signup public** | ⏳ **Dashboard seulement** (voir ci-dessous) |
-| HaveIBeenPwned / leaked passwords | ⏳ **Dashboard seulement** |
+| Auth → **désactiver signup public** | ⏳ Dashboard **ou** Management API `PATCH .../config/auth` + access token (`disable_signup`) — voir `docs/audit-followups.md` |
+| HaveIBeenPwned / leaked passwords | ⏳ Idem (`password_hibp_enabled`) — souvent plan Pro+ |
 
-## Signup public — Dashboard (bloqué MCP)
+## Signup public — hors MCP
 
-Le MCP Supabase n’expose **pas** de mutation Auth config (`disable_signup` / providers). À faire à la main :
+Le MCP Supabase n’expose **pas** de mutation Auth config. Options :
 
-1. [Dashboard](https://supabase.com/dashboard) → **The World Is Yours**
+1. Dashboard (ci-dessous), ou
+2. Management API avec un token [Account → Access Tokens](https://supabase.com/dashboard/account/tokens) (commande PowerShell dans `docs/audit-followups.md`).
+
+### Dashboard
+
+1. [Dashboard](https://supabase.com/dashboard/project/gunjokreeewcvlprgljg/auth/providers) → **The World Is Yours**
 2. **Authentication** → **Providers** → **Email**
 3. Désactiver **Enable sign ups** → Save
+4. Activer **Leaked password protection** si disponible → Save
 
 Même doc opérationnelle : `docs/audit-followups.md`.

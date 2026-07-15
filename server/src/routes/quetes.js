@@ -1,13 +1,13 @@
 import express from 'express';
 import { supabase } from '../supabaseClient.js';
-import { requireAuth } from '../middleware/auth.js';
+import { requireAuthOrApiKey } from '../middleware/auth.js';
 import { validateBody } from '../middleware/validate.js';
 import { createQueteSchema, patchQueteSchema } from '../schemas.js';
 import { incrementerStreak } from './streaks.js';
 
 const router = express.Router();
 
-router.use(requireAuth);
+router.use(requireAuthOrApiKey);
 
 router.get('/', async (req, res) => {
   let query = supabase.from('quetes').select('*').order('date_prevue', { ascending: true });

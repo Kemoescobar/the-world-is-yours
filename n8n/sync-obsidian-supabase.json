@@ -1,5 +1,6 @@
 {
   "name": "TWIY — Sync Obsidian vers Supabase",
+  "id": "twiy-sync-obsidian-supabase",
   "nodes": [
     {
       "parameters": { "rule": { "interval": [{ "field": "hours" }] } },
@@ -11,7 +12,7 @@
     },
     {
       "parameters": {
-        "url": "http://127.0.0.1:27123/vault/02-Projets/",
+        "url": "http://host.docker.internal:27123/vault/02-Projets/",
         "method": "GET",
         "headerParameters": {
           "parameters": [{ "name": "Authorization", "value": "Bearer {{$env.OBSIDIAN_API_KEY}}" }]
@@ -37,6 +38,10 @@
       "parameters": {
         "url": "={{$env.TWIY_API_URL}}/quetes",
         "method": "POST",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [{ "name": "x-api-key", "value": "={{$env.TWIY_WEBHOOK_KEY}}" }]
+        },
         "sendBody": true,
         "bodyParameters": {
           "parameters": [

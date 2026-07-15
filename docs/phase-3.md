@@ -55,9 +55,8 @@ Workflows dans `n8n/` — variables :
 Préférer appeler **`POST /ai/revue`** depuis n8n (auth `x-api-key`) plutôt que dupliquer Claude dans le workflow.
 
 ## Checklist activation
-1. `ANTHROPIC_API_KEY` sur Railway → Redeploy  
+1. `ANTHROPIC_API_KEY` sur Railway → Redeploy (Claude Pro seul ≠ clé Console ; sans clé, `/api/ai/*` soft-off)  
 2. Paramètres → Claude OK  
 3. Revue → Générer  
-4. (Optionnel) Importer `n8n/*.json` + activer cron — copy-paste dans `n8n/README.md`  
-5. Routines du jour chaque matin (bouton ou cron n8n)  
-6. Sans clé Anthropic Console : endpoints `/api/ai/*` restent soft-off (Claude Pro seul ne suffit pas)
+4. n8n local : `cd C:\twiy\n8n; docker compose up -d` → import CLI (voir `n8n/README.md`) → activer les crons  
+5. Routines du jour chaque matin (bouton ou cron n8n)

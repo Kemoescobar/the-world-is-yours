@@ -22,7 +22,7 @@
    - `GITHUB_WEBHOOK_SECRET`
 7. Deploy → **Networking → Generate Domain**
 8. Test : `https://xxxx.up.railway.app/health`
-9. Auth Supabase : `app_owners` + `OWNER_USER_ID` (déjà faits) ; **encore Dashboard** : désactiver signup public + HaveIBeenPwned — voir `docs/audit-followups.md`
+9. Auth Supabase : `app_owners` + `OWNER_USER_ID` (déjà faits) ; **encore Dashboard** (ou Management API + token) : désactiver signup public + HaveIBeenPwned — voir `docs/audit-followups.md`
 
 Si erreur `railpack process exited` : presque toujours **Root Directory ≠ server**.
 ## 2. Client → Vercel

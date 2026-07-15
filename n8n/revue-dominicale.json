@@ -1,5 +1,6 @@
 {
   "name": "TWIY — Revue du dimanche auto-générée",
+  "id": "twiy-revue-dominicale",
   "nodes": [
     {
       "parameters": {
@@ -37,7 +38,7 @@
     },
     {
       "parameters": {
-        "url": "http://127.0.0.1:27123/vault/00-Veille/Revue-Dominicale.md",
+        "url": "http://host.docker.internal:27123/vault/00-Veille/Revue-Dominicale.md",
         "method": "PUT",
         "sendHeaders": true,
         "headerParameters": {

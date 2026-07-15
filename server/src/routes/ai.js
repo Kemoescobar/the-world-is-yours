@@ -1,30 +1,11 @@
 import express from 'express';
-import crypto from 'crypto';
 import { supabase } from '../supabaseClient.js';
-import { requireAuth } from '../middleware/auth.js';
+import { requireAuthOrApiKey } from '../middleware/auth.js';
 import { aiRateLimit } from '../middleware/rateLimit.js';
 import { askClaude, anthropicConfigured } from '../lib/claude.js';
 import { lireMemoire, appendLecon } from '../lib/coachingMemory.js';
 
 const router = express.Router();
-
-function timingSafeEqualString(a, b) {
-  if (typeof a !== 'string' || typeof b !== 'string') return false;
-  const ba = Buffer.from(a);
-  const bb = Buffer.from(b);
-  if (ba.length !== bb.length) return false;
-  return crypto.timingSafeEqual(ba, bb);
-}
-
-/** JWT utilisateur OU clé n8n (x-api-key = WEBHOOK_API_KEY). */
-export function requireAuthOrApiKey(req, res, next) {
-  const cle = req.header('x-api-key');
-  if (cle && timingSafeEqualString(cle, process.env.WEBHOOK_API_KEY || '')) {
-    req.authMode = 'apiKey';
-    return next();
-  }
-  return requireAuth(req, res, next);
-}
 
 router.use(aiRateLimit, requireAuthOrApiKey);
 

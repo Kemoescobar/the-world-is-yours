@@ -1,64 +1,109 @@
 # Workflows n8n — THE WORLD IS YOURS
 
-4 workflows prêts à importer + patterns pour les restants. **Pas obligatoire** pour la vitrine soft-launch.
+4 workflows prêts à importer + patterns pour les 3 restants à assembler toi-même sur le même modèle.
 
-## Activation copy-paste (quand tu veux)
+## Lancer n8n (local, port 5678)
 
-### A. Lancer n8n (Docker local — une commande)
+### Prérequis
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) (Windows)
+- Copie `n8n/.env.example` → `n8n/.env` et renseigne les secrets
+
+### Démarrage
 
 ```powershell
-docker run -d --name twiy-n8n -p 5678:5678 -v twiy_n8n_data:/home/node/.n8n n8nio/n8n
+cd C:\twiy\n8n
+Copy-Item .env.example .env   # si .env n'existe pas encore
+# Éditer .env : TWIY_WEBHOOK_KEY = WEBHOOK_API_KEY de server/.env
+docker compose up -d
 ```
 
-Puis ouvre http://localhost:5678 et crée le compte owner n8n.
+UI : **http://localhost:5678**
 
-Sans Docker : utilise [n8n Cloud](https://n8n.io/cloud/) ou une instance déjà installée — les étapes B–D restent identiques.
+Arrêt : `docker compose down` (les données persistent dans le volume `n8n_data`).
 
-### B. Variables n8n (Settings → Variables)
+### Alternative sans Docker
 
-| Variable | Valeur |
-|----------|--------|
+```powershell
+cd C:\twiy\n8n
+# Charger les vars depuis .env puis :
+npx n8n
+```
+
+## Variables n8n (prod TWIY)
+
+| Variable | Exemple |
+|----------|---------|
 | `TWIY_API_URL` | `https://the-world-is-yours-production.up.railway.app/api` |
-| `TWIY_WEBHOOK_KEY` | même valeur que `WEBHOOK_API_KEY` sur Railway |
-| `OBSIDIAN_API_KEY` | Plugin Local REST API (si sync Obsidian) |
-| `ANTHROPIC_API_KEY` | **ne pas inventer** — inutile pour `revue-dominicale.json` (passe par Railway `/ai/revue`) |
+| `TWIY_WEBHOOK_KEY` | même valeur que `WEBHOOK_API_KEY` Railway / `server/.env` |
+| `OBSIDIAN_API_KEY` | Plugin Local REST API |
+| `ANTHROPIC_API_KEY` | *(optionnel)* seulement si un workflow appelle Claude en direct — `revue-dominicale.json` n’en a plus besoin |
 
-### C. Importer les 4 fichiers
+Ces variables sont injectées via `n8n/.env` + `docker-compose.yml` et accessibles dans les expressions `{{$env.TWIY_API_URL}}`, etc.
 
-Dans n8n : menu ☰ → **Import from File** → un par un :
+**Phase 3 :** `revue-dominicale.json` appelle `POST {{$env.TWIY_API_URL}}/ai/revue` avec `x-api-key: {{$env.TWIY_WEBHOOK_KEY}}` — rédaction + mémoire coaching côté Railway. Voir `docs/phase-3.md`.
 
-1. `sync-obsidian-supabase.json`
-2. `alerte-streak-soir.json`
-3. `revue-dominicale.json`
-4. `backup-hebdo.json`
+## Import des workflows
 
-### D. Tester puis activer
+### Via UI
+1. Ouvre http://localhost:5678 — crée le compte owner au premier lancement
+2. Pour chaque `.json` de ce dossier : menu (☰) → **Import from File**
+3. Active chaque workflow (toggle en haut à droite) **après** un test manuel (bouton **Execute Workflow**)
 
-Pour chaque workflow :
+### Via CLI (conteneur déjà up)
 
-1. Ouvre-le → **Execute Workflow** (manuel) → vérifier 200 / pas d’erreur auth
-2. Toggle **Active** (haut à droite) seulement après un run OK
+```powershell
+cd C:\twiy\n8n
+docker compose exec n8n n8n import:workflow --input=/workflows/sync-obsidian-supabase.json
+docker compose exec n8n n8n import:workflow --input=/workflows/alerte-streak-soir.json
+docker compose exec n8n n8n import:workflow --input=/workflows/revue-dominicale.json
+docker compose exec n8n n8n import:workflow --input=/workflows/backup-hebdo.json
+```
+
+Les workflows importés restent **inactifs** par défaut. Activation CLI après import :
+
+```powershell
+docker compose exec n8n n8n list:workflow
+docker compose exec n8n n8n publish:workflow --id=twiy-alerte-streak-soir
+# ids : twiy-sync-obsidian-supabase | twiy-alerte-streak-soir | twiy-revue-dominicale | twiy-backup-hebdo
+```
+
+Sinon : UI → ouvrir chaque workflow → toggle **Active**.
+
+## Activation (checklist)
+
+1. Railway : `ANTHROPIC_API_KEY` sur le service `server` → Redeploy (requis pour `/ai/revue`)
+2. n8n `.env` : `TWIY_API_URL` + `TWIY_WEBHOOK_KEY` (= `WEBHOOK_API_KEY`)
+3. Obsidian : plugin **Local REST API** démarré + `OBSIDIAN_API_KEY` dans `.env`
+4. Importer les 4 JSON → **Execute Workflow** une fois chacun → activer le toggle
+5. Paramètres TWIY → statut Claude OK (optionnel, pour la UI)
+
+## Caveats importants
+
+### Docker → Obsidian
+Les JSON du repo pointent déjà vers `http://host.docker.internal:27123/...` (pas `127.0.0.1` — depuis le conteneur, localhost = le conteneur). `extra_hosts` est dans `docker-compose.yml`.
+
+Si tu réimporte depuis une vieille copie avec `127.0.0.1`, remplace par `host.docker.internal`.
+
+### Anthropic
+La revue dominicale **n’a pas besoin** de `ANTHROPIC_API_KEY` dans n8n — la clé vit sur Railway. Sans clé Anthropic côté Railway, `POST /ai/revue` échouera.
+
+### Notifications streak
+Le nœud « Notifier » d’`alerte-streak-soir.json` crée une entrée via `/api/entree` (dashboard). Pour une vraie alerte : remplace par Telegram ou Email dans n8n.
 
 ## Workflows fournis
 
 | Fichier | Déclencheur | Rôle |
 |---|---|---|
-| `sync-obsidian-supabase.json` | Toutes les heures | Frontmatter vault (`02-Projets`) → table `quetes` |
-| `alerte-streak-soir.json` | Chaque soir 21h | Streaks non alimentés → notifie |
-| `revue-dominicale.json` | Dimanche 8h | `POST /ai/revue` (`x-api-key`) → écrit dans Obsidian |
-| `backup-hebdo.json` | Lundi 4h | `GET /api/export` → vault |
+| `sync-obsidian-supabase.json` | Toutes les heures | Frontmatter du vault (`02-Projets`) → table `quetes` |
+| `alerte-streak-soir.json` | Chaque soir 21h | Repère les streaks non alimentés aujourd'hui, notifie |
+| `revue-dominicale.json` | Dimanche 8h | `POST /ai/revue` (x-api-key) → écrit la revue dans Obsidian |
+| `backup-hebdo.json` | Lundi 4h | Exporte toutes les tables Supabase (`/api/export`) vers le vault |
 
-**Phase 3 :** `revue-dominicale.json` appelle `POST {{$env.TWIY_API_URL}}/ai/revue` avec `x-api-key: {{$env.TWIY_WEBHOOK_KEY}}`. Voir `docs/phase-3.md`.
+## Workflows à assembler toi-même (même schéma)
 
-## Le nœud "Notifier" d'`alerte-streak-soir.json`
+Tous suivent le même squelette **Cron → HTTP Request(s) → Code (agrégation) → HTTP Request (écriture)** — copie `revue-dominicale.json` comme point de départ et adapte :
 
-Câblé sur `/api/entree` (entrée `type_fait: alerte`). Pour une vraie notif : node **Telegram** ou **Send Email** (credentials dans n8n, sans toucher au serveur).
-
-## Workflows à assembler toi-même
-
-Même squelette **Cron → HTTP Request(s) → Code → HTTP Request** — copie `revue-dominicale.json` :
-
-- **Rappels de routine** : Cron créneaux → `/api/quetes?type=routine`
-- **Checklist sortie beatmaker** : Webhook Trigger sur note `statut: shippe` dans `04-Beatmaker`
-- **Suivi Mvola** : Cron hebdo tant que `statut: en_attente`
-- **Veille hebdo** : guide MCP Partie 5.2 (pas d’API TWIY requise)
+- **Rappels de routine** : Cron sur chaque créneau de ta table Routine → notifie le bloc du moment (`/api/quetes?type=routine`)
+- **Checklist de sortie beatmaker** : **Webhook Trigger** quand une note passe `statut: shippe` dans `04-Beatmaker`
+- **Suivi démarches Mvola** : Cron hebdo → rappel tant que `statut: en_attente`
+- **Veille hebdo** : guide MCP Partie 5.2 — pas d’intégration TWIY supplémentaire

@@ -1,0 +1,29 @@
+services:
+  n8n:
+    image: n8nio/n8n:latest
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    env_file:
+      - .env
+    environment:
+      - N8N_HOST=localhost
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - WEBHOOK_URL=http://localhost:5678/
+      - GENERIC_TIMEZONE=${GENERIC_TIMEZONE:-Indian/Antananarivo}
+      - TZ=${TZ:-Indian/Antananarivo}
+      - N8N_SECURE_COOKIE=false
+      # Expose custom vars to workflow expressions ($env.*)
+      - TWIY_API_URL=${TWIY_API_URL}
+      - TWIY_WEBHOOK_KEY=${TWIY_WEBHOOK_KEY}
+      - OBSIDIAN_API_KEY=${OBSIDIAN_API_KEY:-}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ./:/workflows:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+volumes:
+  n8n_data:

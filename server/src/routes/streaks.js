@@ -1,12 +1,12 @@
 import express from 'express';
 import { supabase } from '../supabaseClient.js';
 import { jourLocal, hierLocal } from '../lib/dates.js';
-import { requireAuth } from '../middleware/auth.js';
+import { requireAuthOrApiKey } from '../middleware/auth.js';
 import { evaluerRupturesStreak, marquerReprise } from '../lib/streaksLogic.js';
 
 const router = express.Router();
 
-router.get('/', requireAuth, async (req, res) => {
+router.get('/', requireAuthOrApiKey, async (req, res) => {
   // Évalue les ruptures à chaque lecture (cheap, mono-user)
   await evaluerRupturesStreak();
 
