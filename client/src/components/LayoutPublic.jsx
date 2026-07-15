@@ -1,7 +1,10 @@
 import { Link } from 'react-router-dom';
+import { useSecretLoginClick } from '../lib/useSecretLoginClick.js';
 
 /** Layout vitrine — pas de QuickCapture, pas de nav dashboard. */
 export default function LayoutPublic({ children }) {
+  const onSecretLogin = useSecretLoginClick();
+
   return (
     <div className="layout" style={{ position: 'relative', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <div className="halftone-overlay halftone-live" />
@@ -33,13 +36,6 @@ export default function LayoutPublic({ children }) {
         <Link to="/catalogue/instrus" style={{ color: 'var(--text-muted)', textDecoration: 'none' }}>
           Sound
         </Link>
-        <Link
-          to="/login"
-          className="btn-ghost"
-          style={{ marginLeft: 'auto', textDecoration: 'none', padding: '6px 12px', fontSize: '0.68rem' }}
-        >
-          Entrer
-        </Link>
         <div className="chrome-bar--nav" aria-hidden />
       </nav>
       <main style={{ position: 'relative', zIndex: 1, flex: 1 }}>{children}</main>
@@ -60,7 +56,12 @@ export default function LayoutPublic({ children }) {
           color: 'var(--text-muted)',
         }}
       >
-        <span>THE WORLD IS YOURS</span>
+        <span
+          onClick={onSecretLogin}
+          style={{ cursor: 'default', userSelect: 'none' }}
+        >
+          THE WORLD IS YOURS
+        </span>
         <span style={{ color: 'rgba(255,210,63,0.35)' }} aria-hidden>•</span>
         <Link to="/mentions" style={{ color: 'var(--text-muted)', textDecoration: 'none' }}>
           Mentions légales

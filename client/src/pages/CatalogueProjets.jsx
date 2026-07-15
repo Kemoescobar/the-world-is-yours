@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { apiGet, apiPost, apiPatch } from '../lib/api.js';
 import { uploadCapture } from '../lib/storageUpload.js';
 import CoverFlow from '../components/CoverFlow.jsx';
@@ -238,9 +237,7 @@ export default function CatalogueProjets({ mode = 'public' }) {
         </h1>
         <p className="compteur" style={{ marginTop: 10 }}>
           {String(items.length).padStart(2, '0')} / {String(Math.max(items.length, 1)).padStart(2, '0')} case{items.length > 1 ? 's' : ''}
-          {editable ? ' • studio' : (
-            <> • <Link to="/login" style={{ color: 'var(--jaune)' }}>connexion</Link> pour ajouter</>
-          )}
+          {editable ? ' • studio' : null}
         </p>
         <div className="chrome-bar chrome-bar--thin" aria-hidden />
       </header>
@@ -286,11 +283,6 @@ export default function CatalogueProjets({ mode = 'public' }) {
             La vitrine CODE attend des captures et des liens live — pas une grille vide.
           </p>
           <span className="annotation-manuscrite" style={{ position: 'relative', marginTop: 16, display: 'block' }}>en construction</span>
-          {editable ? null : (
-            <Link to="/login" className="btn-poster" style={{ position: 'relative', marginTop: 20, textDecoration: 'none', display: 'inline-flex' }}>
-              Entrer pour ajouter
-            </Link>
-          )}
         </div>
       ) : (
         <>

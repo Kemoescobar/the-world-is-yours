@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { apiGet } from '../lib/api.js';
+import { useSecretLoginClick } from '../lib/useSecretLoginClick.js';
 
 export default function Home() {
+  const onSecretLogin = useSecretLoginClick();
   const [stats, setStats] = useState({ projets: 0, instrus: 0, arcs: 3 });
 
   useEffect(() => {
@@ -51,35 +53,33 @@ export default function Home() {
           position: 'relative',
           zIndex: 2,
           padding: 'var(--space-4)',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'flex-start',
-          gap: 16,
         }}
       >
-        <div>
-          <p className="compteur" style={{ marginBottom: 8 }}>
-            <span className="caret-blink" aria-hidden>›</span> LOOK {lookN} / ARCHIVE
-            <span style={{ color: 'rgba(255,210,63,0.5)' }}> • </span>
-            HUD 1440
-          </p>
-          <p
-            className="title-dither title-wide title-ghost-wrap"
-            data-ghost="THE WORLD IS YOURS"
-            style={{ fontSize: 'clamp(1.75rem, 5.5vw, 2.7rem)', margin: 0, lineHeight: 0.9 }}
-          >
-            THE WORLD IS YOURS
-          </p>
-          <p className="compteur" style={{ marginTop: 10 }}>
-            PUBLIC PROOF
-            <span style={{ color: 'rgba(255,210,63,0.5)' }}> • </span>
-            CODE / SOUND
-          </p>
-          <div className="chrome-bar chrome-bar--thin" aria-hidden style={{ marginTop: 14, maxWidth: 180 }} />
-        </div>
-        <Link to="/login" className="btn-ghost" style={{ textDecoration: 'none', padding: '10px 14px' }}>
-          Entrer
-        </Link>
+        <p className="compteur" style={{ marginBottom: 8 }}>
+          <span className="caret-blink" aria-hidden>›</span> LOOK {lookN} / ARCHIVE
+          <span style={{ color: 'rgba(255,210,63,0.5)' }}> • </span>
+          HUD 1440
+        </p>
+        <p
+          className="title-dither title-wide title-ghost-wrap"
+          data-ghost="THE WORLD IS YOURS"
+          onClick={onSecretLogin}
+          style={{
+            fontSize: 'clamp(1.75rem, 5.5vw, 2.7rem)',
+            margin: 0,
+            lineHeight: 0.9,
+            cursor: 'default',
+            userSelect: 'none',
+          }}
+        >
+          THE WORLD IS YOURS
+        </p>
+        <p className="compteur" style={{ marginTop: 10 }}>
+          PUBLIC PROOF
+          <span style={{ color: 'rgba(255,210,63,0.5)' }}> • </span>
+          CODE / SOUND
+        </p>
+        <div className="chrome-bar chrome-bar--thin" aria-hidden style={{ marginTop: 14, maxWidth: 180 }} />
       </header>
 
       <div

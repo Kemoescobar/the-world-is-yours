@@ -50,10 +50,11 @@ export default function App() {
     setEntre(true);
   }
 
-  // /login + pages légales accessibles sans SoundGate
+  // /login (/os) + pages légales accessibles sans SoundGate
   const gateOk =
     entre ||
     location.pathname === '/login' ||
+    location.pathname === '/os' ||
     location.pathname === '/mentions' ||
     location.pathname === '/confidentialite';
 
@@ -66,6 +67,7 @@ export default function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/os" element={<Login />} />
             <Route path="/mentions" element={<LayoutPublic><MentionsLegales /></LayoutPublic>} />
             <Route path="/confidentialite" element={<LayoutPublic><Confidentialite /></LayoutPublic>} />
 

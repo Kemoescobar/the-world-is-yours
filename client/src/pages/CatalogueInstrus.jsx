@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import WaveSurfer from 'wavesurfer.js';
-import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase.js';
 import { apiGet, apiPost, apiPatch } from '../lib/api.js';
 import { uploadCapture } from '../lib/storageUpload.js';
@@ -276,9 +275,7 @@ export default function CatalogueInstrus({ mode = 'public' }) {
         </h1>
         <p className="compteur" style={{ marginTop: 10 }}>
           {String(showcase.length).padStart(2, '0')} / {String(Math.max(showcase.length, 1)).padStart(2, '0')} showcase
-          {editable ? ' • studio' : (
-            <> • <Link to="/login" style={{ color: 'var(--jaune)' }}>connexion</Link> pour publier</>
-          )}
+          {editable ? ' • studio' : null}
         </p>
         <div className="chrome-bar chrome-bar--thin" aria-hidden />
       </header>
@@ -323,11 +320,6 @@ export default function CatalogueInstrus({ mode = 'public' }) {
             Le catalogue est une vitrine waveform — pas une page vide. Upload la première session depuis le studio.
           </p>
           <span className="annotation-manuscrite" style={{ marginTop: 16, display: 'block' }}>à venir…</span>
-          {editable ? null : (
-            <Link to="/login" className="btn-poster" style={{ marginTop: 20, textDecoration: 'none', display: 'inline-flex' }}>
-              Entrer pour publier
-            </Link>
-          )}
         </div>
       ) : (
         <>
