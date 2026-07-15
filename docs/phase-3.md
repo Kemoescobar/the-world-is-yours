@@ -50,7 +50,7 @@ Workflows dans `n8n/` — variables :
 | `TWIY_API_URL` | `https://the-world-is-yours-production.up.railway.app/api` |
 | `TWIY_WEBHOOK_KEY` | = `WEBHOOK_API_KEY` Railway |
 | `ANTHROPIC_API_KEY` | (si le workflow appelle Anthropic direct) |
-| `OBSIDIAN_API_KEY` | Local REST API |
+| `OBSIDIAN_API_KEY` | Local REST API — setup : [`obsidian-rest.md`](./obsidian-rest.md) |
 
 Préférer appeler **`POST /ai/revue`** depuis n8n (auth `x-api-key`) plutôt que dupliquer Claude dans le workflow.
 

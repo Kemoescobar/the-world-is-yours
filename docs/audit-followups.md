@@ -63,7 +63,7 @@ Note : HIBP est souvent réservé au **plan Pro** et plus. Advisor : `auth_leake
 - [x] Workflows JSON (Obsidian → `host.docker.internal`)
 - [ ] Premier compte owner n8n UI si pas encore créé → http://localhost:5678
 - [x] Toggle **Active** / `publish:workflow` (4/4 actifs dans n8n local)
-- [ ] Obsidian Local REST API + `OBSIDIAN_API_KEY` pour sync/backup/revue écriture vault
+- [x] Obsidian Local REST API + `OBSIDIAN_API_KEY` pour sync/backup/revue écriture vault (voir `docs/obsidian-rest.md` ; Obsidian doit rester ouvert)
 - [ ] Attendre redeploy Railway après push (pour que `/streaks`+`/export`+`/quetes` acceptent `x-api-key`) puis valider alerte-streak
 
 ### Légal / assets

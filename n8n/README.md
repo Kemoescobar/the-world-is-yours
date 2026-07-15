@@ -73,7 +73,7 @@ Sinon : UI → ouvrir chaque workflow → toggle **Active**.
 
 1. Railway : `ANTHROPIC_API_KEY` sur le service `server` → Redeploy (requis pour `/ai/revue`)
 2. n8n `.env` : `TWIY_API_URL` + `TWIY_WEBHOOK_KEY` (= `WEBHOOK_API_KEY`)
-3. Obsidian : plugin **Local REST API** démarré + `OBSIDIAN_API_KEY` dans `.env`
+3. Obsidian : plugin **Local REST API** démarré + `OBSIDIAN_API_KEY` dans `.env` — guide : [`docs/obsidian-rest.md`](../docs/obsidian-rest.md)
 4. Importer les 4 JSON → **Execute Workflow** une fois chacun → activer le toggle
 5. Paramètres TWIY → statut Claude OK (optionnel, pour la UI)
 
@@ -83,6 +83,8 @@ Sinon : UI → ouvrir chaque workflow → toggle **Active**.
 Les JSON du repo pointent déjà vers `http://host.docker.internal:27123/...` (pas `127.0.0.1` — depuis le conteneur, localhost = le conteneur). `extra_hosts` est dans `docker-compose.yml`.
 
 Si tu réimporte depuis une vieille copie avec `127.0.0.1`, remplace par `host.docker.internal`.
+
+Setup détaillé (clics Obsidian, vault Midas, tests curl) : [`docs/obsidian-rest.md`](../docs/obsidian-rest.md).
 
 ### Anthropic
 La revue dominicale **n’a pas besoin** de `ANTHROPIC_API_KEY` dans n8n — la clé vit sur Railway. Sans clé Anthropic côté Railway, `POST /ai/revue` échouera.
