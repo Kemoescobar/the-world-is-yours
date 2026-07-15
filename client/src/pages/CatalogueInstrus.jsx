@@ -2,7 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import WaveSurfer from 'wavesurfer.js';
 import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase.js';
-import { apiGet, apiPost } from '../lib/api.js';
+import { apiGet, apiPost, apiPatch } from '../lib/api.js';
+import { uploadCapture } from '../lib/storageUpload.js';
 import CoverFlow from '../components/CoverFlow.jsx';
 
 function Player({ url, peaks }) {
@@ -57,11 +58,26 @@ async function peaksFromFile(file) {
 
 function InstruSleeve({ item, index, focused }) {
   const n = String(index + 1).padStart(2, '0');
+  const cover = item.cover_url;
   return (
-    <div className="cover-sleeve chrome-specular">
+    <div className={`cover-sleeve cover-sleeve--vinyl chrome-specular${cover ? ' has-cover' : ''}`}>
       <div className="cover-sleeve__media">
-        <img src="/brand/vinyl-chrome.png" alt="" aria-hidden style={{ objectFit: 'contain', padding: '12%' }} />
-        <span className="compteur" style={{ position: 'relative', zIndex: 1, color: 'var(--jaune)' }}>
+        {cover ? (
+          <img
+            src={cover}
+            alt={item.titre ? `Pochette — ${item.titre}` : 'Pochette'}
+            loading="lazy"
+            className="cover-sleeve__art"
+          />
+        ) : (
+          <img
+            src="/brand/vinyl-chrome.png"
+            alt=""
+            aria-hidden
+            className="cover-sleeve__vinyl-fallback"
+          />
+        )}
+        <span className="compteur cover-sleeve__badge" style={{ color: 'var(--jaune)' }}>
           {n} / SHOWCASE
         </span>
       </div>
@@ -77,6 +93,108 @@ function InstruSleeve({ item, index, focused }) {
   );
 }
 
+function InstruEditForm({ item, onSaved }) {
+  const [titre, setTitre] = useState(item.titre || '');
+  const [bpm, setBpm] = useState(item.bpm != null ? String(item.bpm) : '');
+  const [genre, setGenre] = useState(item.genre || '');
+  const [statut, setStatut] = useState(item.statut || 'showcase');
+  const [coverUrl, setCoverUrl] = useState(item.cover_url || '');
+  const [busy, setBusy] = useState(false);
+  const [erreur, setErreur] = useState('');
+
+  async function onCover(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setBusy(true);
+    setErreur('');
+    try {
+      const url = await uploadCapture(file, `covers/${item.id}`);
+      setCoverUrl(url);
+    } catch (err) {
+      setErreur(err.message);
+    } finally {
+      setBusy(false);
+      e.target.value = '';
+    }
+  }
+
+  async function sauver(e) {
+    e.preventDefault();
+    setBusy(true);
+    setErreur('');
+    try {
+      const updated = await apiPatch(`/instrumentaux/${item.id}`, {
+        titre: titre.trim(),
+        bpm: bpm ? Number(bpm) : null,
+        genre: genre || null,
+        statut,
+        cover_url: coverUrl || null,
+      });
+      onSaved(updated);
+    } catch (err) {
+      setErreur(err.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <form onSubmit={sauver} className="chrome-panel chrome-edge catalogue-edit" style={{ padding: 'var(--space-3)', display: 'grid', gap: 10 }}>
+      <p className="compteur">ÉDITER · {item.titre}</p>
+      <input
+        required
+        value={titre}
+        onChange={(e) => setTitre(e.target.value)}
+        placeholder="Titre"
+        className="os-input"
+      />
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+        <input
+          value={bpm}
+          onChange={(e) => setBpm(e.target.value)}
+          placeholder="BPM"
+          type="number"
+          className="os-input"
+        />
+        <input
+          value={genre}
+          onChange={(e) => setGenre(e.target.value)}
+          placeholder="Genre"
+          className="os-input"
+        />
+      </div>
+      <select
+        value={statut}
+        onChange={(e) => setStatut(e.target.value)}
+        className="os-input"
+      >
+        <option value="showcase">showcase</option>
+        <option value="prive">privé</option>
+      </select>
+      <div>
+        <p className="compteur" style={{ marginBottom: 8 }}>POCHETTE · SLEEVE</p>
+        {coverUrl ? (
+          <div className="capture-thumbs">
+            <div className="capture-thumbs__item">
+              <img src={coverUrl} alt="Pochette" />
+              <button type="button" className="btn-ghost" onClick={() => setCoverUrl('')}>
+                ×
+              </button>
+            </div>
+          </div>
+        ) : (
+          <p className="compteur" style={{ opacity: 0.55 }}>chrome vinyl si vide</p>
+        )}
+        <input type="file" accept="image/*" disabled={busy} onChange={onCover} style={{ marginTop: 8 }} />
+      </div>
+      {erreur && <p className="annotation-manuscrite">{erreur}</p>}
+      <button type="submit" className="btn-poster" disabled={busy}>
+        {busy ? 'Enregistrement…' : 'Enregistrer'}
+      </button>
+    </form>
+  );
+}
+
 export default function CatalogueInstrus({ mode = 'public' }) {
   const editable = mode === 'edit';
   const [items, setItems] = useState([]);
@@ -84,10 +202,12 @@ export default function CatalogueInstrus({ mode = 'public' }) {
   const [bpm, setBpm] = useState('');
   const [genre, setGenre] = useState('');
   const [fichier, setFichier] = useState(null);
+  const [coverFile, setCoverFile] = useState(null);
   const [statut, setStatut] = useState('idle');
   const [erreur, setErreur] = useState('');
   const [actif, setActif] = useState(null);
   const [focusItem, setFocusItem] = useState(null);
+  const [editingId, setEditingId] = useState(null);
 
   async function charger() {
     const data = await apiGet('/instrumentaux', { auth: editable });
@@ -115,18 +235,24 @@ export default function CatalogueInstrus({ mode = 'public' }) {
       });
       if (upErr) throw upErr;
       const { data: pub } = supabase.storage.from('instrumentaux').getPublicUrl(path);
+      let cover_url = null;
+      if (coverFile) {
+        cover_url = await uploadCapture(coverFile, 'covers');
+      }
       await apiPost('/instrumentaux', {
         titre: titre.trim(),
         bpm: bpm ? Number(bpm) : null,
         genre: genre || null,
         statut: 'showcase',
         fichier_url: pub.publicUrl,
+        cover_url,
         waveform_data: peaks,
       });
       setTitre('');
       setBpm('');
       setGenre('');
       setFichier(null);
+      setCoverFile(null);
       await charger();
       setStatut('ok');
     } catch (err) {
@@ -161,14 +287,21 @@ export default function CatalogueInstrus({ mode = 'public' }) {
         <form onSubmit={uploader} className="chrome-panel" style={{ padding: 'var(--space-3)', margin: 'var(--space-4) 0', display: 'grid', gap: 10 }}>
           <p className="compteur">NOUVEL UPLOAD</p>
           <input value={titre} onChange={(e) => setTitre(e.target.value)} placeholder="Titre" required
-            style={{ padding: 10, background: 'var(--bg-2)', color: 'var(--text)', border: '1px solid var(--bg-3)' }} />
+            className="os-input" />
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
             <input value={bpm} onChange={(e) => setBpm(e.target.value)} placeholder="BPM" type="number"
-              style={{ padding: 10, background: 'var(--bg-2)', color: 'var(--text)', border: '1px solid var(--bg-3)' }} />
+              className="os-input" />
             <input value={genre} onChange={(e) => setGenre(e.target.value)} placeholder="Genre"
-              style={{ padding: 10, background: 'var(--bg-2)', color: 'var(--text)', border: '1px solid var(--bg-3)' }} />
+              className="os-input" />
           </div>
-          <input type="file" accept="audio/*" onChange={(e) => setFichier(e.target.files?.[0] || null)} />
+          <label className="compteur" style={{ display: 'grid', gap: 6 }}>
+            Audio
+            <input type="file" accept="audio/*" onChange={(e) => setFichier(e.target.files?.[0] || null)} />
+          </label>
+          <label className="compteur" style={{ display: 'grid', gap: 6 }}>
+            Pochette (optionnel)
+            <input type="file" accept="image/*" onChange={(e) => setCoverFile(e.target.files?.[0] || null)} />
+          </label>
           {erreur && <p className="annotation-manuscrite">{erreur}</p>}
           <button type="submit" disabled={statut === 'envoi'} className="btn-poster">
             {statut === 'envoi' ? 'Upload…' : 'Publier'}
@@ -217,17 +350,44 @@ export default function CatalogueInstrus({ mode = 'public' }) {
                 <p className="compteur">
                   <span className="caret-blink" aria-hidden>›</span> DECK · {listening.titre}
                 </p>
-                {actif !== listening.id ? (
-                  <button type="button" className="btn-ghost" onClick={() => setActif(listening.id)}>
-                    › Écouter
-                  </button>
-                ) : null}
+                <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                  {actif !== listening.id ? (
+                    <button type="button" className="btn-ghost" onClick={() => setActif(listening.id)}>
+                      › Écouter
+                    </button>
+                  ) : null}
+                  {editable && (
+                    <button
+                      type="button"
+                      className="btn-ghost"
+                      onClick={() => setEditingId(editingId === listening.id ? null : listening.id)}
+                    >
+                      {editingId === listening.id ? '› Fermer' : '› Éditer'}
+                    </button>
+                  )}
+                </div>
               </div>
+              <p className="compteur" style={{ marginTop: 8 }}>
+                {[listening.bpm && `${listening.bpm} BPM`, listening.genre, listening.statut].filter(Boolean).join(' · ')}
+              </p>
               {actif === listening.id ? (
                 <div style={{ marginTop: 12 }}>
                   <Player url={listening.fichier_url} peaks={listening.waveform_data ? [listening.waveform_data] : undefined} />
                 </div>
               ) : null}
+              {editable && editingId === listening.id && (
+                <div style={{ marginTop: 16 }}>
+                  <InstruEditForm
+                    key={`${listening.id}-${listening.cover_url || ''}`}
+                    item={listening}
+                    onSaved={(updated) => {
+                      setItems((prev) => prev.map((i) => (i.id === updated.id ? updated : i)));
+                      setFocusItem(updated);
+                      setEditingId(null);
+                    }}
+                  />
+                </div>
+              )}
             </div>
           )}
 
@@ -239,6 +399,20 @@ export default function CatalogueInstrus({ mode = 'public' }) {
                 return (
                   <article key={item.id} className="instru-ship">
                     <div className="instru-ship__wave">
+                      {item.cover_url ? (
+                        <img
+                          src={item.cover_url}
+                          alt=""
+                          style={{ width: 72, height: 72, objectFit: 'cover', border: '1px solid rgba(200,220,255,0.2)' }}
+                        />
+                      ) : (
+                        <img
+                          src="/brand/vinyl-chrome.png"
+                          alt=""
+                          aria-hidden
+                          style={{ width: 56, height: 56, objectFit: 'contain', opacity: 0.7 }}
+                        />
+                      )}
                       <span className="compteur" style={{ color: 'var(--jaune)' }}>{n} / SHOWCASE</span>
                       {actif === item.id ? (
                         <Player url={item.fichier_url} peaks={item.waveform_data ? [item.waveform_data] : undefined} />
@@ -254,6 +428,17 @@ export default function CatalogueInstrus({ mode = 'public' }) {
                       <p className="compteur">
                         {[item.bpm && `${item.bpm} BPM`, item.genre].filter(Boolean).join(' · ') || 'session'}
                       </p>
+                      <button
+                        type="button"
+                        className="btn-ghost"
+                        style={{ marginTop: 8, alignSelf: 'flex-start' }}
+                        onClick={() => {
+                          setFocusItem(item);
+                          setEditingId(item.id);
+                        }}
+                      >
+                        › Éditer
+                      </button>
                     </div>
                   </article>
                 );

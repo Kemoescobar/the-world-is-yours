@@ -97,6 +97,7 @@ create table instrumentaux (
   tags text[],
   statut text default 'showcase',     -- showcase | prive
   fichier_url text not null,          -- Supabase Storage, bucket 'instrumentaux'
+  cover_url text,                     -- sleeve art, bucket 'captures' (public)
   waveform_data jsonb,
   cree_le timestamptz default now()
 );
@@ -105,10 +106,11 @@ create table instrumentaux (
 create table projets_dev (
   id uuid primary key default gen_random_uuid(),
   titre text not null,
-  description text,
+  description text,                   -- presentation / lookbook text
   lien_github text,
   lien_live text,
-  capture_url text,                   -- bucket 'captures'
+  capture_url text,                   -- legacy primary shot; mirrors captures[0]
+  captures text[] default '{}',       -- screenshots, bucket 'captures'
   fichier_url text,                   -- bucket 'projets', optionnel
   stack text[],
   statut text default 'shippe',
