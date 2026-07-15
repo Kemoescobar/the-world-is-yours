@@ -28,3 +28,13 @@ Clone CRT beige AWGE · néons partout · SaaS cards · hero typo seule
 4. Template Drop  
 5. Empty states catalogues  
 6. Polish Chantier  
+
+## Moodboard vidéos (Phase 2.2)
+Frames analysées → voir [`moodboard-videos.md`](./moodboard-videos.md).
+
+**Ajouts DA issus des clips :**
+- Void + grille technique (spiral showreel) · bloom chrome
+- Titres ghostés / display plus wide · HUD `›` `•` mono
+- Split catalogue street (bleu plein / panneaux) sans crème de fond site
+- Grain / scanlines / iridescent edge intensifiés  
+Palette identité **bleu nuit · rouge · jaune** inchangée.

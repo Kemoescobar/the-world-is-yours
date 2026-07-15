@@ -28,7 +28,7 @@ export default function Nav() {
 
   return (
     <nav
-      className="nav-primary"
+      className="nav-primary nav-chrome"
       style={{
         display: 'flex',
         gap: 'var(--space-3)',
@@ -38,27 +38,12 @@ export default function Nav() {
         textTransform: 'uppercase',
         alignItems: 'center',
         flexWrap: 'wrap',
-        borderBottom: '1px solid rgba(255,255,255,0.08)',
-        background: 'rgba(6,10,26,0.85)',
-        backdropFilter: 'blur(8px)',
         position: 'sticky',
         top: 0,
         zIndex: 20,
       }}
     >
-      <Link
-        to="/"
-        style={{
-          color: 'var(--text)',
-          textDecoration: 'none',
-          fontFamily: 'var(--font-display)',
-          fontWeight: 800,
-          fontSize: '0.95rem',
-          letterSpacing: '-0.04em',
-          textTransform: 'uppercase',
-          marginRight: 4,
-        }}
-      >
+      <Link to="/" className="nav-brand" style={{ marginRight: 4 }}>
         TWIY
       </Link>
 
@@ -68,7 +53,7 @@ export default function Nav() {
         </NavLink>
       ))}
 
-      <span style={{ color: 'rgba(255,255,255,0.15)' }}>|</span>
+      <span style={{ color: 'rgba(255,210,63,0.3)' }}>•</span>
 
       {outils.map((l) => (
         <NavLink key={l.to} to={l.to} style={linkStyle}>

@@ -132,12 +132,14 @@ export default function CatalogueProjets({ mode = 'public' }) {
 
   return (
     <div style={{ padding: 'var(--space-4)', maxWidth: 1100, margin: '0 auto' }}>
-      <p className="compteur" style={{ marginBottom: 8 }}>01 · CODE · BLUEPRINT</p>
-      <h1 style={{ fontSize: 'clamp(2.2rem, 7vw, 3.6rem)', lineHeight: 0.95 }}>Projets shippés</h1>
+      <p className="compteur" style={{ marginBottom: 8 }}>01 • CODE • BLUEPRINT</p>
+      <h1 className="title-dither" style={{ fontSize: 'clamp(2.2rem, 7vw, 3.6rem)', lineHeight: 0.95 }}>
+        Projets shippés
+      </h1>
       <p className="compteur" style={{ marginTop: 10 }}>
-        {items.length} case{items.length > 1 ? 's' : ''}
-        {editable ? ' · studio' : (
-          <> · <Link to="/login" style={{ color: 'var(--jaune)' }}>connexion</Link> pour ajouter</>
+        {String(items.length).padStart(2, '0')} case{items.length > 1 ? 's' : ''}
+        {editable ? ' • studio' : (
+          <> • <Link to="/login" style={{ color: 'var(--jaune)' }}>connexion</Link> pour ajouter</>
         )}
       </p>
 
@@ -164,7 +166,7 @@ export default function CatalogueProjets({ mode = 'public' }) {
       {!items.length ? (
         <div className="empty-wall" style={{ marginTop: 'var(--space-4)' }}>
           <div className="blueprint-grid" aria-hidden style={{ position: 'absolute', inset: 0, opacity: 0.35 }} />
-          <p className="compteur" style={{ position: 'relative' }}>MUR DE PREUVES · CODE</p>
+          <p className="compteur" style={{ position: 'relative' }}>MUR DE PREUVES • CODE</p>
           <h2 style={{ position: 'relative', fontSize: 'clamp(1.6rem, 4vw, 2.4rem)', margin: '12px 0' }}>Aucun projet shippé</h2>
           <p style={{ position: 'relative', color: 'var(--text-muted)', maxWidth: 360 }}>
             La vitrine CODE attend des captures et des liens live — pas une grille vide.

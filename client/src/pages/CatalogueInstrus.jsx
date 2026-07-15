@@ -113,12 +113,14 @@ export default function CatalogueInstrus({ mode = 'public' }) {
 
   return (
     <div style={{ padding: 'var(--space-4)', maxWidth: 1100, margin: '0 auto' }}>
-      <p className="compteur" style={{ marginBottom: 8 }}>02 · SOUND · CHROME</p>
-      <h1 style={{ fontSize: 'clamp(2.2rem, 7vw, 3.6rem)', lineHeight: 0.95 }}>Instrumentaux</h1>
+      <p className="compteur" style={{ marginBottom: 8 }}>02 • SOUND • CHROME</p>
+      <h1 className="title-dither" style={{ fontSize: 'clamp(2.2rem, 7vw, 3.6rem)', lineHeight: 0.95 }}>
+        Instrumentaux
+      </h1>
       <p className="compteur" style={{ marginTop: 10 }}>
-        {showcase.length} showcase
-        {editable ? ' · studio' : (
-          <> · <Link to="/login" style={{ color: 'var(--jaune)' }}>connexion</Link> pour publier</>
+        {String(showcase.length).padStart(2, '0')} showcase
+        {editable ? ' • studio' : (
+          <> • <Link to="/login" style={{ color: 'var(--jaune)' }}>connexion</Link> pour publier</>
         )}
       </p>
 
@@ -149,7 +151,7 @@ export default function CatalogueInstrus({ mode = 'public' }) {
             aria-hidden
             style={{ position: 'absolute', right: 24, bottom: 16, width: 140, opacity: 0.35, transform: 'rotate(-20deg)' }}
           />
-          <p className="compteur">MUR DE PREUVES · SOUND</p>
+          <p className="compteur">MUR DE PREUVES • SOUND</p>
           <h2 style={{ fontSize: 'clamp(1.6rem, 4vw, 2.4rem)', margin: '12px 0' }}>Aucune instru encore</h2>
           <p style={{ color: 'var(--text-muted)', maxWidth: 360 }}>
             Le catalogue est une vitrine waveform — pas une page vide. Upload la première session depuis le studio.

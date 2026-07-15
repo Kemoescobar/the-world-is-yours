@@ -6,6 +6,7 @@ export default function LayoutPublic({ children }) {
     <div className="layout" style={{ position: 'relative', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <div className="halftone-overlay" />
       <nav
+        className="nav-chrome"
         style={{
           display: 'flex',
           gap: 18,
@@ -13,30 +14,18 @@ export default function LayoutPublic({ children }) {
           fontFamily: 'var(--font-mono)',
           fontSize: '0.72rem',
           textTransform: 'uppercase',
-          borderBottom: '1px solid rgba(255,255,255,0.08)',
           alignItems: 'center',
           position: 'relative',
           zIndex: 2,
-          background: 'rgba(6,10,26,0.75)',
         }}
       >
-        <Link
-          to="/"
-          style={{
-            color: 'var(--text)',
-            textDecoration: 'none',
-            fontFamily: 'var(--font-display)',
-            fontWeight: 800,
-            fontSize: '0.95rem',
-            letterSpacing: '-0.04em',
-            textTransform: 'uppercase',
-          }}
-        >
+        <Link to="/" className="nav-brand">
           TWIY
         </Link>
         <Link to="/catalogue/projets" style={{ color: 'var(--text-muted)', textDecoration: 'none' }}>
           Code
         </Link>
+        <span aria-hidden style={{ color: 'rgba(255,210,63,0.35)' }}>•</span>
         <Link to="/catalogue/instrus" style={{ color: 'var(--text-muted)', textDecoration: 'none' }}>
           Sound
         </Link>
@@ -50,11 +39,13 @@ export default function LayoutPublic({ children }) {
       </nav>
       <main style={{ position: 'relative', zIndex: 1, flex: 1 }}>{children}</main>
       <footer
+        className="nav-chrome"
         style={{
           position: 'relative',
           zIndex: 2,
           padding: 'var(--space-3) var(--space-4)',
-          borderTop: '1px solid rgba(255,255,255,0.08)',
+          borderTop: '1px solid rgba(200,220,255,0.12)',
+          borderBottom: 'none',
           fontFamily: 'var(--font-mono)',
           fontSize: '0.68rem',
           textTransform: 'uppercase',
@@ -62,7 +53,6 @@ export default function LayoutPublic({ children }) {
           flexWrap: 'wrap',
           gap: 16,
           color: 'var(--text-muted)',
-          background: 'rgba(6,10,26,0.75)',
         }}
       >
         <span>THE WORLD IS YOURS</span>

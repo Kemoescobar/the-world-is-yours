@@ -9,7 +9,7 @@ export default function SoundGate({ onEnter }) {
 
   return (
     <div
-      className="anim-gate"
+      className="anim-gate chrome-edge chrome-edge-live"
       style={{
         position: 'fixed',
         inset: 0,
@@ -22,44 +22,61 @@ export default function SoundGate({ onEnter }) {
     >
       <div
         aria-hidden
+        className="atmosphere-void void-grid atmosphere-breathe"
+        style={{
+          position: 'absolute',
+          inset: 0,
+        }}
+      />
+      <div
+        aria-hidden
         style={{
           position: 'absolute',
           inset: 0,
           background:
-            'radial-gradient(ellipse at 70% 40%, rgba(91,45,158,0.45), transparent 55%), radial-gradient(ellipse at 20% 80%, rgba(19,39,90,0.9), transparent 50%), #060a1a',
+            'radial-gradient(ellipse at 72% 38%, rgba(42,111,176,0.42), transparent 52%), radial-gradient(ellipse at 18% 78%, rgba(255,59,48,0.12), transparent 45%), radial-gradient(ellipse at 50% 100%, rgba(19,39,90,0.85), transparent 50%)',
         }}
       />
       <img
         src="/brand/globe-hand.png"
         alt=""
         aria-hidden
+        className="sticker-cutout"
         style={{
           position: 'absolute',
-          right: '-8%',
-          bottom: '-12%',
-          width: 'min(72vw, 640px)',
-          opacity: 0.55,
-          filter: 'contrast(1.1) saturate(1.05)',
-          maskImage: 'linear-gradient(to left, black 40%, transparent 95%)',
-          WebkitMaskImage: 'linear-gradient(to left, black 40%, transparent 95%)',
+          right: '-6%',
+          bottom: '-10%',
+          width: 'min(68vw, 600px)',
+          opacity: 0.58,
+          filter: 'contrast(1.12) saturate(1.08)',
+          maskImage: 'linear-gradient(to left, black 45%, transparent 96%)',
+          WebkitMaskImage: 'linear-gradient(to left, black 45%, transparent 96%)',
           pointerEvents: 'none',
+          boxShadow: 'none',
+          clipPath: 'none',
         }}
       />
       <div className="grain grain-live" />
       <div className="scanlines scanlines-live" />
-      <div className="halftone-overlay halftone-live" style={{ position: 'absolute', zIndex: 3, opacity: 0.2 }} />
+      <div className="halftone-overlay halftone-live" style={{ position: 'absolute', zIndex: 3, opacity: 0.24 }} />
 
-      <div style={{ position: 'relative', zIndex: 4, textAlign: 'center', padding: 'var(--space-4)', maxWidth: 640 }}>
+      <div style={{ position: 'relative', zIndex: 4, textAlign: 'center', padding: 'var(--space-4)', maxWidth: 680 }}>
         <p className="compteur" style={{ marginBottom: 'var(--space-3)' }}>
           <span className="caret-blink">›</span> SYSTEM READY
+          <span style={{ color: 'rgba(255,210,63,0.45)' }}> • </span>
+          PRESS START
         </p>
-        <h1 className="title-dither" style={{ fontSize: 'clamp(2.8rem, 11vw, 5.5rem)', lineHeight: 0.88, marginBottom: 'var(--space-2)' }}>
+        <h1
+          className="title-dither title-ghost-wrap"
+          data-ghost="THE WORLD IS YOURS"
+          style={{ fontSize: 'clamp(2.8rem, 11vw, 5.5rem)', lineHeight: 0.88, marginBottom: 'var(--space-2)' }}
+        >
           THE WORLD
           <br />
           IS YOURS
         </h1>
-        <p style={{ color: 'var(--text-muted)', marginBottom: 'var(--space-4)', fontSize: '0.95rem' }}>
-          Chroniques · Chantier · Preuves
+        <p className="compteur" style={{ marginBottom: 'var(--space-4)', color: 'var(--text-muted)' }}>
+          Chroniques • Chantier • Preuves
         </p>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, justifyContent: 'center' }}>
           <button type="button" className="btn-poster" onClick={() => enter(true)}>

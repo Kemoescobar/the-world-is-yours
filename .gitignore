@@ -5,3 +5,4 @@ client/.env
 server/.env
 *.log
 .DS_Store
+tmp/
