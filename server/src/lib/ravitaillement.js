@@ -4,8 +4,10 @@
  */
 
 export const ARCS_RAVITAILLEMENT = ['dev', 'beatmaker'];
-export const ACTIVES_TRIGGER = 1; // ≤1 active → proposer
-export const ACTIVES_TARGET = 4; // remplir jusqu'à 3–4 (cible haute)
+/** Besoin de refill si actifs < cible (lot de 3). */
+export const ACTIVES_TARGET = 3;
+/** Taille d’un lot proposé (exactement 3 quand l’arc est vide). */
+export const LOT_SIZE = 3;
 
 const NIVEAU_ORDER = { initiation: 0, pratique: 1, maitrise: 2 };
 
@@ -91,7 +93,7 @@ function titreCourt(titre) {
  * Génère N titres concrets pour une compétence (pas le titre brut seul).
  */
 export function genererDrafts(comp, besoin) {
-  const n = Math.max(0, Math.min(4, besoin));
+  const n = Math.max(0, Math.min(LOT_SIZE, besoin));
   if (!n || !comp) return [];
 
   const short = titreCourt(comp.titre);
@@ -153,6 +155,8 @@ export function labelArc(arcId) {
 
 /**
  * Construit une proposition pour un arc (ou signal roadmap terminée).
+ * Lot : remplit jusqu’à ACTIVES_TARGET (exactement LOT_SIZE si arc vide).
+ * Parcourt plusieurs compétences si besoin pour compléter le lot.
  */
 export function preparerPropositionArc({
   arcId,
@@ -162,7 +166,7 @@ export function preparerPropositionArc({
   skipCompetenceIds = [],
 }) {
   const actives = quetesActivesArc(quetes, arcId);
-  if (actives.length > ACTIVES_TRIGGER) {
+  if (actives.length >= ACTIVES_TARGET) {
     return {
       trigger: false,
       actives: actives.length,
@@ -170,11 +174,43 @@ export function preparerPropositionArc({
     };
   }
 
+  const besoin = Math.max(1, Math.min(LOT_SIZE, ACTIVES_TARGET - actives.length));
   const preuvesIds = preuveSetFromRows(preuves);
   const compsArc = (competences || []).filter((c) => c.arc_id === arcId && c.source_roadmap);
-  const competence = choisirCompetence(compsArc, quetes, preuvesIds, { skipCompetenceIds });
 
-  if (!competence) {
+  const drafts = [];
+  const competencesUtilisees = [];
+  const skip = new Set(skipCompetenceIds);
+  // Quêtes virtuelles pour éviter de resaturer la même compétence dans le lot
+  const quetesVirtuelles = [...(quetes || [])];
+
+  while (drafts.length < besoin) {
+    const competence = choisirCompetence(compsArc, quetesVirtuelles, preuvesIds, {
+      skipCompetenceIds: [...skip],
+    });
+    if (!competence) break;
+
+    const remaining = besoin - drafts.length;
+    const batch = genererDrafts(competence, remaining);
+    if (!batch.length) {
+      skip.add(competence.id);
+      continue;
+    }
+
+    drafts.push(...batch);
+    competencesUtilisees.push(competence);
+    skip.add(competence.id);
+    // Marque la compétence comme saturée pour la suite du lot
+    for (const d of batch) {
+      quetesVirtuelles.push({
+        competence_id: d.competence_id,
+        type: d.type,
+        statut: 'a_faire',
+      });
+    }
+  }
+
+  if (!drafts.length) {
     return {
       trigger: true,
       actives: actives.length,
@@ -185,15 +221,14 @@ export function preparerPropositionArc({
     };
   }
 
-  const besoin = Math.max(1, ACTIVES_TARGET - actives.length);
-  const drafts = genererDrafts(competence, besoin);
-
+  const primary = competencesUtilisees[0];
   return {
     trigger: true,
     actives: actives.length,
     roadmap_terminee: false,
-    competence,
+    competence: primary,
     drafts,
     cible: ACTIVES_TARGET,
+    lot: drafts.length,
   };
 }

@@ -1,6 +1,6 @@
 # Ravitaillement — design + implémentation
 
-**Statut** : **implemented** (2026-07-16) · Dev + Beatmaker · Croisement **skipped**.  
+**Statut** : **implemented** (2026-07-16) · Dev + Beatmaker · Croisement **hidden** (UI) + **skipped** (ravitaillement).  
 **Rôle** : remplir le Chantier de quêtes concrètes quand un arc manque d’actifs, à partir de l’arbre compétences / roadmap — jamais en silence.
 
 ---
@@ -13,8 +13,9 @@ Les compétences seedées (Dev + Beatmaker) existent ; les quêtes actives ne so
 
 ## Déclencheur
 
-- **Condition** : ≤ **1** quête active (`a_faire` / `en_cours`) **par arc** (`type === arc`).
-- **Hors scope** : arc **Croisement** — pas de ravitaillement tant que l’arbre Croisement n’est pas peuplé.
+- **Condition** : actifs (`a_faire` / `en_cours`) **&lt; 3** **par arc** (`type === arc`).
+- **Scan** : **tous** les arcs Dev + Beatmaker en un seul passage (pas un arc à la fois).
+- **Hors scope** : arc **Croisement** — pas de ravitaillement ; carte / route Chantier masquées (DB conservée).
 
 ---
 
@@ -23,15 +24,16 @@ Les compétences seedées (Dev + Beatmaker) existent ; les quêtes actives ne so
 1. Parcourir l’arbre de l’arc dans l’**ordre roadmap** (`source_roadmap` / semaine → cours) + **niveaux** Initiation → Pratique → Maîtrise.
 2. Si `prerequis` est présent : ne proposer une compétence que si les prérequis ont des **preuves**.
 3. Compétence **couverte** (preuve ou quête `fait` liée) / **saturée** (quête active liée) → skip.
-4. Choisir **une** compétence cible.
+4. Remplir le lot en enchaînant les compétences ouvertes si besoin.
 
 Code : `server/src/lib/ravitaillement.js`.
 
 ---
 
-## Génération de quêtes
+## Génération de quêtes — lot ×3
 
-- Remplir jusqu’à une cible de **4** actifs sur l’arc (3–4).
+- Cible : **3** actifs par arc (`ACTIVES_TARGET` / `LOT_SIZE`).
+- Arc vide → **exactement 3** brouillons ; sinon refill jusqu’à 3.
 - Titres **concrets** (templates + ligne `Projet:` roadmap Beatmaker) — pas le titre brut de la compétence.
 - Chaque brouillon porte un **`competence_id`**.
 
@@ -41,7 +43,8 @@ Code : `server/src/lib/ravitaillement.js`.
 
 - **Jamais** d’injection silencieuse en `quetes`.
 - Table `ravitaillement_propositions` (`statut = proposee`) + accepter / refuser.
-- UI : bandeau **Contremaître** sur le Chantier (liste des drafts + boutons).
+- UI : bandeau **Contremaître** — **une** carte listant **tous** les arcs needy (lots ×3) + **Accepter tout** / **Refuser**.
+- Accepter crée le **lot entier** (3 ou refill) en une action — pas une quête à la fois.
 
 ### API
 
@@ -49,8 +52,9 @@ Code : `server/src/lib/ravitaillement.js`.
 |---|---|---|
 | GET | `/api/ravitaillement/status` | Actifs / besoin / roadmap terminée / props ouvertes |
 | GET | `/api/ravitaillement/actif` | Propositions `proposee` |
-| POST | `/api/ravitaillement/proposer` | Corps optionnel `{ arc_id?: 'dev'\|'beatmaker' }` → brouillons |
-| POST | `/api/ravitaillement/:id/repondre` | `{ action: 'accepter'\|'refuser' }` — accepter **seul** crée les quêtes |
+| POST | `/api/ravitaillement/proposer` | Corps optionnel `{ arc_id?: 'dev'\|'beatmaker' }` → lots pour tous les arcs needy |
+| POST | `/api/ravitaillement/repondre-lot` | `{ action: 'accepter'\|'refuser' }` — tous les lots ouverts |
+| POST | `/api/ravitaillement/:id/repondre` | `{ action }` — un lot (arc) |
 
 ---
 
@@ -62,7 +66,7 @@ Signal : **`roadmap [arc] terminée`** (ex. `roadmap Dev terminée`) — pas de 
 
 ## Croisement — aside
 
-**Skipped** en v1. Revisiter après seed / design arbre Croisement.
+**Hidden** en UI Chantier / ArcDetail ; **skipped** en ravitaillement. Revisiter après seed / design arbre Croisement.
 
 ---
 
@@ -80,6 +84,8 @@ Signal : **`roadmap [arc] terminée`** (ex. `roadmap Dev terminée`) — pas de 
 ```powershell
 cd C:\twiy\server
 npm test
-# smoke (WEBHOOK_API_KEY) :
-# POST /api/ravitaillement/proposer → Accepter dans l’UI Chantier
+# smoke (WEBHOOK_API_KEY ou session) :
+# GET  /api/ravitaillement/status  → besoin sur Dev et/ou Beatmaker
+# POST /api/ravitaillement/proposer → lots ×3
+# Accepter tout dans l’UI Chantier
 ```

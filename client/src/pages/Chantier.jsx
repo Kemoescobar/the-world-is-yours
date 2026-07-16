@@ -9,7 +9,9 @@ import ContremaitreBanner from '../components/ContremaitreBanner.jsx';
 import { apiGet } from '../lib/api.js';
 import { useAuth } from '../auth/AuthContext.jsx';
 
-const streakParArc = { dev: 'dev', beatmaker: 'miprod', croisement: null };
+const streakParArc = { dev: 'dev', beatmaker: 'miprod' };
+/** Croisement mis de côté — UI hide seulement (DB inchangée). */
+const ARCS_CACHES = new Set(['croisement']);
 
 const ROUTINES = ['Aube', 'Miprod', 'Dev', 'Étude', 'Odin', 'Miprod+'];
 
@@ -135,6 +137,11 @@ export default function Chantier() {
     return c0?.titre || 'Chapitre 0 — Amorçage';
   }, [chapitres]);
 
+  const arcsVisibles = useMemo(
+    () => arcs.filter((a) => !ARCS_CACHES.has(a.id)),
+    [arcs],
+  );
+
   const faites = quetes.filter((q) => q.statut === 'fait').length;
   const totalStreak = streaks.reduce((acc, s) => acc + (s.jours_consecutifs || 0), 0);
 
@@ -171,7 +178,7 @@ export default function Chantier() {
       <div className="os-stat-rail" aria-label="Compteurs chantier">
         <div>
           <p className="compteur">ARCS</p>
-          <p className="os-stat-rail__n">{chargement ? '…' : (arcs.length || 0)}</p>
+          <p className="os-stat-rail__n">{chargement ? '…' : (arcsVisibles.length || 0)}</p>
         </div>
         <div>
           <p className="compteur">QUÊTES</p>
@@ -193,7 +200,7 @@ export default function Chantier() {
         ))}
       </div>
 
-      {!chargement && !erreurPrincipale && !arcs.length && (
+      {!chargement && !erreurPrincipale && !arcsVisibles.length && (
         <div className="empty-wall" style={{ marginTop: 16, textAlign: 'center' }}>
           <p className="compteur">ARCS</p>
           <h2 style={{ margin: '12px 0' }}>Aucun arc depuis l’API</h2>
@@ -202,7 +209,7 @@ export default function Chantier() {
       )}
 
       <div className="os-arcs">
-        {arcs.map((a) => {
+        {arcsVisibles.map((a) => {
           const liste = quetesPourArc(a.id);
           const chap = chapitrePourArc(a.id);
           const rompu = chap?.statut === 'rompu';

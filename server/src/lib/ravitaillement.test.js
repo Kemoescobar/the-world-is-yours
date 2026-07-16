@@ -11,6 +11,8 @@ import {
   preparerPropositionArc,
   quetesActivesArc,
   preuveSetFromRows,
+  ACTIVES_TARGET,
+  LOT_SIZE,
 } from './ravitaillement.js';
 
 const comps = [
@@ -73,7 +75,7 @@ describe('ravitaillement', () => {
     }
   });
 
-  it('trigger ≤1 actif et remplit jusqu’à 4', () => {
+  it('trigger si actifs < 3 et lot exact de 3 quand vide', () => {
     const prep = preparerPropositionArc({
       arcId: 'dev',
       competences: comps,
@@ -81,16 +83,30 @@ describe('ravitaillement', () => {
       preuves: [],
     });
     assert.equal(prep.trigger, true);
-    assert.equal(prep.drafts.length, 4);
+    assert.equal(prep.drafts.length, LOT_SIZE);
+    assert.equal(prep.cible, ACTIVES_TARGET);
     assert.equal(prep.competence.id, 'c1');
   });
 
-  it('pas de trigger si assez d’actifs', () => {
+  it('refill partiel jusqu’à 3 si déjà 1 actif', () => {
+    const quetes = [{ type: 'dev', statut: 'a_faire', titre: 'A' }];
+    const prep = preparerPropositionArc({
+      arcId: 'dev',
+      competences: comps,
+      quetes,
+      preuves: [],
+    });
+    assert.equal(prep.trigger, true);
+    assert.equal(prep.drafts.length, 2);
+  });
+
+  it('pas de trigger si assez d’actifs (≥3)', () => {
     const quetes = [
       { type: 'dev', statut: 'a_faire', titre: 'A' },
       { type: 'dev', statut: 'en_cours', titre: 'B' },
+      { type: 'dev', statut: 'a_faire', titre: 'C' },
     ];
-    assert.equal(quetesActivesArc(quetes, 'dev').length, 2);
+    assert.equal(quetesActivesArc(quetes, 'dev').length, 3);
     const prep = preparerPropositionArc({
       arcId: 'dev',
       competences: comps,

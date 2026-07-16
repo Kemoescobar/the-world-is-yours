@@ -133,6 +133,11 @@ export const ravitaillementRepondreSchema = z.object({
   action: z.enum(['accepter', 'refuser']),
 });
 
+/** Accepter / refuser toutes les propositions ouvertes (lots Dev + Beatmaker). */
+export const ravitaillementRepondreLotSchema = z.object({
+  action: z.enum(['accepter', 'refuser']),
+});
+
 export const createInstrumentalSchema = z.object({
   titre: z.string().trim().min(1).max(300),
   bpm: z.number().int().positive().optional().nullable(),

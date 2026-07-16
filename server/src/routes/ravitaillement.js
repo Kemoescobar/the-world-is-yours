@@ -2,10 +2,10 @@ import express from 'express';
 import { supabase } from '../supabaseClient.js';
 import { requireAuthOrApiKey } from '../middleware/auth.js';
 import { validateBody } from '../middleware/validate.js';
-import { ravitaillementRepondreSchema, ravitaillementProposerSchema } from '../schemas.js';
+import { ravitaillementRepondreSchema, ravitaillementProposerSchema, ravitaillementRepondreLotSchema } from '../schemas.js';
 import {
   ARCS_RAVITAILLEMENT,
-  ACTIVES_TRIGGER,
+  ACTIVES_TARGET,
   preparerPropositionArc,
   quetesActivesArc,
   labelArc,
@@ -56,7 +56,9 @@ router.get('/status', async (req, res) => {
       });
       arcs[arcId] = {
         actives: n,
-        besoin_ravitaillement: n <= ACTIVES_TRIGGER,
+        besoin_ravitaillement: n < ACTIVES_TARGET,
+        cible: ACTIVES_TARGET,
+        manquants: Math.max(0, ACTIVES_TARGET - n),
         roadmap_terminee: Boolean(prep.roadmap_terminee),
         message: prep.message || null,
       };
@@ -83,8 +85,8 @@ router.get('/actif', async (req, res) => {
 });
 
 /**
- * Propose des brouillons si ≤1 quête active sur l'arc.
- * Jamais d'insert quetes ici — statut proposee seulement.
+ * Propose des lots (refill jusqu’à ACTIVES_TARGET) pour tous les arcs
+ * Dev + Beatmaker en besoin — jamais d'insert quetes ici.
  */
 router.post('/proposer', validateBody(ravitaillementProposerSchema), async (req, res) => {
   try {
@@ -138,7 +140,7 @@ router.post('/proposer', validateBody(ravitaillementProposerSchema), async (req,
           competence_id: prep.competence.id,
           drafts: prep.drafts,
           statut: 'proposee',
-          note: `Remplir jusqu'à ${prep.cible} actifs · ${labelArc(arcId)} · ${prep.competence.titre}`,
+          note: `Lot ×${prep.lot || prep.drafts.length} · jusqu'à ${prep.cible} actifs · ${labelArc(arcId)} · ${prep.competence.titre}`,
         })
         .select()
         .single();
@@ -161,6 +163,69 @@ router.post('/proposer', validateBody(ravitaillementProposerSchema), async (req,
       signaux,
       skip_croisement: true,
     });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * Accepter ou refuser tous les lots ouverts (Dev + Beatmaker) en une action.
+ * Enregistré avant /:id/repondre pour éviter toute collision de route.
+ */
+router.post('/repondre-lot', validateBody(ravitaillementRepondreLotSchema), async (req, res) => {
+  try {
+    const action = req.body.action;
+    const props = await propositionsActives();
+    if (!props.length) {
+      return res.json({ ok: true, propositions: [], quetes: [] });
+    }
+
+    const now = new Date().toISOString();
+    const allQuetes = [];
+    const updated = [];
+
+    if (action === 'refuser') {
+      for (const prop of props) {
+        const { data, error } = await supabase
+          .from('ravitaillement_propositions')
+          .update({ statut: 'refusee', date_reponse: now })
+          .eq('id', prop.id)
+          .eq('statut', 'proposee')
+          .select()
+          .single();
+        if (error) return res.status(500).json({ error: error.message });
+        updated.push(data);
+      }
+      return res.json({ ok: true, propositions: updated, quetes: [] });
+    }
+
+    for (const prop of props) {
+      const drafts = Array.isArray(prop.drafts) ? prop.drafts : [];
+      if (!drafts.length) continue;
+
+      const rows = drafts.map((d) => ({
+        type: d.type || prop.arc_id,
+        titre: d.titre,
+        statut: 'a_faire',
+        competence_id: d.competence_id || prop.competence_id,
+      }));
+
+      const { data: quetes, error: qErr } = await supabase.from('quetes').insert(rows).select();
+      if (qErr) return res.status(500).json({ error: qErr.message });
+      allQuetes.push(...(quetes || []));
+
+      const { data, error } = await supabase
+        .from('ravitaillement_propositions')
+        .update({ statut: 'acceptee', date_reponse: now })
+        .eq('id', prop.id)
+        .eq('statut', 'proposee')
+        .select()
+        .single();
+      if (error) return res.status(500).json({ error: error.message });
+      updated.push(data);
+    }
+
+    res.status(201).json({ ok: true, propositions: updated, quetes: allQuetes });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -190,7 +255,7 @@ router.post('/:id/repondre', validateBody(ravitaillementRepondreSchema), async (
     return res.json({ ok: true, proposition: data, quetes: [] });
   }
 
-  // accepter → créer les quêtes (seul moment d'insert)
+  // accepter → créer le lot entier de quêtes (seul moment d'insert)
   const drafts = Array.isArray(prop.drafts) ? prop.drafts : [];
   if (!drafts.length) {
     return res.status(400).json({ error: 'aucun brouillon à accepter' });

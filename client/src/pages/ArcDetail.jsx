@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, Navigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { validerQuete } from '../store/slices/questsSlice.js';
 import OsHeader from '../components/OsHeader.jsx';
@@ -181,6 +181,11 @@ export default function ArcDetail() {
     } finally {
       setPreuveBusy(false);
     }
+  }
+
+  // Croisement mis de côté — redirect UI (DB inchangée)
+  if (arc === 'croisement') {
+    return <Navigate to="/chantier" replace />;
   }
 
   return (
