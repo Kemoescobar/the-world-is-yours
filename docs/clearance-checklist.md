@@ -13,9 +13,9 @@ Références repo : [`audit-followups.md`](./audit-followups.md) (section Légal
 
 | Fichier | Usage code | Signal risque (observation) |
 |---------|------------|-----------------------------|
-| `globe-hand.png` | SoundGate ; fallback sleeve Catalogue Projets ; favicon + OG/Twitter (`client/index.html`) | **Remplacé 2026-07-15** — image générée IA (Cursor), sans UI tierce / watermark |
-| `globe-youth.png` | Home (atmosphère bas-centre) | **Remplacé 2026-07-15** — image générée IA (Cursor), sans logos / texte marque |
-| `vinyl-chrome.png` | Home pane SOUND ; fallback vinyl Catalogue Instrus | **Remplacé 2026-07-15** — image générée IA (Cursor), vinyle chrome sans watermark |
+| `globe-hand.png` | SoundGate ; fallback sleeve Catalogue Projets ; favicon + OG/Twitter (`client/index.html`) | **Remplacé 2026-07-16** — Nano Banana / Gemini, DA World Poster (halftone + HUD) |
+| `globe-youth.png` | Home (atmosphère bas-centre) | **Remplacé 2026-07-16** — Nano Banana / Gemini, collage cosmique + chantier |
+| `vinyl-chrome.png` | Home pane SOUND ; fallback vinyl Catalogue Instrus | **Remplacé 2026-07-16** — Nano Banana / Gemini, vinyl chrome void |
 
 ### Hors `public/` (OK pour DA privée, pas pour ship)
 
@@ -41,17 +41,16 @@ Références repo : [`audit-followups.md`](./audit-followups.md) (section Légal
 Pour chaque fichier, note la **source** (photo perso / IA + outil / stock + licence / téléchargement tiers) et la **décision** (OK public · remplacer · retirer).
 
 - [x] `client/public/brand/globe-hand.png`  
-  - Source : IA Cursor (génération 2026-07-15)  
-  - Décision : remplacé — OK pour soft-launch ; revalider ToS plateforme si ouverture commerciale large
+  - Source : Nano Banana / Gemini (2026-07-16) — DA World Poster validée  
+  - Décision : remplacé — OK soft-launch
 
 - [x] `client/public/brand/globe-youth.png`  
-  - Source : IA Cursor (génération 2026-07-15)  
+  - Source : Nano Banana / Gemini (2026-07-16)  
   - Décision : remplacé
 
 - [x] `client/public/brand/vinyl-chrome.png`  
-  - Outil IA / date : Cursor, 2026-07-15  
-  - ToS commercial / affichage public OK ? à confirmer côté plateforme si monétisation  
-  - Watermark : aucun sur le nouveau rendu  
+  - Outil IA / date : Nano Banana / Gemini, 2026-07-16  
+  - Watermark : aucun  
   - Décision : remplacé
 
 ---
