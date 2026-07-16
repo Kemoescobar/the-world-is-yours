@@ -1,16 +1,14 @@
 import { useEffect, useState } from 'react';
 
 /**
- * Bandeau Contremaître / message matin + propositions Ravitaillement — Chantier.
- * Ravitaillement : lots ×3 par arc needy (Dev + Beatmaker), jamais d'injection silencieuse.
- * Une carte : tous les arcs en refill + Accepter tout / Refuser.
+ * Bandeau Contremaître / message matin + note Ravitaillement auto — Chantier.
+ * Ravitaillement : refill automatique à 3 actifs (Dev + Beatmaker), sans Accepter/Refuser.
  */
 export default function ContremaitreBanner() {
   const [data, setData] = useState(null);
-  const [ravitaillements, setRavitaillements] = useState([]);
+  const [noteRav, setNoteRav] = useState('');
   const [signauxTerminee, setSignauxTerminee] = useState([]);
   const [erreur, setErreur] = useState('');
-  const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -27,25 +25,26 @@ export default function ContremaitreBanner() {
           if (active) payload.message = `Suggestion : ${active.ressource_titre}`;
         }
 
-        let props = [];
+        let note = '';
         let terminees = [];
         try {
-          const status = await apiGet('/ravitaillement/status');
-          props = status?.propositions || [];
-          terminees = Object.entries(status?.arcs || {})
-            .filter(([, a]) => a.roadmap_terminee)
-            .map(([arc, a]) => a.message || `roadmap ${arc} terminée`);
+          const auto = await apiPost('/ravitaillement/auto', {});
+          const n = auto?.total_ajoutees || 0;
+          for (const s of auto?.signaux || []) {
+            if (s.roadmap_terminee && s.message) terminees.push(s.message);
+          }
+          for (const m of auto?.roadmap_terminees || []) {
+            if (m) terminees.push(m);
+          }
+          terminees = [...new Set(terminees)];
 
-          const besoin = Object.entries(status?.arcs || {}).some(
-            ([, a]) => a.besoin_ravitaillement && !a.roadmap_terminee,
-          );
-          // Propose pour TOUS les arcs needy (Dev + Beatmaker) en un seul appel
-          if (besoin && !props.length) {
-            const proposed = await apiPost('/ravitaillement/proposer', {});
-            props = proposed?.propositions || [];
-            for (const s of proposed?.signaux || []) {
-              if (s.roadmap_terminee && s.message) terminees.push(s.message);
-            }
+          if (n > 0) {
+            note = auto.message || `Ravitaillement auto · ${n} quête${n > 1 ? 's' : ''} ajoutée${n > 1 ? 's' : ''}`;
+            window.dispatchEvent(new CustomEvent('twiy:quetes-changed'));
+          } else if (terminees.length) {
+            note = '';
+          } else if (auto?.message) {
+            note = auto.message;
           }
         } catch {
           // soft — table / route peut manquer avant migration
@@ -53,8 +52,8 @@ export default function ContremaitreBanner() {
 
         if (!cancelled) {
           setData(payload);
-          setRavitaillements(props);
-          setSignauxTerminee([...new Set(terminees)]);
+          setNoteRav(note);
+          setSignauxTerminee(terminees);
         }
       } catch (err) {
         if (!cancelled) setErreur(err.message);
@@ -74,33 +73,10 @@ export default function ContremaitreBanner() {
     }
   }
 
-  async function repondreLot(action) {
-    if (!ravitaillements.length) return;
-    setBusy(true);
-    setErreur('');
-    try {
-      const { apiPost } = await import('../lib/api.js');
-      await apiPost('/ravitaillement/repondre-lot', { action });
-      setRavitaillements([]);
-      if (action === 'accepter') {
-        window.dispatchEvent(new CustomEvent('twiy:quetes-changed'));
-      }
-    } catch (err) {
-      setErreur(err.message);
-    } finally {
-      setBusy(false);
-    }
-  }
-
   const hasContre = Boolean(data?.contremaitre || data?.message);
-  const hasRav = ravitaillements.length > 0 || signauxTerminee.length > 0;
+  const hasRav = Boolean(noteRav) || signauxTerminee.length > 0;
   if (!data && !erreur && !hasRav) return null;
   if (!hasContre && !hasRav && !erreur) return null;
-
-  const totalDrafts = ravitaillements.reduce(
-    (n, p) => n + (Array.isArray(p.drafts) ? p.drafts.length : 0),
-    0,
-  );
 
   return (
     <aside
@@ -150,57 +126,19 @@ export default function ContremaitreBanner() {
           </p>
         ))}
 
-        {ravitaillements.length > 0 && (
-          <div
+        {noteRav && (
+          <p
+            className="compteur"
             style={{
               borderTop: hasContre || signauxTerminee.length ? '1px solid rgba(255,210,63,0.2)' : undefined,
               paddingTop: hasContre || signauxTerminee.length ? 12 : 0,
+              marginBottom: 0,
+              color: noteRav.includes('ajoutée') ? 'var(--jaune)' : undefined,
             }}
+            role="status"
           >
-            <p className="compteur" style={{ marginBottom: 10 }}>
-              RAVITAILLEMENT · {ravitaillements.length} arc
-              {ravitaillements.length > 1 ? 's' : ''} · {totalDrafts} quête
-              {totalDrafts > 1 ? 's' : ''} (lots ×3)
-            </p>
-
-            {ravitaillements.map((prop) => (
-              <div key={prop.id} style={{ marginBottom: 12 }}>
-                <p className="compteur" style={{ marginBottom: 6, color: 'var(--jaune)' }}>
-                  {String(prop.arc_id).toUpperCase()}
-                  {prop.note ? ` · ${prop.note}` : ` · lot ×${(prop.drafts || []).length}`}
-                </p>
-                <ul className="os-list" style={{ marginBottom: 4 }}>
-                  {(prop.drafts || []).map((d, i) => (
-                    <li key={`${prop.id}-${i}`}>
-                      <span style={{ color: 'var(--jaune)' }}>›</span>
-                      <span>{d.titre}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 4 }}>
-              <button
-                type="button"
-                className="btn-ghost"
-                style={{ fontSize: '0.7rem' }}
-                disabled={busy}
-                onClick={() => repondreLot('accepter')}
-              >
-                Accepter tout
-              </button>
-              <button
-                type="button"
-                className="btn-ghost"
-                style={{ fontSize: '0.7rem' }}
-                disabled={busy}
-                onClick={() => repondreLot('refuser')}
-              >
-                Refuser
-              </button>
-            </div>
-          </div>
+            {noteRav}
+          </p>
         )}
       </div>
     </aside>

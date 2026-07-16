@@ -1,7 +1,9 @@
 # Ravitaillement — design + implémentation
 
-**Statut** : **implemented** (2026-07-16) · Dev + Beatmaker · Croisement **hidden** (UI) + **skipped** (ravitaillement).  
-**Rôle** : remplir le Chantier de quêtes concrètes quand un arc manque d’actifs, à partir de l’arbre compétences / roadmap — jamais en silence.
+**Statut** : **auto** (2026-07-16) · Dev + Beatmaker · Croisement **hidden** (UI) + **skipped** (ravitaillement).  
+**Rôle** : remplir le Chantier de quêtes concrètes quand un arc manque d’actifs, à partir de l’arbre compétences / roadmap.
+
+> **Override produit (2026-07-16)** : l’ancien principe « jamais d’injection silencieuse » est **abandonné**. Le chemin normal crée les quêtes **directement** (pas de carte Accepter / Refuser). L’UI informe seulement (`Ravitaillement auto · N quêtes ajoutées`).
 
 ---
 
@@ -15,6 +17,7 @@ Les compétences seedées (Dev + Beatmaker) existent ; les quêtes actives ne so
 
 - **Condition** : actifs (`a_faire` / `en_cours`) **&lt; 3** **par arc** (`type === arc`).
 - **Scan** : **tous** les arcs Dev + Beatmaker en un seul passage (pas un arc à la fois).
+- **Quand** : chargement Chantier → bandeau Contremaître appelle `POST /api/ravitaillement/auto`.
 - **Hors scope** : arc **Croisement** — pas de ravitaillement ; carte / route Chantier masquées (DB conservée).
 
 ---
@@ -25,36 +28,38 @@ Les compétences seedées (Dev + Beatmaker) existent ; les quêtes actives ne so
 2. Si `prerequis` est présent : ne proposer une compétence que si les prérequis ont des **preuves**.
 3. Compétence **couverte** (preuve ou quête `fait` liée) / **saturée** (quête active liée) → skip.
 4. Remplir le lot en enchaînant les compétences ouvertes si besoin.
+5. **Ne jamais inventer** de compétences hors DB / hors `source_roadmap`.
 
 Code : `server/src/lib/ravitaillement.js`.
 
 ---
 
-## Génération de quêtes — lot ×3
+## Génération de quêtes — lot ×3 (insert direct)
 
 - Cible : **3** actifs par arc (`ACTIVES_TARGET` / `LOT_SIZE`).
-- Arc vide → **exactement 3** brouillons ; sinon refill jusqu’à 3.
+- Arc vide → **exactement 3** quêtes `a_faire` ; sinon refill jusqu’à 3.
 - Titres **concrets** (templates + ligne `Projet:` roadmap Beatmaker) — pas le titre brut de la compétence.
-- Chaque brouillon porte un **`competence_id`**.
+- Chaque quête porte un **`competence_id`**.
+- **Idempotence** : si actifs ≥ 3 → no-op. Debounce in-memory **60 s** par arc (évite double-create sur reload rapide).
 
 ---
 
-## Surface UX — toujours brouillon / proposition
+## Surface UX — info only (plus de proposition)
 
-- **Jamais** d’injection silencieuse en `quetes`.
-- Table `ravitaillement_propositions` (`statut = proposee`) + accepter / refuser.
-- UI : bandeau **Contremaître** — **une** carte listant **tous** les arcs needy (lots ×3) + **Accepter tout** / **Refuser**.
-- Accepter crée le **lot entier** (3 ou refill) en une action — pas une quête à la fois.
+- **Plus** de carte Accepter / Refuser sur le chemin normal.
+- Contremaître : toast/note `Ravitaillement auto · N quêtes ajoutées` si création ; sinon message clair (`rien à faire` / debounce / `roadmap [arc] terminée`).
+- Table `ravitaillement_propositions` : **non écrite** par le chemin auto ; propositions `proposee` restantes sont archivées (`refusee` + note obsolète) au passage. Routes legacy `/repondre*` conservées mais inutilisées par l’UI.
 
 ### API
 
 | Méthode | Route | Rôle |
 |---|---|---|
-| GET | `/api/ravitaillement/status` | Actifs / besoin / roadmap terminée / props ouvertes |
-| GET | `/api/ravitaillement/actif` | Propositions `proposee` |
-| POST | `/api/ravitaillement/proposer` | Corps optionnel `{ arc_id?: 'dev'\|'beatmaker' }` → lots pour tous les arcs needy |
-| POST | `/api/ravitaillement/repondre-lot` | `{ action: 'accepter'\|'refuser' }` — tous les lots ouverts |
-| POST | `/api/ravitaillement/:id/repondre` | `{ action }` — un lot (arc) |
+| GET | `/api/ravitaillement/status` | Actifs / besoin / roadmap terminée |
+| POST | `/api/ravitaillement/auto` | **Principal** — refill auto tous les arcs needy → insert `quetes` |
+| POST | `/api/ravitaillement/proposer` | Alias de `/auto` (compat) |
+| GET | `/api/ravitaillement/actif` | Legacy propositions `proposee` (attendu vide) |
+| POST | `/api/ravitaillement/repondre-lot` | Legacy accepter/refuser lots |
+| POST | `/api/ravitaillement/:id/repondre` | Legacy un lot |
 
 ---
 
@@ -75,7 +80,7 @@ Signal : **`roadmap [arc] terminée`** (ex. `roadmap Dev terminée`) — pas de 
 1. Persistance quêtes API (déjà là) + `competence_id` sur drafts.
 2. Migration `20260716_ravitaillement` + liens best-effort quêtes existantes (Dev/Beatmaker) — ambigu → `null`.
 3. Script : `server/scripts/link-quetes-competences.mjs` (`--dry-run` ok).
-4. Dispersion soft : pas de banner si zéro quête a `ere_objectif_id` (« ère pas encore branchée »).
+4. Dispersion soft : pas de banner Contremaître « suggestion » si zéro quête a `ere_objectif_id` (« ère pas encore branchée »).
 
 ---
 
@@ -86,6 +91,6 @@ cd C:\twiy\server
 npm test
 # smoke (WEBHOOK_API_KEY ou session) :
 # GET  /api/ravitaillement/status  → besoin sur Dev et/ou Beatmaker
-# POST /api/ravitaillement/proposer → lots ×3
-# Accepter tout dans l’UI Chantier
+# POST /api/ravitaillement/auto    → quetes créées (ou rien à faire / roadmap terminée)
+# Recharger Chantier → note info, pas de boutons Accepter/Refuser
 ```

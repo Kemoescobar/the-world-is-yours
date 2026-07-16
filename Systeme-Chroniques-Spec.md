@@ -273,7 +273,7 @@ Cet addendum **ne remplace pas** la spec ci-dessus ; il ancre le réel post-scaf
 - Audit runtime `fec7fa2` : Chantier session-gated, Paramètres probes réels (OK/—), redirects catalogue, Insights soft-off sans IA, Drops spiral, demo freelance retirée, dispersion **seulement** avec Ère active
 - Compétences `66402fe` : UI interactive, preuves, prérequis roadmap + migration
 - LIVE vérifié : Paramètres probes ; Chantier loading → 13/13 ; Contremaître OK
-- **Ravitaillement** Dev/Beatmaker : propositions + accepter/refuser (`docs/ravitaillement.md`) ; Croisement skipped
+- **Ravitaillement** Dev/Beatmaker : auto-fill à 3 actifs (`docs/ravitaillement.md`) ; Croisement skipped
 - Dispersion soft : pas de banner si ère pas encore branchée aux quêtes (`ere_objectif_id`)
 
 ### OPEN

@@ -129,11 +129,14 @@ export const ravitaillementProposerSchema = z.object({
   arc_id: z.enum(['dev', 'beatmaker']).optional(),
 }).strict();
 
+/** Auto-ravitaillement (insert direct quetes) — même corps que proposer. */
+export const ravitaillementAutoSchema = ravitaillementProposerSchema;
+
 export const ravitaillementRepondreSchema = z.object({
   action: z.enum(['accepter', 'refuser']),
 });
 
-/** Accepter / refuser toutes les propositions ouvertes (lots Dev + Beatmaker). */
+/** Legacy : accepter / refuser lots (UI n’utilise plus). */
 export const ravitaillementRepondreLotSchema = z.object({
   action: z.enum(['accepter', 'refuser']),
 });

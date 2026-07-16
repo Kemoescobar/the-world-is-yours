@@ -1,5 +1,6 @@
 /**
- * Ravitaillement — sélection compétence + brouillons de quêtes (Dev / Beatmaker).
+ * Ravitaillement — sélection compétence + drafts de quêtes (Dev / Beatmaker).
+ * Chemin normal : insert auto en quetes (pas de proposition Accepter/Refuser).
  * Croisement hors scope.
  */
 
