@@ -19,7 +19,18 @@ router.get('/', async (req, res) => {
 });
 
 router.post('/', validateBody(createQueteSchema), async (req, res) => {
-  const { data, error } = await supabase.from('quetes').insert(req.body).select().single();
+  const row = { ...req.body };
+  // Rattache au chapitre ouvert de l’arc (même heuristique que Chantier / ravitaillement)
+  if (!row.chapitre_id && row.type && ['dev', 'beatmaker', 'croisement'].includes(row.type)) {
+    const { data: chaps } = await supabase
+      .from('chapitres')
+      .select('id, date_debut')
+      .eq('arc_id', row.type)
+      .order('date_debut', { ascending: false })
+      .limit(1);
+    if (chaps?.[0]?.id) row.chapitre_id = chaps[0].id;
+  }
+  const { data, error } = await supabase.from('quetes').insert(row).select().single();
   if (error) return res.status(500).json({ error: error.message });
   res.status(201).json(data);
 });

@@ -9,7 +9,9 @@ const TYPES = [
   { value: 'instru', label: 'Instru', arc: 'beatmaker' },
   { value: 'projet', label: 'Projet', arc: 'dev' },
   { value: 'certif', label: 'Certif', arc: 'dev' },
-  { value: 'quete', label: 'Quête / autre', arc: null },
+  /** Crée une vraie ligne `quetes` (pas seulement une entrée). */
+  { value: 'quete', label: 'Quête Dev', arc: 'dev', creeQuete: true, queteType: 'dev' },
+  { value: 'quete_beat', label: 'Quête Beatmaker', arc: 'beatmaker', creeQuete: true, queteType: 'beatmaker' },
 ];
 
 function signalerCirculation(detail = {}) {
@@ -75,16 +77,30 @@ export default function QuickCapture() {
     setErreur('');
     setConfirmation('');
     const meta = TYPES.find((t) => t.value === typeFait);
+    const texte = detail.trim();
     try {
+      let quete = null;
+      if (meta?.creeQuete) {
+        quete = await apiPost('/quetes', {
+          type: meta.queteType || meta.arc || 'dev',
+          titre: texte,
+          statut: 'a_faire',
+        });
+      }
       const entree = await apiPost('/entrees', {
-        type_fait: typeFait,
-        detail: detail.trim(),
+        type_fait: meta?.creeQuete ? 'quete' : typeFait,
+        detail: texte,
         arc_id: meta?.arc || null,
+        quete_id: quete?.id || null,
       });
       setDetail('');
-      setConfirmation(`Capturé · ${typeFait}${entree?.id ? '' : ''}`);
+      setConfirmation(quete ? `Quête ajoutée · ${quete.titre}` : `Capturé · ${typeFait}`);
       setStatut('ok');
-      signalerCirculation({ kind: 'fait', entree });
+      signalerCirculation({
+        kind: quete ? 'quete' : 'fait',
+        entree,
+        quete,
+      });
       setTimeout(fermer, 900);
     } catch (err) {
       setErreur(err.message || 'échec capture');

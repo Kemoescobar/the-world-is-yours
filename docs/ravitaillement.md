@@ -26,7 +26,7 @@ Les compétences seedées (Dev + Beatmaker) existent ; les quêtes actives ne so
 
 ## Sélection de compétence
 
-1. Parcourir l’arbre de l’arc dans l’**ordre roadmap** (`source_roadmap` / semaine → cours) + **niveaux** Initiation → Pratique → Maîtrise.
+1. Parcourir l’arbre de l’arc dans l’**ordre roadmap exact** (`source_roadmap` / semaine → cours). Les niveaux ne réordonnent plus (évite S4-C4 avant S4-C3).
 2. Si `prerequis` est présent (**ravitaillement soft-unlock**) : OK si prérequis a une **preuve** **ou** une quête liée `fait` (pas preuve-only). Croisement toujours skip.
 3. Compétence **couverte** (preuve ou quête `fait` liée) / **saturée** (quête active liée) → skip.
 4. Remplir le lot en enchaînant les compétences ouvertes si besoin.
@@ -41,7 +41,7 @@ Code : `server/src/lib/ravitaillement.js`.
 
 - Cible : **3** actifs par arc (`ACTIVES_TARGET` / `LOT_SIZE`) dans le chapitre courant.
 - Arc vide → **exactement 3** quêtes `a_faire` ; sinon refill jusqu’à 3.
-- Titres **concrets** (templates + ligne `Projet:` roadmap Beatmaker) — pas le titre brut de la compétence.
+- Titres **directs** (verbe d’action) : ligne `Projet:` / premier Objectif (Beatmaker), sinon `Terminer {titre}` (Dev/certifs) — pas « Avancer le parcours… ». Une quête par compétence dans le lot (ordre roadmap).
 - Chaque quête porte un **`competence_id`** + **`chapitre_id`** du chapitre ouvert.
 - **Idempotence** : si actifs (chapitre) ≥ 3 → no-op. Debounce in-memory **10 s** par arc **uniquement après create réussi** (attempt vide ne bloque pas).
 

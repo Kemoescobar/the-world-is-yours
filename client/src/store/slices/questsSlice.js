@@ -12,9 +12,6 @@ export const fetchQuetes = createAsyncThunk(
     }
     return data;
   },
-  {
-    // Always hit the network when dispatched — never reuse a fulfilled cache as “fresh”.
-  },
 );
 
 export const validerQuete = createAsyncThunk('quetes/valider', async (id) => {
@@ -26,33 +23,41 @@ export const validerQuete = createAsyncThunk('quetes/valider', async (id) => {
 
 const questsSlice = createSlice({
   name: 'quetes',
-  initialState: { items: [], statut: 'idle', erreur: null },
+  initialState: {
+    items: [],
+    statut: 'idle',
+    erreur: null,
+    /** Monotonic id so a slow stale fetch cannot overwrite a newer one. */
+    lastRequestId: null,
+  },
   reducers: {
     resetQuetes(state) {
       state.items = [];
       state.statut = 'idle';
       state.erreur = null;
+      state.lastRequestId = null;
     },
   },
   extraReducers: (builder) => {
     builder
-      .addCase(fetchQuetes.pending, (state) => {
-        state.statut = 'chargement';
+      .addCase(fetchQuetes.pending, (state, action) => {
+        state.lastRequestId = action.meta.requestId;
         state.erreur = null;
-        // Clear leftovers so UI never shows invented/stale Chroniques while refetching
-        state.items = [];
+        // Keep existing items during refetch — clearing caused empty flash + race wipes
+        if (!state.items.length) state.statut = 'chargement';
       })
       .addCase(fetchQuetes.fulfilled, (state, action) => {
+        if (action.meta.requestId !== state.lastRequestId) return;
         state.items = action.payload;
         state.statut = 'pret';
         state.erreur = null;
       })
       .addCase(fetchQuetes.rejected, (state, action) => {
-        // Abort from effect cleanup / StrictMode — keep prior state, no fake empty
         if (action.meta?.aborted) return;
+        if (action.meta.requestId !== state.lastRequestId) return;
         state.statut = 'erreur';
         state.erreur = action.error.message;
-        state.items = [];
+        // Keep prior items on error so the card does not go blank
       })
       .addCase(validerQuete.fulfilled, (state, action) => {
         const i = state.items.findIndex((q) => q.id === action.payload.id);

@@ -93,13 +93,19 @@ export default function Chantier() {
     }
 
     function onEntreesChanged(ev) {
-      dispatch(fetchQuetes());
+      // Quête créée via capture (type « Quête ») → refresh liste ; sinon faits seulement
+      if (ev?.detail?.quete || ev?.detail?.kind === 'quete') {
+        dispatch(fetchQuetes());
+      }
       setEdtRefresh((n) => n + 1);
       setChroniqueRefresh((n) => n + 1);
       reloadSide().catch(() => {});
       const n = ev?.detail?.creees?.length || (ev?.detail?.entree ? 1 : 0);
       if (n > 0) {
-        setToast(`${n} fait${n > 1 ? 's' : ''} dans le système`);
+        const label = ev?.detail?.quete
+          ? `${n} quête${n > 1 ? 's' : ''} ajoutée${n > 1 ? 's' : ''}`
+          : `${n} fait${n > 1 ? 's' : ''} dans le système`;
+        setToast(label);
         setTimeout(() => setToast(''), 2200);
       }
     }
@@ -130,26 +136,23 @@ export default function Chantier() {
   }, [dispatch, session, authLoading, reloadSide]);
 
   const aujourdhui = jourISO();
+  // Ne bloque l’UI que sur le premier chargement — un refetch ne vide plus la carte
   const chargement =
     authLoading
     || arcsStatut === 'chargement'
-    || quetesStatut === 'chargement'
     || arcsStatut === 'idle'
-    || quetesStatut === 'idle'
+    || ((quetesStatut === 'chargement' || quetesStatut === 'idle') && !quetes.length)
     || sideStatut === 'chargement'
     || sideStatut === 'idle';
   const erreurPrincipale = arcsErreur || quetesErreur || sideErreur;
 
+  /** Toutes les quêtes de l’arc (type) — ArcCard priorise les non-fait. Pas de filtre chapitre. */
   function quetesPourArc(arcId) {
-    const chap = chapitrePourArc(arcId);
     return quetes.filter((q) => {
       if (arcId === 'dev') {
-        if (!(q.type === 'dev' || q.type === 'routine' || q.type === 'freelance')) return false;
-      } else if (q.type !== arcId) {
-        return false;
+        return q.type === 'dev' || q.type === 'routine' || q.type === 'freelance';
       }
-      if (chap?.id) return q.chapitre_id === chap.id;
-      return true;
+      return q.type === arcId;
     });
   }
 

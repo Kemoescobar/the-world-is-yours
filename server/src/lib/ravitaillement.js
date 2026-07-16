@@ -10,26 +10,26 @@ export const ACTIVES_TARGET = 3;
 /** Taille d’un lot proposé (exactement 3 quand l’arc est vide). */
 export const LOT_SIZE = 3;
 
-const NIVEAU_ORDER = { initiation: 0, pratique: 1, maitrise: 2 };
-
 export function roadmapSortKey(comp) {
   const src = String(comp.source_roadmap || '');
   const learn = src.match(/LearnByDoing-S(\d+)(?:-C(\d+))?/i);
   if (learn) {
     return [Number(learn[1]), Number(learn[2] || 0)];
   }
-  const beatP = src.match(/Beatmaker-P(\d+)/i);
-  if (beatP) return [Number(beatP[1]), 0];
+  // Beatmaker-P{n}-SS{week} — trier par semaine (SS), pas seulement par phase P
+  const beat = src.match(/Beatmaker-P(\d+)(?:-SS?(\d+(?:-\d+)?))?/i);
+  if (beat) {
+    const weekPart = String(beat[2] || '0').split('-')[0];
+    return [Number(weekPart) || Number(beat[1]), Number(beat[1])];
+  }
   const ss = src.match(/SS(\d+)/i);
   if (ss) return [Number(ss[1]), 0];
   return [9999, 0];
 }
 
+/** Ordre exact roadmap (source_roadmap) — pas de niveau-first qui casse S4-C3 / S4-C4. */
 export function sortCompetencesRoadmap(comps) {
   return [...comps].sort((a, b) => {
-    const na = NIVEAU_ORDER[a.niveau_requis] ?? 9;
-    const nb = NIVEAU_ORDER[b.niveau_requis] ?? 9;
-    if (na !== nb) return na - nb;
     const ka = roadmapSortKey(a);
     const kb = roadmapSortKey(b);
     return ka[0] - kb[0] || ka[1] - kb[1] || String(a.titre).localeCompare(String(b.titre));
@@ -103,7 +103,7 @@ export function competenceCouverture(comp, quetes, preuvesIds) {
 }
 
 /**
- * Prochaine compétence éligible : ordre roadmap + niveau, prereqs OK, non couverte / non saturée.
+ * Prochaine compétence éligible : ordre source_roadmap, prereqs OK, non couverte / non saturée.
  * opts.softUnlockViaQueteFaite — pour ravitaillement uniquement.
  */
 export function choisirCompetence(comps, quetes, preuvesIds, opts = {}) {
@@ -159,6 +159,15 @@ function extraireProjet(description) {
   return m[1].trim().replace(/\.\s*$/, '').slice(0, 200);
 }
 
+function extrairePremierObjectif(description) {
+  if (!description) return null;
+  const m = String(description).match(/Objectifs:\s*([^\n]+)/i);
+  if (!m) return null;
+  const first = m[1].split(';').map((s) => s.trim()).find(Boolean);
+  if (!first) return null;
+  return first.replace(/\.\s*$/, '').slice(0, 200);
+}
+
 function titreCourt(titre) {
   return String(titre || '')
     .replace(/^S\d+\s*[—–-]\s*/i, '')
@@ -167,44 +176,58 @@ function titreCourt(titre) {
     .slice(0, 80);
 }
 
+/** Préfixe un verbe d’action si la phrase n’en a pas déjà un. */
+function avecVerbeAction(texte, verbe = 'Livrer') {
+  const t = String(texte || '').trim();
+  if (!t) return null;
+  if (/^(terminer|livrer|uploader|compléter|completer|valider|exporterer|créer|creer|importer|appliquer|masteriser|designer|produire|exporterer|exporterer)/i.test(t)) {
+    return t.slice(0, 200);
+  }
+  return `${verbe} — ${t}`.slice(0, 200);
+}
+
 /**
- * Génère N titres concrets pour une compétence (pas le titre brut seul).
+ * Génère N titres directs pour une compétence (verbe + livrable / certif).
+ * Préfère Projet: / Objectifs: roadmap ; sinon « Terminer {titre} ».
  */
 export function genererDrafts(comp, besoin) {
   const n = Math.max(0, Math.min(LOT_SIZE, besoin));
   if (!n || !comp) return [];
 
-  const short = titreCourt(comp.titre);
+  const fullTitre = String(comp.titre || '').trim();
+  const short = titreCourt(comp.titre) || fullTitre;
   const projet = extraireProjet(comp.description);
+  const objectif = extrairePremierObjectif(comp.description);
+  const estCertif = /certification|fCC|DL\.AI|CS50|n8n|Anthropic|AWS|Microsoft Learn|Claude|LangChain|LlamaIndex|CrewAI|Docker|Zapier|Make Academy/i.test(
+    `${comp.titre} ${comp.description || ''}`,
+  );
+
   const candidats = [];
 
-  if (projet) candidats.push(projet);
-
-  if (/certification|fCC|DL\.AI|CS50|n8n|Anthropic|AWS|Microsoft Learn/i.test(
-    `${comp.titre} ${comp.description || ''}`,
-  )) {
-    candidats.push(`Avancer le parcours ${short} — session du jour`);
-    candidats.push(`Valider un checkpoint ${short}`);
-    candidats.push(`Documenter ${short} — note + preuve`);
-  } else {
-    candidats.push(`Pratiquer : ${short} — livrable concret`);
-    candidats.push(`Appliquer ${short} sur un beat / projet en cours`);
-    candidats.push(`Documenter ${short} — capture + note`);
+  if (projet) {
+    candidats.push(avecVerbeAction(projet, 'Livrer'));
+  }
+  if (objectif) {
+    candidats.push(avecVerbeAction(objectif, 'Terminer'));
   }
 
-  if (comp.niveau_requis === 'initiation') {
-    candidats.push(`Premier pas — ${short}`);
-  } else if (comp.niveau_requis === 'maitrise') {
-    candidats.push(`Peaufiner ${short} — version publiable`);
+  if (estCertif) {
+    candidats.push(`Terminer ${fullTitre}`);
+    candidats.push(`Uploader la preuve — ${short}`);
+    candidats.push(`Valider le checkpoint — ${short}`);
+  } else {
+    candidats.push(`Livrer : ${short}`);
+    candidats.push(`Terminer ${fullTitre}`);
+    candidats.push(`Exporter + noter — ${short}`);
   }
 
   const seen = new Set();
   const out = [];
   for (const titre of candidats) {
-    const t = String(titre).trim().slice(0, 200);
+    const t = String(titre || '').trim().slice(0, 200);
     if (!t || seen.has(t.toLowerCase())) continue;
     // Ne jamais proposer uniquement le titre brut de la compétence
-    if (t.toLowerCase() === String(comp.titre).trim().toLowerCase()) continue;
+    if (t.toLowerCase() === fullTitre.toLowerCase()) continue;
     seen.add(t.toLowerCase());
     out.push({
       titre: t,
@@ -214,9 +237,8 @@ export function genererDrafts(comp, besoin) {
     if (out.length >= n) break;
   }
 
-  // Fallback si trop peu de variantes
   while (out.length < n) {
-    const titre = `${short} — étape ${out.length + 1}`;
+    const titre = `Terminer ${short} — étape ${out.length + 1}`;
     if (seen.has(titre.toLowerCase())) break;
     seen.add(titre.toLowerCase());
     out.push({ titre, competence_id: comp.id, type: comp.arc_id });
@@ -313,8 +335,8 @@ export function preparerPropositionArc({
     });
     if (!competence) break;
 
-    const remaining = besoin - drafts.length;
-    const batch = genererDrafts(competence, remaining);
+    // Une quête claire par compétence — ordre roadmap (S1 → S2 → …)
+    const batch = genererDrafts(competence, 1);
     if (!batch.length) {
       skip.add(competence.id);
       continue;
@@ -323,12 +345,12 @@ export function preparerPropositionArc({
     drafts.push(...batch);
     competencesUtilisees.push(competence);
     skip.add(competence.id);
-    // Marque la compétence comme saturée pour la suite du lot
+    // Saturation + déblocage soft du suivant dans le lot seulement (pas en DB)
     for (const d of batch) {
       quetesVirtuelles.push({
         competence_id: d.competence_id,
         type: d.type,
-        statut: 'a_faire',
+        statut: 'fait',
         chapitre_id: chapitreId,
       });
     }

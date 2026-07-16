@@ -125,7 +125,7 @@ export default function ArcCard({
           })}
           {!liste.length && (
             <li className="compteur" style={{ border: 'none', paddingTop: 4 }}>
-              Aucune quête — capture un fait
+              Aucune quête — + Quête ou ravitaillement
             </li>
           )}
         </ul>

@@ -52,11 +52,23 @@ const chapDev = { id: 'chap-dev-1', arc_id: 'dev', date_debut: '2026-07-01', sta
 const chapDevOld = { id: 'chap-dev-0', arc_id: 'dev', date_debut: '2026-06-01', statut: 'complet' };
 
 describe('ravitaillement', () => {
-  it('ordonne par niveau puis roadmap', () => {
-    const ordered = sortCompetencesRoadmap(comps);
+  it('ordonne par source_roadmap (pas niveau-first)', () => {
+    const ordered = sortCompetencesRoadmap([
+      ...comps,
+      {
+        id: 'c4',
+        arc_id: 'dev',
+        titre: 'AI Fluency',
+        niveau_requis: 'initiation',
+        source_roadmap: 'LearnByDoing-S4-C4',
+        prerequis: ['c3'],
+        description: 'Certification active',
+      },
+    ]);
     assert.equal(ordered[0].id, 'c1');
     assert.equal(ordered[1].id, 'c2');
-    assert.equal(ordered[2].id, 'c3');
+    assert.equal(ordered[2].id, 'c3'); // S4-C3 pratique avant S4-C4 initiation
+    assert.equal(ordered[3].id, 'c4');
   });
 
   it('choisit la première sans prereq / non couverte', () => {
@@ -86,16 +98,35 @@ describe('ravitaillement', () => {
     assert.equal(c.id, 'c2');
   });
 
-  it('génère des titres concrets ≠ titre compétence', () => {
+  it('génère des titres directs (verbe + livrable), jamais « Avancer le parcours »', () => {
     const drafts = genererDrafts(comps[1], 3);
     assert.ok(drafts.length >= 2);
     for (const d of drafts) {
       assert.equal(d.competence_id, 'c1');
       assert.notEqual(d.titre.toLowerCase(), comps[1].titre.toLowerCase());
+      assert.doesNotMatch(d.titre, /Avancer le parcours/i);
+      assert.doesNotMatch(d.titre, /^Pratiquer\s*:/i);
+      assert.match(d.titre, /^(Terminer|Livrer|Uploader|Valider|Exporter)/i);
     }
   });
 
-  it('trigger si actifs < 3 et lot exact de 3 quand vide', () => {
+  it('Beatmaker : préfère la ligne Projet: comme titre d’action', () => {
+    const bm = {
+      id: 'bm1',
+      arc_id: 'beatmaker',
+      titre: "S1 — Anatomie d'un hit — déconstruire pour comprendre",
+      niveau_requis: 'initiation',
+      source_roadmap: 'Beatmaker-P1-SS1',
+      prerequis: [],
+      description: "Objectifs: Déconstruire 5 sons\nProjet: Importer 3 sons référence dans FL Studio et annoter chaque section.\nRessources: x",
+    };
+    const drafts = genererDrafts(bm, 1);
+    assert.equal(drafts.length, 1);
+    assert.match(drafts[0].titre, /Importer 3 sons référence/i);
+    assert.doesNotMatch(drafts[0].titre, /Avancer le parcours|Pratiquer\s*:/i);
+  });
+
+  it('lot vide : 3 compétences roadmap (S1→S2→S3), une quête chacune', () => {
     const prep = preparerPropositionArc({
       arcId: 'dev',
       competences: comps,
@@ -108,6 +139,13 @@ describe('ravitaillement', () => {
     assert.equal(prep.cible, ACTIVES_TARGET);
     assert.equal(prep.competence.id, 'c1');
     assert.equal(prep.chapitre_id, chapDev.id);
+    assert.deepEqual(
+      prep.drafts.map((d) => d.competence_id),
+      ['c1', 'c2', 'c3'],
+    );
+    for (const d of prep.drafts) {
+      assert.doesNotMatch(d.titre, /Avancer le parcours/i);
+    }
   });
 
   it('refill partiel jusqu’à 3 si déjà 1 actif (chapitre courant)', () => {
