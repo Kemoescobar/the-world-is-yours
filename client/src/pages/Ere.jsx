@@ -88,7 +88,7 @@ export default function Ere() {
       />
       {erreur && <p className="annotation-manuscrite" style={{ marginBottom: 12 }}>{erreur}</p>}
 
-      {dispersion?.dispersion && (
+      {dispersion?.ere && dispersion?.dispersion && (
         <p className="annotation-manuscrite" style={{ marginBottom: 16 }}>
           Dispersion douce — {dispersion.sans_objectif?.length || 0} quête(s) sans objectif d’ère sur {dispersion.jours}j
           (non bloquant)

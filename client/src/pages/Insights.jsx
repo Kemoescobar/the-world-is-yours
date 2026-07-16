@@ -8,10 +8,14 @@ export default function Insights() {
   const [texte, setTexte] = useState('');
   const [statut, setStatut] = useState('idle');
   const [erreur, setErreur] = useState('');
+  const [aiOk, setAiOk] = useState(null); // null=probe, true/false
 
   useEffect(() => {
     apiGet('/entrees').then(setEntrees).catch(() => setEntrees([]));
     apiGet('/quetes').then(setQuetes).catch(() => setQuetes([]));
+    apiGet('/ai/status')
+      .then((s) => setAiOk(Boolean(s?.anthropic)))
+      .catch(() => setAiOk(false));
   }, []);
 
   const stats = useMemo(() => {
@@ -27,6 +31,7 @@ export default function Insights() {
   }, [entrees, quetes]);
 
   async function generer() {
+    if (!aiOk) return;
     setStatut('gen');
     setErreur('');
     try {
@@ -39,6 +44,13 @@ export default function Insights() {
     }
   }
 
+  const disabled = aiOk !== true || statut === 'gen';
+  const btnLabel =
+    aiOk === null ? 'IA…'
+      : aiOk === false ? 'IA indisponible'
+        : statut === 'gen' ? 'Analyse…'
+          : '› Corrélations IA';
+
   return (
     <div className="os-page" style={{ maxWidth: 800 }}>
       <OsHeader
@@ -46,11 +58,24 @@ export default function Insights() {
         title="INSIGHTS"
         meta="Corrélations · Claude (Phase 3)"
         actions={(
-          <button type="button" className="btn-poster" onClick={generer} disabled={statut === 'gen'}>
-            {statut === 'gen' ? 'Analyse…' : '› Corrélations IA'}
+          <button
+            type="button"
+            className="btn-poster"
+            onClick={generer}
+            disabled={disabled}
+            title={aiOk === false ? 'ANTHROPIC_API_KEY manquante — voir Paramètres' : undefined}
+            style={aiOk === false ? { opacity: 0.45, cursor: 'not-allowed' } : undefined}
+          >
+            {btnLabel}
           </button>
         )}
       />
+
+      {aiOk === false && (
+        <p className="annotation-manuscrite" style={{ marginBottom: 12 }}>
+          Claude indisponible (/ai/status) — bouton désactivé. Configure ANTHROPIC_API_KEY sur Railway.
+        </p>
+      )}
 
       <div className="os-stat-rail">
         <div>

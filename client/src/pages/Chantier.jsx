@@ -7,6 +7,7 @@ import ArcCard from '../components/ArcCard.jsx';
 import OsHeader from '../components/OsHeader.jsx';
 import ContremaitreBanner from '../components/ContremaitreBanner.jsx';
 import { apiGet } from '../lib/api.js';
+import { useAuth } from '../auth/AuthContext.jsx';
 
 const streakParArc = { dev: 'dev', beatmaker: 'miprod', croisement: null };
 
@@ -28,22 +29,71 @@ function blocRoutineActuel() {
 
 export default function Chantier() {
   const dispatch = useDispatch();
+  const { session, loading: authLoading } = useAuth();
   const arcs = useSelector((s) => s.arcs.items);
+  const arcsStatut = useSelector((s) => s.arcs.statut);
+  const arcsErreur = useSelector((s) => s.arcs.erreur);
   const quetes = useSelector((s) => s.quetes.items);
+  const quetesStatut = useSelector((s) => s.quetes.statut);
+  const quetesErreur = useSelector((s) => s.quetes.erreur);
   const [streaks, setStreaks] = useState([]);
   const [chapitres, setChapitres] = useState([]);
   const [dispersion, setDispersion] = useState(null);
+  const [sideErreur, setSideErreur] = useState('');
+  const [sideStatut, setSideStatut] = useState('idle');
   const actuel = blocRoutineActuel();
 
   useEffect(() => {
-    dispatch(fetchArcs());
-    dispatch(fetchQuetes());
-    apiGet('/streaks').then(setStreaks).catch(() => setStreaks([]));
-    apiGet('/chapitres').then(setChapitres).catch(() => setChapitres([]));
-    apiGet('/eres/dispersion?jours=14').then(setDispersion).catch(() => setDispersion(null));
-  }, [dispatch]);
+    // RequireAuth already gates, but never dispatch until JWT exists —
+    // api.js throws 401 before fetch when token missing (zero Network tab).
+    if (authLoading || !session) return undefined;
+
+    const arcsAction = dispatch(fetchArcs());
+    const quetesAction = dispatch(fetchQuetes());
+
+    let cancelled = false;
+    setSideErreur('');
+    setSideStatut('chargement');
+    (async () => {
+      try {
+        const [s, c, d] = await Promise.all([
+          apiGet('/streaks'),
+          apiGet('/chapitres'),
+          apiGet('/eres/dispersion?jours=14'),
+        ]);
+        if (cancelled) return;
+        setStreaks(Array.isArray(s) ? s : []);
+        setChapitres(Array.isArray(c) ? c : []);
+        setDispersion(d && typeof d === 'object' ? d : null);
+        setSideStatut('pret');
+      } catch (err) {
+        if (!cancelled) {
+          setStreaks([]);
+          setChapitres([]);
+          setDispersion(null);
+          setSideErreur(err.message || 'échec chargement annexes');
+          setSideStatut('erreur');
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+      arcsAction.abort?.();
+      quetesAction.abort?.();
+    };
+  }, [dispatch, session, authLoading]);
 
   const aujourdhui = jourISO();
+  const chargement =
+    authLoading
+    || arcsStatut === 'chargement'
+    || quetesStatut === 'chargement'
+    || arcsStatut === 'idle'
+    || quetesStatut === 'idle'
+    || sideStatut === 'chargement'
+    || sideStatut === 'idle';
+  const erreurPrincipale = arcsErreur || quetesErreur || sideErreur;
 
   function quetesPourArc(arcId) {
     return quetes.filter((q) => {
@@ -82,6 +132,9 @@ export default function Chantier() {
   const faites = quetes.filter((q) => q.statut === 'fait').length;
   const totalStreak = streaks.reduce((acc, s) => acc + (s.jours_consecutifs || 0), 0);
 
+  // Banner only when an active Ère exists AND dispersion is flagged
+  const showDispersion = Boolean(dispersion?.ere && dispersion?.dispersion);
+
   return (
     <div className="os-page">
       <OsHeader
@@ -92,7 +145,17 @@ export default function Chantier() {
 
       <ContremaitreBanner />
 
-      {dispersion?.dispersion && (
+      {chargement && (
+        <p className="compteur" style={{ marginBottom: 12 }}>› chargement quêtes…</p>
+      )}
+
+      {erreurPrincipale && (
+        <p className="annotation-manuscrite" style={{ marginBottom: 12 }}>
+          API — {erreurPrincipale}
+        </p>
+      )}
+
+      {showDispersion && (
         <p className="annotation-manuscrite" style={{ marginBottom: 12 }}>
           Dispersion — {dispersion.sans_objectif?.length || 0} quête(s) hors objectif d’ère (14j).{' '}
           <Link to="/ere" style={{ color: 'inherit' }}>Voir Ère</Link>
@@ -102,15 +165,17 @@ export default function Chantier() {
       <div className="os-stat-rail" aria-label="Compteurs chantier">
         <div>
           <p className="compteur">ARCS</p>
-          <p className="os-stat-rail__n">{arcs.length || 0}</p>
+          <p className="os-stat-rail__n">{chargement ? '…' : (arcs.length || 0)}</p>
         </div>
         <div>
           <p className="compteur">QUÊTES</p>
-          <p className="os-stat-rail__n">{faites}/{quetes.length || 0}</p>
+          <p className="os-stat-rail__n">
+            {chargement ? '…/…' : `${faites}/${quetes.length || 0}`}
+          </p>
         </div>
         <div>
           <p className="compteur">STREAK Σ</p>
-          <p className="os-stat-rail__n">{totalStreak}</p>
+          <p className="os-stat-rail__n">{chargement ? '…' : totalStreak}</p>
         </div>
       </div>
 
@@ -121,6 +186,14 @@ export default function Chantier() {
           </span>
         ))}
       </div>
+
+      {!chargement && !erreurPrincipale && !arcs.length && (
+        <div className="empty-wall" style={{ marginTop: 16, textAlign: 'center' }}>
+          <p className="compteur">ARCS</p>
+          <h2 style={{ margin: '12px 0' }}>Aucun arc depuis l’API</h2>
+          <p style={{ color: 'var(--text-muted)' }}>Pas de données inventées — vérifie Railway /seed.</p>
+        </div>
+      )}
 
       <div className="os-arcs">
         {arcs.map((a) => {

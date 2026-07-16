@@ -84,7 +84,15 @@ export default function CoverFlow({
     setFocus(best);
   }, []);
 
-  if (!items.length) return null;
+  if (!items.length) {
+    return (
+      <div className="empty-wall" style={{ marginTop: 'var(--space-3)', textAlign: 'center' }} role="status">
+        <p className="compteur">{label.toUpperCase()}</p>
+        <h2 style={{ margin: '12px 0' }}>Catalogue vide</h2>
+        <p style={{ color: 'var(--text-muted)' }}>Aucun élément à afficher.</p>
+      </div>
+    );
+  }
 
   const n = String(focus + 1).padStart(2, '0');
   const total = String(items.length).padStart(2, '0');

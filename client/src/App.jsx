@@ -1,9 +1,10 @@
-import { Routes, Route, useLocation } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Suspense, lazy, useState } from 'react';
 import Layout from './components/Layout.jsx';
 import LayoutPublic from './components/LayoutPublic.jsx';
 import SoundGate from './components/SoundGate.jsx';
 import RequireAuth from './components/RequireAuth.jsx';
+import ErrorBoundary from './components/ErrorBoundary.jsx';
 import { AuthProvider } from './auth/AuthContext.jsx';
 
 const Home = lazy(() => import('./pages/Home.jsx'));
@@ -29,8 +30,18 @@ const Rayonnement = lazy(() => import('./pages/Rayonnement.jsx'));
 function Prive({ children }) {
   return (
     <RequireAuth>
-      <Layout>{children}</Layout>
+      <Layout>
+        <ErrorBoundary>{children}</ErrorBoundary>
+      </Layout>
     </RequireAuth>
+  );
+}
+
+function Public({ children }) {
+  return (
+    <LayoutPublic>
+      <ErrorBoundary>{children}</ErrorBoundary>
+    </LayoutPublic>
   );
 }
 
@@ -38,6 +49,23 @@ function RouteFallback() {
   return (
     <div style={{ padding: 'var(--space-4)', fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
       › chargement…
+    </div>
+  );
+}
+
+function NotFound() {
+  return (
+    <div className="empty-wall" style={{ margin: 'var(--space-4)', textAlign: 'center', minHeight: '50vh', display: 'grid', placeItems: 'center' }}>
+      <div>
+        <p className="compteur">404</p>
+        <h1 style={{ margin: '12px 0' }}>Page introuvable</h1>
+        <p style={{ color: 'var(--text-muted)' }}>
+          Chemins catalogue : /catalogue/instrus · /catalogue/projets
+        </p>
+        <p style={{ marginTop: 16 }}>
+          <a href="/" style={{ color: 'var(--jaune)' }}>← Accueil</a>
+        </p>
+      </div>
     </div>
   );
 }
@@ -70,11 +98,16 @@ export default function App() {
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
             <Route path="/os" element={<Login />} />
-            <Route path="/mentions" element={<LayoutPublic><MentionsLegales /></LayoutPublic>} />
-            <Route path="/confidentialite" element={<LayoutPublic><Confidentialite /></LayoutPublic>} />
+            <Route path="/mentions" element={<Public><MentionsLegales /></Public>} />
+            <Route path="/confidentialite" element={<Public><Confidentialite /></Public>} />
 
-            <Route path="/catalogue/instrus" element={<LayoutPublic><CatalogueInstrus mode="public" /></LayoutPublic>} />
-            <Route path="/catalogue/projets" element={<LayoutPublic><CatalogueProjets mode="public" /></LayoutPublic>} />
+            {/* Canonical catalogue paths */}
+            <Route path="/catalogue/instrus" element={<Public><CatalogueInstrus mode="public" /></Public>} />
+            <Route path="/catalogue/projets" element={<Public><CatalogueProjets mode="public" /></Public>} />
+
+            {/* Legacy short paths — were blank (no Route match → empty DOM) */}
+            <Route path="/instrus" element={<Navigate to="/catalogue/instrus" replace />} />
+            <Route path="/projets" element={<Navigate to="/catalogue/projets" replace />} />
 
             <Route path="/studio/instrus" element={<Prive><CatalogueInstrus mode="edit" /></Prive>} />
             <Route path="/studio/projets" element={<Prive><CatalogueProjets mode="edit" /></Prive>} />
@@ -92,6 +125,8 @@ export default function App() {
             <Route path="/portefeuille" element={<Prive><Portefeuille /></Prive>} />
             <Route path="/revue" element={<Prive><Revue /></Prive>} />
             <Route path="/parametres" element={<Prive><Parametres /></Prive>} />
+
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
       )}

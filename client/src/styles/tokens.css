@@ -1793,9 +1793,14 @@ textarea.os-input {
   position: relative;
 }
 
+.drop-spiral {
+  overflow: hidden;
+}
+
 .drop-spiral-card {
-  width: 180px;
-  padding: 12px;
+  width: min(168px, 42vw);
+  max-width: 168px;
+  padding: 10px 12px;
   text-decoration: none;
   color: inherit;
   background:
@@ -1803,12 +1808,34 @@ textarea.os-input {
     var(--bg-2);
   border: 1px solid rgba(200, 220, 255, 0.18);
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.4);
-  transition: border-color 180ms ease, transform 220ms var(--ease-poster);
+  transition: border-color 180ms ease, transform 220ms var(--ease-poster), z-index 0ms;
+  overflow: hidden;
+}
+
+.drop-spiral-card__type {
+  margin: 0 0 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.drop-spiral-card__detail {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 0.88rem;
+  text-transform: uppercase;
+  line-height: 1.25;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  word-break: break-word;
 }
 
 .drop-spiral-card:hover {
   border-color: rgba(255, 210, 63, 0.45);
-  transform: translate(-50%, -50%) scale(1.04) !important;
+  transform: translate(-50%, -50%) scale(1.06) !important;
+  z-index: 40 !important;
 }
 
 .mode-toggle {

@@ -54,8 +54,17 @@ router.get('/dispersion', async (req, res) => {
     .limit(1)
     .maybeSingle();
 
+  // Never alarm without an active Ère — frontend also guards on `ere`
   if (!ere) {
-    return res.json({ ok: true, ere: null, dispersion: false, sans_objectif: [], note: 'aucune ère active' });
+    return res.json({
+      ok: true,
+      ere: null,
+      dispersion: false,
+      sans_objectif: [],
+      total_periode: 0,
+      jours,
+      note: 'aucune ère active',
+    });
   }
 
   const { data: quetes, error } = await supabase

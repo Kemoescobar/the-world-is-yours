@@ -5,14 +5,40 @@ import { apiGet } from '../lib/api.js';
 
 const DROP_TYPES = new Set(['certif', 'instru', 'projet', 'quete', 'bilan_ere']);
 
+/** Spiral layout that avoids heavy overlap + truncates detail text. */
+function spiralPosition(index, total) {
+  const n = Math.max(total, 1);
+  const t = index / n;
+  const angle = t * Math.PI * 2 - Math.PI / 2;
+  // Expanding radius so cards fan out instead of stacking on center
+  const radiusPct = 18 + (index % 6) * 5.5 + Math.floor(index / 6) * 3;
+  const x = 50 + Math.cos(angle) * radiusPct * 0.95;
+  const y = 50 + Math.sin(angle) * radiusPct * 0.72;
+  return {
+    left: `${Math.min(92, Math.max(8, x))}%`,
+    top: `${Math.min(90, Math.max(10, y))}%`,
+    zIndex: 10 + (index % 8),
+  };
+}
+
+function truncate(text, max = 72) {
+  const s = String(text || 'Drop').trim();
+  if (s.length <= max) return s;
+  return `${s.slice(0, max - 1)}…`;
+}
+
 export default function Drops() {
   const [items, setItems] = useState([]);
   const [mode, setMode] = useState('spiral');
+  const [erreur, setErreur] = useState('');
 
   useEffect(() => {
     apiGet('/entrees')
       .then((data) => setItems((data || []).filter((e) => DROP_TYPES.has(e.type_fait))))
-      .catch(() => setItems([]));
+      .catch((err) => {
+        setItems([]);
+        setErreur(err.message || 'échec');
+      });
   }, []);
 
   return (
@@ -36,6 +62,8 @@ export default function Drops() {
           </div>
         )}
       />
+
+      {erreur && <p className="annotation-manuscrite" style={{ marginBottom: 12 }}>{erreur}</p>}
 
       {mode === 'liste' ? (
         <div className="os-stack">
@@ -64,13 +92,9 @@ export default function Drops() {
           )}
         </div>
       ) : (
-        <div style={{ position: 'relative', height: 520 }} className="void-grid">
+        <div className="drop-spiral void-grid" style={{ position: 'relative', minHeight: 560 }}>
           {items.map((e, i) => {
-            const angle = (i / Math.max(items.length, 1)) * Math.PI * 2;
-            const radius = 120 + (i % 5) * 28;
-            const x = 50 + Math.cos(angle) * (radius / 6);
-            const y = 45 + Math.sin(angle) * (radius / 7);
-            const depth = 0.7 + ((i % 4) * 0.1);
+            const pos = spiralPosition(i, items.length);
             return (
               <Link
                 key={e.id}
@@ -78,15 +102,16 @@ export default function Drops() {
                 className="drop-spiral-card chrome-edge"
                 style={{
                   position: 'absolute',
-                  left: `${x}%`,
-                  top: `${y}%`,
-                  transform: `translate(-50%, -50%) scale(${depth})`,
-                  zIndex: Math.round(depth * 10),
+                  left: pos.left,
+                  top: pos.top,
+                  transform: 'translate(-50%, -50%)',
+                  zIndex: pos.zIndex,
                 }}
+                title={e.detail || 'Drop'}
               >
-                <p className="compteur">{e.type_fait}</p>
-                <p style={{ fontFamily: 'var(--font-display)', fontSize: '0.95rem', textTransform: 'uppercase' }}>
-                  {e.detail || 'Drop'}
+                <p className="compteur drop-spiral-card__type">{e.type_fait}</p>
+                <p className="drop-spiral-card__detail">
+                  {truncate(e.detail)}
                 </p>
               </Link>
             );

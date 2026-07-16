@@ -14,6 +14,8 @@ services:
       - GENERIC_TIMEZONE=${GENERIC_TIMEZONE:-Indian/Antananarivo}
       - TZ=${TZ:-Indian/Antananarivo}
       - N8N_SECURE_COOKIE=false
+      # Allow $env.* in HTTP Request nodes (needed for TWIY_* secrets)
+      - N8N_BLOCK_ENV_ACCESS_IN_NODE=false
       # Expose custom vars to workflow expressions ($env.*)
       - TWIY_API_URL=${TWIY_API_URL}
       - TWIY_WEBHOOK_KEY=${TWIY_WEBHOOK_KEY}

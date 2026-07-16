@@ -1,73 +1,153 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../auth/AuthContext.jsx';
 import OsHeader from '../components/OsHeader.jsx';
-import { apiGet, apiPost } from '../lib/api.js';
+import { apiGet, apiPost, getApiOrigin } from '../lib/api.js';
 
-const rawApi = (import.meta.env.VITE_API_URL || '').trim();
-const API_URL = rawApi && !/^https?:\/\//i.test(rawApi) ? `https://${rawApi}` : rawApi;
+/**
+ * Probe states: 'probe' | 'ok' | 'error'
+ * Never show OK without a completed probe.
+ */
+function Badge({ state }) {
+  const color =
+    state === 'ok' ? 'var(--jaune)'
+      : state === 'probe' ? 'var(--text-muted)'
+        : 'var(--rouge)';
+  const label = state === 'ok' ? 'OK' : state === 'probe' ? 'probe…' : '—';
+  return (
+    <span
+      style={{
+        color,
+        fontFamily: 'var(--font-mono)',
+        fontSize: '0.75rem',
+        letterSpacing: '0.12em',
+      }}
+    >
+      {label}
+    </span>
+  );
+}
 
-async function probeWebhook() {
-  const res = await fetch(`${API_URL}/webhooks/github`, {
+async function probeWebhook(apiOrigin) {
+  if (!apiOrigin) throw new Error('VITE_API_URL manquante');
+  const res = await fetch(`${apiOrigin}/api/webhooks/github`, {
     method: 'POST',
+    cache: 'no-store',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ repo: 'twiy-probe', message: 'parametres probe', sha: `probe-${Date.now()}` }),
   });
-  return res.status === 401;
+  // Secret required → 401 means endpoint is up and protected
+  return { ok: res.status === 401, status: res.status };
 }
 
 export default function Parametres() {
   const { session } = useAuth();
-  const [health, setHealth] = useState(null);
-  const [streaks, setStreaks] = useState([]);
-  const [webhookOk, setWebhookOk] = useState(null);
-  const [webhookDetail, setWebhookDetail] = useState('probe…');
-  const [ai, setAi] = useState(null);
+  const apiOrigin = getApiOrigin();
+
+  const [health, setHealth] = useState({ state: 'probe', detail: 'probe…' });
+  const [streaks, setStreaks] = useState({ state: 'probe', detail: 'probe…', count: null });
+  const [webhook, setWebhook] = useState({ state: 'probe', detail: 'probe…' });
+  const [ai, setAi] = useState({ state: 'probe', detail: 'probe…', anthropic: false });
   const [msg, setMsg] = useState('');
 
-  useEffect(() => {
-    fetch(`${API_URL.replace(/\/api$/, '')}/health`)
-      .then((r) => r.json())
-      .then(setHealth)
-      .catch(() => setHealth({ ok: false }));
-    apiGet('/streaks').then(setStreaks).catch(() => setStreaks([]));
-    apiGet('/ai/status').then(setAi).catch(() => setAi({ anthropic: false }));
-    probeWebhook()
-      .then((ok) => {
-        setWebhookOk(ok);
-        setWebhookDetail(ok ? 'secret requis (401) · protection OK' : 'réponse inattendue');
-      })
-      .catch(() => {
-        setWebhookOk(false);
-        setWebhookDetail('injoignable');
+  async function runProbes() {
+    setHealth({ state: 'probe', detail: 'probe…' });
+    setStreaks({ state: 'probe', detail: 'probe…', count: null });
+    setWebhook({ state: 'probe', detail: 'probe…' });
+    setAi({ state: 'probe', detail: 'probe…', anthropic: false });
+
+    // /health (Express root, not under /api)
+    try {
+      if (!apiOrigin) throw new Error('VITE_API_URL manquante');
+      const res = await fetch(`${apiOrigin}/health`, { cache: 'no-store' });
+      const data = await res.json();
+      if (!res.ok || !data?.ok) {
+        setHealth({ state: 'error', detail: `HTTP ${res.status}` });
+      } else {
+        setHealth({
+          state: 'ok',
+          detail: `${data.systeme || 'API'} · TZ ${data.tz || '?'}`,
+        });
+      }
+    } catch (err) {
+      setHealth({ state: 'error', detail: err.message || 'injoignable' });
+    }
+
+    // /streaks
+    try {
+      const data = await apiGet('/streaks');
+      if (!Array.isArray(data)) throw new Error('réponse invalide');
+      setStreaks({
+        state: 'ok',
+        detail: `${data.length} piste${data.length === 1 ? '' : 's'}`,
+        count: data.length,
       });
-  }, []);
+    } catch (err) {
+      setStreaks({ state: 'error', detail: err.message || 'échec', count: null });
+    }
+
+    // /ai/status
+    try {
+      const data = await apiGet('/ai/status');
+      if (data?.anthropic) {
+        setAi({
+          state: 'ok',
+          detail: `OK · ${data.model || 'claude'}`,
+          anthropic: true,
+        });
+      } else {
+        setAi({
+          state: 'error',
+          detail: 'ANTHROPIC_API_KEY manquante sur Railway',
+          anthropic: false,
+        });
+      }
+    } catch (err) {
+      setAi({ state: 'error', detail: err.message || 'échec', anthropic: false });
+    }
+
+    // webhook probe
+    try {
+      const result = await probeWebhook(apiOrigin);
+      if (result.ok) {
+        setWebhook({ state: 'ok', detail: 'secret requis (401) · protection OK' });
+      } else {
+        setWebhook({ state: 'error', detail: `réponse inattendue HTTP ${result.status}` });
+      }
+    } catch (err) {
+      setWebhook({ state: 'error', detail: err.message || 'injoignable' });
+    }
+  }
+
+  useEffect(() => {
+    // Auth probes (/streaks, /ai/status) need JWT — wait for session like Chantier
+    if (!session) return undefined;
+    runProbes();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [apiOrigin, session]);
 
   const connexions = useMemo(() => ([
-    { nom: 'API Express', ok: !!health?.ok, detail: `${health?.systeme || 'offline'} · TZ ${health?.tz || '?'}` },
-    { nom: 'Supabase Auth', ok: !!session, detail: session?.user?.email || 'non connecté' },
-    { nom: 'Streaks DB', ok: streaks.length > 0, detail: `${streaks.length} pistes` },
+    { nom: 'API Express', state: health.state, detail: health.detail },
     {
-      nom: 'GitHub webhook',
-      ok: webhookOk === true,
-      detail: webhookOk == null ? webhookDetail : webhookOk ? webhookDetail : webhookDetail || 'échec',
+      nom: 'Supabase Auth',
+      state: session ? 'ok' : 'error',
+      detail: session?.user?.email || 'non connecté',
     },
-    {
-      nom: 'Claude (Phase 3)',
-      ok: !!ai?.anthropic,
-      detail: ai?.anthropic ? `OK · ${ai.model}` : 'ANTHROPIC_API_KEY manquante sur Railway',
-    },
-  ]), [health, session, streaks, webhookOk, webhookDetail, ai]);
+    { nom: 'Streaks DB', state: streaks.state, detail: streaks.detail },
+    { nom: 'GitHub webhook', state: webhook.state, detail: webhook.detail },
+    { nom: 'Claude (Phase 3)', state: ai.state, detail: ai.detail },
+  ]), [health, session, streaks, webhook, ai]);
 
   async function testerWebhook() {
-    setWebhookOk(null);
-    setWebhookDetail('probe…');
+    setWebhook({ state: 'probe', detail: 'probe…' });
     try {
-      const ok = await probeWebhook();
-      setWebhookOk(ok);
-      setWebhookDetail(ok ? 'secret requis (401) · protection OK' : 'réponse inattendue');
-    } catch {
-      setWebhookOk(false);
-      setWebhookDetail('injoignable');
+      const result = await probeWebhook(apiOrigin);
+      if (result.ok) {
+        setWebhook({ state: 'ok', detail: 'secret requis (401) · protection OK' });
+      } else {
+        setWebhook({ state: 'error', detail: `réponse inattendue HTTP ${result.status}` });
+      }
+    } catch (err) {
+      setWebhook({ state: 'error', detail: err.message || 'injoignable' });
     }
   }
 
@@ -82,14 +162,19 @@ export default function Parametres() {
   }
 
   async function exporter() {
-    const dump = await apiGet('/export');
-    const blob = new Blob([JSON.stringify(dump, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `twiy-export-${new Date().toISOString().slice(0, 10)}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
+    setMsg('');
+    try {
+      const dump = await apiGet('/export');
+      const blob = new Blob([JSON.stringify(dump, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `twiy-export-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setMsg(err.message);
+    }
   }
 
   return (
@@ -109,23 +194,17 @@ export default function Parametres() {
               </p>
               <p className="compteur" style={{ marginTop: 6 }}>{c.detail}</p>
             </div>
-            <span
-              style={{
-                color: c.ok ? 'var(--jaune)' : (c.detail === 'probe…' ? 'var(--text-muted)' : 'var(--rouge)'),
-                fontFamily: 'var(--font-mono)',
-                fontSize: '0.75rem',
-                letterSpacing: '0.12em',
-              }}
-            >
-              {c.detail === 'probe…' ? '…' : (c.ok ? 'OK' : '—')}
-            </span>
+            <Badge state={c.state} />
           </div>
         ))}
       </div>
 
       <div style={{ display: 'flex', gap: 10, marginTop: 'var(--space-4)', flexWrap: 'wrap' }}>
+        <button type="button" onClick={runProbes} className="btn-ghost">Retester tout</button>
         <button type="button" onClick={testerWebhook} className="btn-ghost">Retester webhook</button>
-        <button type="button" onClick={routinesJour} className="btn-ghost">Routines du jour</button>
+        <button type="button" onClick={routinesJour} className="btn-ghost" disabled={!ai.anthropic}>
+          Routines du jour
+        </button>
         <button type="button" onClick={exporter} className="btn-poster">Exporter JSON</button>
       </div>
       {msg && <p className="compteur" style={{ marginTop: 12 }}>{msg}</p>}

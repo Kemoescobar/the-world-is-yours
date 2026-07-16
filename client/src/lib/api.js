@@ -54,7 +54,12 @@ export async function api(path, options = {}) {
   }
 
   if (auth) {
-    const token = await getAccessToken();
+    let token = await getAccessToken();
+    // Brief retry — AuthContext hydration can lag getSession by a tick
+    if (!token) {
+      await new Promise((r) => setTimeout(r, 80));
+      token = await getAccessToken();
+    }
     if (!token) {
       // Throw BEFORE fetch → zero network. Callers must surface this, never invent data.
       throw new ApiError('authentification requise', 401);
