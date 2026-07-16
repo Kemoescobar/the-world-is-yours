@@ -13,29 +13,34 @@ import {
   ACTIVES_TARGET,
   preparerPropositionArc,
   quetesActivesArc,
+  chapitreCourantArc,
   labelArc,
+  messageDepuisSignaux,
 } from '../lib/ravitaillement.js';
 
 const router = express.Router();
 router.use(requireAuthOrApiKey);
 
-/** Debounce in-memory : pas de 2e auto-fill du même arc dans la même minute. */
+/** Debounce in-memory : seulement après create réussi ; 10 s pour ne pas bloquer un retry vide. */
 const lastAutoByArc = new Map();
-const AUTO_DEBOUNCE_MS = 60_000;
+const AUTO_DEBOUNCE_MS = 10_000;
 
 async function chargerContexte() {
-  const [comps, quetes, preuves] = await Promise.all([
+  const [comps, quetes, preuves, chapitres] = await Promise.all([
     supabase.from('competences').select('*').in('arc_id', ARCS_RAVITAILLEMENT),
     supabase.from('quetes').select('*'),
     supabase.from('competences_preuves').select('competence_id'),
+    supabase.from('chapitres').select('*').in('arc_id', ARCS_RAVITAILLEMENT),
   ]);
   if (comps.error) throw new Error(comps.error.message);
   if (quetes.error) throw new Error(quetes.error.message);
   if (preuves.error) throw new Error(preuves.error.message);
+  if (chapitres.error) throw new Error(chapitres.error.message);
   return {
     competences: comps.data || [],
     quetes: quetes.data || [],
     preuves: preuves.data || [],
+    chapitres: chapitres.data || [],
   };
 }
 
@@ -63,9 +68,13 @@ async function archiverPropositionsOuvertes() {
   return data || [];
 }
 
+function chapitreIdPourArc(chapitres, arcId) {
+  return chapitreCourantArc(chapitres, arcId)?.id ?? null;
+}
+
 /**
  * Remplit jusqu’à ACTIVES_TARGET pour les arcs needy — insert direct en quetes.
- * Idempotent si ≥3 actifs ; debounce 60s par arc.
+ * Compte les actifs du chapitre courant seulement. Debounce 10 s après create réussi.
  */
 async function autoRemplirArcs(arcsDemandes) {
   const ctx = await chargerContexte();
@@ -81,14 +90,15 @@ async function autoRemplirArcs(arcsDemandes) {
       continue;
     }
 
+    const chapitreId = chapitreIdPourArc(ctx.chapitres, arcId);
     const last = lastAutoByArc.get(arcId) || 0;
     if (now - last < AUTO_DEBOUNCE_MS) {
-      const n = quetesActivesArc(ctx.quetes, arcId).length;
+      const n = quetesActivesArc(ctx.quetes, arcId, { chapitreId }).length;
       signaux.push({
         arc_id: arcId,
         debounce: true,
         actives: n,
-        note: 'auto récent (< 1 min) — skip',
+        note: 'auto récent (< 10 s) — skip',
       });
       continue;
     }
@@ -98,10 +108,21 @@ async function autoRemplirArcs(arcsDemandes) {
       competences: ctx.competences,
       quetes: ctx.quetes,
       preuves: ctx.preuves,
+      chapitres: ctx.chapitres,
     });
 
     if (!prep.trigger) {
       signaux.push({ arc_id: arcId, trigger: false, actives: prep.actives, note: prep.note });
+      continue;
+    }
+
+    if (prep.bloque_prereqs) {
+      signaux.push({
+        arc_id: arcId,
+        bloque_prereqs: true,
+        message: prep.message,
+        actives: prep.actives,
+      });
       continue;
     }
 
@@ -120,22 +141,23 @@ async function autoRemplirArcs(arcsDemandes) {
       titre: d.titre,
       statut: 'a_faire',
       competence_id: d.competence_id,
+      chapitre_id: prep.chapitre_id || null,
     }));
 
     const { data: quetes, error: qErr } = await supabase.from('quetes').insert(rows).select();
     if (qErr) throw new Error(qErr.message);
 
+    // Debounce uniquement après create réussi (pas sur attempt vide / bloqué)
     lastAutoByArc.set(arcId, now);
     const inserted = quetes || [];
     creees.push(...inserted);
 
-    // Met à jour le contexte local pour le prochain arc / cohérence
     ctx.quetes.push(...inserted);
 
     signaux.push({
       arc_id: arcId,
       created: inserted.length,
-      actives_apres: quetesActivesArc(ctx.quetes, arcId).length,
+      actives_apres: quetesActivesArc(ctx.quetes, arcId, { chapitreId: prep.chapitre_id }).length,
       competence: prep.competence?.titre || null,
       note: `auto · lot ×${inserted.length} · ${labelArc(arcId)}`,
     });
@@ -150,19 +172,23 @@ router.get('/status', async (req, res) => {
     const ctx = await chargerContexte();
     const arcs = {};
     for (const arcId of ARCS_RAVITAILLEMENT) {
-      const n = quetesActivesArc(ctx.quetes, arcId).length;
+      const chapitreId = chapitreIdPourArc(ctx.chapitres, arcId);
+      const n = quetesActivesArc(ctx.quetes, arcId, { chapitreId }).length;
       const prep = preparerPropositionArc({
         arcId,
         competences: ctx.competences,
         quetes: ctx.quetes,
         preuves: ctx.preuves,
+        chapitres: ctx.chapitres,
       });
       arcs[arcId] = {
         actives: n,
+        chapitre_id: chapitreId,
         besoin_ravitaillement: n < ACTIVES_TARGET,
         cible: ACTIVES_TARGET,
         manquants: Math.max(0, ACTIVES_TARGET - n),
         roadmap_terminee: Boolean(prep.roadmap_terminee),
+        bloque_prereqs: Boolean(prep.bloque_prereqs),
         message: prep.message || null,
       };
     }
@@ -200,7 +226,9 @@ router.post('/auto', validateBody(ravitaillementAutoSchema), async (req, res) =>
 
     const { creees, signaux } = await autoRemplirArcs(arcsDemandes);
     const terminees = signaux.filter((s) => s.roadmap_terminee).map((s) => s.message);
-    const rienAFaire = !creees.length && !terminees.length;
+    const message = messageDepuisSignaux(signaux, creees.length);
+    const rienAFaire = !creees.length && !terminees.length
+      && !signaux.some((s) => s.bloque_prereqs);
 
     res.status(creees.length ? 201 : 200).json({
       ok: true,
@@ -209,11 +237,7 @@ router.post('/auto', validateBody(ravitaillementAutoSchema), async (req, res) =>
       total_ajoutees: creees.length,
       signaux,
       roadmap_terminees: terminees,
-      message: creees.length
-        ? `Ravitaillement auto · ${creees.length} quête${creees.length > 1 ? 's' : ''} ajoutée${creees.length > 1 ? 's' : ''}`
-        : terminees.length
-          ? terminees.join(' · ')
-          : 'Ravitaillement auto · rien à faire (actifs ≥ 3 ou debounce)',
+      message,
       rien_a_faire: rienAFaire,
       skip_croisement: true,
     });
@@ -239,6 +263,7 @@ router.post('/proposer', validateBody(ravitaillementProposerSchema), async (req,
       propositions: [],
       total_ajoutees: creees.length,
       signaux,
+      message: messageDepuisSignaux(signaux, creees.length),
       skip_croisement: true,
     });
   } catch (err) {

@@ -15,7 +15,7 @@ Les compétences seedées (Dev + Beatmaker) existent ; les quêtes actives ne so
 
 ## Déclencheur
 
-- **Condition** : actifs (`a_faire` / `en_cours`) **&lt; 3** **par arc** (`type === arc`).
+- **Condition** : actifs (`a_faire` / `en_cours`) **&lt; 3** **par arc** dans le **chapitre ouvert** (même filtre que Chantier `quetesPourArc`) — les `a_faire` hors chapitre / orphelins sont **ignorés** pour le compte.
 - **Scan** : **tous** les arcs Dev + Beatmaker en un seul passage (pas un arc à la fois).
 - **Quand** : chargement Chantier → bandeau Contremaître appelle `POST /api/ravitaillement/auto`.
 - **Hors scope** : arc **Croisement** — pas de ravitaillement ; carte / route Chantier masquées (DB conservée).
@@ -25,10 +25,11 @@ Les compétences seedées (Dev + Beatmaker) existent ; les quêtes actives ne so
 ## Sélection de compétence
 
 1. Parcourir l’arbre de l’arc dans l’**ordre roadmap** (`source_roadmap` / semaine → cours) + **niveaux** Initiation → Pratique → Maîtrise.
-2. Si `prerequis` est présent : ne proposer une compétence que si les prérequis ont des **preuves**.
+2. Si `prerequis` est présent (**ravitaillement soft-unlock**) : OK si prérequis a une **preuve** **ou** une quête liée `fait` (pas preuve-only). Croisement toujours skip.
 3. Compétence **couverte** (preuve ou quête `fait` liée) / **saturée** (quête active liée) → skip.
 4. Remplir le lot en enchaînant les compétences ouvertes si besoin.
 5. **Ne jamais inventer** de compétences hors DB / hors `source_roadmap`.
+6. Absence de drafts : distinguer **`bloqué prereqs`** vs **`roadmap [arc] terminée`**.
 
 Code : `server/src/lib/ravitaillement.js`.
 
@@ -36,18 +37,18 @@ Code : `server/src/lib/ravitaillement.js`.
 
 ## Génération de quêtes — lot ×3 (insert direct)
 
-- Cible : **3** actifs par arc (`ACTIVES_TARGET` / `LOT_SIZE`).
+- Cible : **3** actifs par arc (`ACTIVES_TARGET` / `LOT_SIZE`) dans le chapitre courant.
 - Arc vide → **exactement 3** quêtes `a_faire` ; sinon refill jusqu’à 3.
 - Titres **concrets** (templates + ligne `Projet:` roadmap Beatmaker) — pas le titre brut de la compétence.
-- Chaque quête porte un **`competence_id`**.
-- **Idempotence** : si actifs ≥ 3 → no-op. Debounce in-memory **60 s** par arc (évite double-create sur reload rapide).
+- Chaque quête porte un **`competence_id`** + **`chapitre_id`** du chapitre ouvert.
+- **Idempotence** : si actifs (chapitre) ≥ 3 → no-op. Debounce in-memory **10 s** par arc **uniquement après create réussi** (attempt vide ne bloque pas).
 
 ---
 
 ## Surface UX — info only (plus de proposition)
 
 - **Plus** de carte Accepter / Refuser sur le chemin normal.
-- Contremaître : toast/note `Ravitaillement auto · N quêtes ajoutées` si création ; sinon message clair (`rien à faire` / debounce / `roadmap [arc] terminée`).
+- Contremaître : message **honnête** — `N quêtes ajoutées` / `assez d'actifs (n)` / `debounce` / `bloqué prereqs` / `roadmap terminée`. Jamais « actifs ≥ 3 » si actives = 0.
 - Table `ravitaillement_propositions` : **non écrite** par le chemin auto ; propositions `proposee` restantes sont archivées (`refusee` + note obsolète) au passage. Routes legacy `/repondre*` conservées mais inutilisées par l’UI.
 
 ### API

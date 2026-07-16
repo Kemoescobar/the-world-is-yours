@@ -36,19 +36,50 @@ export function sortCompetencesRoadmap(comps) {
   });
 }
 
-export function quetesActivesArc(quetes, arcId) {
-  return (quetes || []).filter(
-    (q) => q.type === arcId && q.statut !== 'fait' && q.statut !== 'abandonne',
-  );
+/**
+ * Chapitre « ouvert » pour un arc — même heuristique que Chantier.chapitrePourArc :
+ * le plus récent par date_debut.
+ */
+export function chapitreCourantArc(chapitres, arcId) {
+  return (chapitres || [])
+    .filter((c) => c.arc_id === arcId)
+    .sort((a, b) => String(b.date_debut).localeCompare(String(a.date_debut)))[0] || null;
+}
+
+/**
+ * Actifs pour refill. Si `chapitreId` est fourni, ignore les a_faire hors chapitre
+ * (orphelin / anciens chapitres) — aligné sur ce que le Chantier affiche pour l’arc.
+ */
+export function quetesActivesArc(quetes, arcId, opts = {}) {
+  const chapitreId = opts.chapitreId;
+  return (quetes || []).filter((q) => {
+    if (q.type !== arcId) return false;
+    if (q.statut === 'fait' || q.statut === 'abandonne') return false;
+    if (chapitreId != null) return q.chapitre_id === chapitreId;
+    return true;
+  });
 }
 
 export function preuveSetFromRows(preuves) {
   return new Set((preuves || []).map((p) => p.competence_id));
 }
 
-export function prerequisSatisfaits(comp, preuvesIds) {
+function prereqCouvertParQueteFaite(prereqId, quetes) {
+  return (quetes || []).some((q) => q.competence_id === prereqId && q.statut === 'fait');
+}
+
+/**
+ * Prérequis OK. Mode soft (ravitaillement) : preuve OU quête liée `fait`.
+ * Mode strict (défaut) : preuve seulement.
+ */
+export function prerequisSatisfaits(comp, preuvesIds, opts = {}) {
   const prereqs = Array.isArray(comp.prerequis) ? comp.prerequis : [];
   if (!prereqs.length) return true;
+  if (opts.softUnlockViaQueteFaite) {
+    return prereqs.every(
+      (id) => preuvesIds.has(id) || prereqCouvertParQueteFaite(id, opts.quetes),
+    );
+  }
   return prereqs.every((id) => preuvesIds.has(id));
 }
 
@@ -62,17 +93,52 @@ export function competenceCouverture(comp, quetes, preuvesIds) {
 
 /**
  * Prochaine compétence éligible : ordre roadmap + niveau, prereqs OK, non couverte / non saturée.
+ * opts.softUnlockViaQueteFaite — pour ravitaillement uniquement.
  */
 export function choisirCompetence(comps, quetes, preuvesIds, opts = {}) {
   const skipIds = new Set(opts.skipCompetenceIds || []);
+  const soft = Boolean(opts.softUnlockViaQueteFaite);
   const ordered = sortCompetencesRoadmap(comps || []);
   for (const c of ordered) {
     if (skipIds.has(c.id)) continue;
-    if (!prerequisSatisfaits(c, preuvesIds)) continue;
+    if (!prerequisSatisfaits(c, preuvesIds, soft ? { softUnlockViaQueteFaite: true, quetes } : {})) {
+      continue;
+    }
     const cov = competenceCouverture(c, quetes, preuvesIds);
     if (cov === 'ouverte') return c;
   }
   return null;
+}
+
+/** Diagnostique pourquoi aucun draft : roadmap terminée vs bloqué prereqs. */
+export function diagnostiquerAbsenceDrafts(comps, quetes, preuvesIds, opts = {}) {
+  const soft = Boolean(opts.softUnlockViaQueteFaite);
+  const ordered = sortCompetencesRoadmap(comps || []);
+  if (!ordered.length) {
+    return { roadmap_terminee: true, bloque_prereqs: false };
+  }
+
+  let ouverteBloquee = false;
+  let ouverteEligible = false;
+  let touteCouverte = true;
+
+  for (const c of ordered) {
+    const cov = competenceCouverture(c, quetes, preuvesIds);
+    if (cov === 'ouverte') {
+      touteCouverte = false;
+      const ok = prerequisSatisfaits(c, preuvesIds, soft ? { softUnlockViaQueteFaite: true, quetes } : {});
+      if (ok) ouverteEligible = true;
+      else ouverteBloquee = true;
+    }
+  }
+
+  if (ouverteEligible) {
+    return { roadmap_terminee: false, bloque_prereqs: false };
+  }
+  if (ouverteBloquee) {
+    return { roadmap_terminee: false, bloque_prereqs: true };
+  }
+  return { roadmap_terminee: touteCouverte || true, bloque_prereqs: false };
 }
 
 function extraireProjet(description) {
@@ -155,22 +221,66 @@ export function labelArc(arcId) {
 }
 
 /**
- * Construit une proposition pour un arc (ou signal roadmap terminée).
+ * Message honnête à partir des signaux /auto (jamais « actifs ≥ 3 » si actives=0).
+ */
+export function messageDepuisSignaux(signaux, totalAjoutees) {
+  if (totalAjoutees > 0) {
+    return `Ravitaillement auto · ${totalAjoutees} quête${totalAjoutees > 1 ? 's' : ''} ajoutée${totalAjoutees > 1 ? 's' : ''}`;
+  }
+  const parts = [];
+  for (const s of signaux || []) {
+    const arc = labelArc(s.arc_id);
+    if (s.created > 0) {
+      parts.push(`${arc}: +${s.created}`);
+      continue;
+    }
+    if (s.debounce) {
+      parts.push(`${arc}: debounce (${s.note || '< 10 s'})`);
+      continue;
+    }
+    if (s.bloque_prereqs) {
+      parts.push(`${arc}: bloqué prereqs`);
+      continue;
+    }
+    if (s.roadmap_terminee) {
+      parts.push(s.message || `roadmap ${arc} terminée`);
+      continue;
+    }
+    if (s.trigger === false) {
+      parts.push(`${arc}: assez d'actifs (${s.actives ?? '?'})`);
+      continue;
+    }
+    if (s.skip) {
+      parts.push(`${arc}: hors scope`);
+      continue;
+    }
+    if (s.note) parts.push(`${arc}: ${s.note}`);
+  }
+  return parts.length ? `Ravitaillement auto · ${parts.join(' · ')}` : 'Ravitaillement auto · rien à faire';
+}
+
+/**
+ * Construit une proposition pour un arc (ou signal roadmap terminée / bloqué).
  * Lot : remplit jusqu’à ACTIVES_TARGET (exactement LOT_SIZE si arc vide).
  * Parcourt plusieurs compétences si besoin pour compléter le lot.
+ * Soft-unlock prereqs via quête faite (ravitaillement).
  */
 export function preparerPropositionArc({
   arcId,
   competences,
   quetes,
   preuves,
+  chapitres = [],
   skipCompetenceIds = [],
 }) {
-  const actives = quetesActivesArc(quetes, arcId);
+  const chap = chapitreCourantArc(chapitres, arcId);
+  const chapitreId = chap?.id ?? null;
+  const actives = quetesActivesArc(quetes, arcId, { chapitreId });
   if (actives.length >= ACTIVES_TARGET) {
     return {
       trigger: false,
       actives: actives.length,
+      chapitre_id: chapitreId,
       note: `assez d'actifs (${actives.length})`,
     };
   }
@@ -188,6 +298,7 @@ export function preparerPropositionArc({
   while (drafts.length < besoin) {
     const competence = choisirCompetence(compsArc, quetesVirtuelles, preuvesIds, {
       skipCompetenceIds: [...skip],
+      softUnlockViaQueteFaite: true,
     });
     if (!competence) break;
 
@@ -207,15 +318,33 @@ export function preparerPropositionArc({
         competence_id: d.competence_id,
         type: d.type,
         statut: 'a_faire',
+        chapitre_id: chapitreId,
       });
     }
   }
 
   if (!drafts.length) {
+    const diag = diagnostiquerAbsenceDrafts(compsArc, quetes, preuvesIds, {
+      softUnlockViaQueteFaite: true,
+    });
+    if (diag.bloque_prereqs) {
+      return {
+        trigger: true,
+        actives: actives.length,
+        chapitre_id: chapitreId,
+        roadmap_terminee: false,
+        bloque_prereqs: true,
+        message: `${labelArc(arcId)}: bloqué prereqs`,
+        competence: null,
+        drafts: [],
+      };
+    }
     return {
       trigger: true,
       actives: actives.length,
+      chapitre_id: chapitreId,
       roadmap_terminee: true,
+      bloque_prereqs: false,
       message: `roadmap ${labelArc(arcId)} terminée`,
       competence: null,
       drafts: [],
@@ -226,7 +355,9 @@ export function preparerPropositionArc({
   return {
     trigger: true,
     actives: actives.length,
+    chapitre_id: chapitreId,
     roadmap_terminee: false,
+    bloque_prereqs: false,
     competence: primary,
     drafts,
     cible: ACTIVES_TARGET,

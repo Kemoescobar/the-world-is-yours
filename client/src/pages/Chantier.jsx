@@ -104,9 +104,16 @@ export default function Chantier() {
   const erreurPrincipale = arcsErreur || quetesErreur || sideErreur;
 
   function quetesPourArc(arcId) {
+    const chap = chapitrePourArc(arcId);
     return quetes.filter((q) => {
-      if (arcId === 'dev') return q.type === 'dev' || q.type === 'routine' || q.type === 'freelance';
-      return q.type === arcId;
+      if (arcId === 'dev') {
+        if (!(q.type === 'dev' || q.type === 'routine' || q.type === 'freelance')) return false;
+      } else if (q.type !== arcId) {
+        return false;
+      }
+      // Aligné ravitaillement : n’afficher que le chapitre ouvert (ignore a_faire orphelins / anciens)
+      if (chap?.id) return q.chapitre_id === chap.id;
+      return true;
     });
   }
 

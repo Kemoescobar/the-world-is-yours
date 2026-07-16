@@ -30,21 +30,24 @@ export default function ContremaitreBanner() {
         try {
           const auto = await apiPost('/ravitaillement/auto', {});
           const n = auto?.total_ajoutees || 0;
-          for (const s of auto?.signaux || []) {
-            if (s.roadmap_terminee && s.message) terminees.push(s.message);
-          }
-          for (const m of auto?.roadmap_terminees || []) {
-            if (m) terminees.push(m);
-          }
-          terminees = [...new Set(terminees)];
 
           if (n > 0) {
             note = auto.message || `Ravitaillement auto · ${n} quête${n > 1 ? 's' : ''} ajoutée${n > 1 ? 's' : ''}`;
+            // Chantier écoute twiy:quetes-changed → fetchQuetes()
             window.dispatchEvent(new CustomEvent('twiy:quetes-changed'));
-          } else if (terminees.length) {
-            note = '';
           } else if (auto?.message) {
+            // debounce / assez d'actifs / bloqué prereqs / roadmap — message honnête du serveur
             note = auto.message;
+            for (const s of auto?.signaux || []) {
+              if ((s.roadmap_terminee || s.bloque_prereqs) && s.message) {
+                terminees.push(s.message);
+              }
+            }
+            terminees = [...new Set(terminees)];
+            // Évite doublon note + lignes jaunes si le message serveur est déjà complet
+            if (terminees.length && note.includes(terminees[0])) {
+              terminees = [];
+            }
           }
         } catch {
           // soft — table / route peut manquer avant migration
