@@ -1,7 +1,6 @@
-# Ravitaillement — design (pas encore implémenté)
+# Ravitaillement — design + implémentation
 
-**Statut** : design figé · code **non shippé** · dépendances listées en bas.  
-**Date** : 2026-07-16  
+**Statut** : **implemented** (2026-07-16) · Dev + Beatmaker · Croisement **skipped**.  
 **Rôle** : remplir le Chantier de quêtes concrètes quand un arc manque d’actifs, à partir de l’arbre compétences / roadmap — jamais en silence.
 
 ---
@@ -14,85 +13,73 @@ Les compétences seedées (Dev + Beatmaker) existent ; les quêtes actives ne so
 
 ## Déclencheur
 
-- **Condition** : ≤ **1** quête active par arc concerné.
-- **Hors scope pour l’instant** : arc **Croisement** — pas de ravitaillement tant que l’arbre Croisement n’est pas peuplé.
+- **Condition** : ≤ **1** quête active (`a_faire` / `en_cours`) **par arc** (`type === arc`).
+- **Hors scope** : arc **Croisement** — pas de ravitaillement tant que l’arbre Croisement n’est pas peuplé.
 
 ---
 
 ## Sélection de compétence
 
-1. Parcourir l’arbre de l’arc dans l’**ordre roadmap** (`source_roadmap` / semaine → cours).
-2. Respecter les **niveaux** : Initiation → Pratique → Maîtrise.
-3. Si `prerequis` est présent : ne proposer une compétence que si les prérequis sont satisfaits (preuves / statut acquis — même logique que le gate preuves déjà shippé).
-4. Choisir **une** compétence cible (la prochaine non couverte / non saturée).
+1. Parcourir l’arbre de l’arc dans l’**ordre roadmap** (`source_roadmap` / semaine → cours) + **niveaux** Initiation → Pratique → Maîtrise.
+2. Si `prerequis` est présent : ne proposer une compétence que si les prérequis ont des **preuves**.
+3. Compétence **couverte** (preuve ou quête `fait` liée) / **saturée** (quête active liée) → skip.
+4. Choisir **une** compétence cible.
+
+Code : `server/src/lib/ravitaillement.js`.
 
 ---
 
 ## Génération de quêtes
 
-- À partir de **cette** compétence, proposer de **remplir jusqu’à une cible de 3–4 quêtes actives** sur l’arc (pas un tirage aléatoire « 1–3 seulement »).
-- Titres de quêtes **concrets** (action + livrable), **pas** le titre brut de la compétence.
-- Chaque quête proposée porte un **`competence_id`** (lien obligatoire).
-
-Exemple d’esprit (indicatif) :
-
-| Compétence (arbre) | Quêtes proposées (brouillon) |
-|---|---|
-| Initiation — Git & GitHub | « Créer le repo du projet X » · « Premier push avec README » · « Ouvrir une PR de polish » |
+- Remplir jusqu’à une cible de **4** actifs sur l’arc (3–4).
+- Titres **concrets** (templates + ligne `Projet:` roadmap Beatmaker) — pas le titre brut de la compétence.
+- Chaque brouillon porte un **`competence_id`**.
 
 ---
 
 ## Surface UX — toujours brouillon / proposition
 
-Aligné Contremaître et apprentissages check-in :
+- **Jamais** d’injection silencieuse en `quetes`.
+- Table `ravitaillement_propositions` (`statut = proposee`) + accepter / refuser.
+- UI : bandeau **Contremaître** sur le Chantier (liste des drafts + boutons).
 
-- **Jamais** d’injection silencieuse en base comme quêtes `a_faire` actives.
-- Toujours un **brouillon / proposition** à accepter ou rejeter.
-- Surfaces prévues :
-  - bandeau **Contremaître** (Chantier), et/ou
-  - **message matin**, et/ou
-  - **Revue** (section dédiée ou rappel).
+### API
 
-Pattern de référence déjà en prod : `suggestions_contremaitre.statut = 'proposee'` + feedback utile / pas utile ; apprentissages en `apprentissages_brouillon` sans auto-insert.
+| Méthode | Route | Rôle |
+|---|---|---|
+| GET | `/api/ravitaillement/status` | Actifs / besoin / roadmap terminée / props ouvertes |
+| GET | `/api/ravitaillement/actif` | Propositions `proposee` |
+| POST | `/api/ravitaillement/proposer` | Corps optionnel `{ arc_id?: 'dev'\|'beatmaker' }` → brouillons |
+| POST | `/api/ravitaillement/:id/repondre` | `{ action: 'accepter'\|'refuser' }` — accepter **seul** crée les quêtes |
 
 ---
 
 ## Arbre épuisé
 
-Quand plus aucune compétence éligible sur l’arc :
-
-- Signal clair, non ambigu : **« roadmap [arc] terminée »** (ex. `roadmap Dev terminée`).
-- Pas de faux ravitaillement ni de quêtes inventées hors arbre.
+Signal : **`roadmap [arc] terminée`** (ex. `roadmap Dev terminée`) — pas de faux brouillons.
 
 ---
 
 ## Croisement — aside
 
-Pas de ravitaillement sur **Croisement** tant que l’arbre compétences Croisement n’est pas peuplé. Revisiter après seed / design arbre.
+**Skipped** en v1. Revisiter après seed / design arbre Croisement.
 
 ---
 
-## Dépendances (avant code produit)
+## Dépendances shippées avec
 
-1. **Persistance API réelle** des quêtes (déjà là) + usage systématique de `quetes.competence_id`.
-2. **Lier les quêtes existantes** à un `competence_id` (migration / script / édition manuelle) — sinon le ravitaillement double ou ignore l’existant.
-3. Règles de statut « compétence couverte » (preuves attachées, quêtes faites liées) — s’appuyer sur `competences_preuves` + quêtes liées déjà en place depuis `66402fe`.
-
----
-
-## Hors périmètre (v1)
-
-- Génération IA obligatoire des titres (peut être templates déterministes d’abord).
-- Auto-acceptation.
-- Ravitaillement multi-arcs en une passe.
-- Croisement.
+1. Persistance quêtes API (déjà là) + `competence_id` sur drafts.
+2. Migration `20260716_ravitaillement` + liens best-effort quêtes existantes (Dev/Beatmaker) — ambigu → `null`.
+3. Script : `server/scripts/link-quetes-competences.mjs` (`--dry-run` ok).
+4. Dispersion soft : pas de banner si zéro quête a `ere_objectif_id` (« ère pas encore branchée »).
 
 ---
 
-## Ordre d’implémentation suggéré
+## Tests
 
-1. Audit data : combien de quêtes actives ont déjà `competence_id` ?
-2. Script / UI pour rattacher les orphelines.
-3. Endpoint `POST /ravitaillement/proposer` (ou extension Contremaître) → brouillons seulement.
-4. UI accept / reject → insert quêtes avec `competence_id`.
-5. Signal « roadmap terminée ».
+```powershell
+cd C:\twiy\server
+npm test
+# smoke (WEBHOOK_API_KEY) :
+# POST /api/ravitaillement/proposer → Accepter dans l’UI Chantier
+```

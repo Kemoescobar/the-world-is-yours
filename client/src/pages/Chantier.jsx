@@ -77,10 +77,16 @@ export default function Chantier() {
       }
     })();
 
+    function onQuetesChanged() {
+      dispatch(fetchQuetes());
+    }
+    window.addEventListener('twiy:quetes-changed', onQuetesChanged);
+
     return () => {
       cancelled = true;
       arcsAction.abort?.();
       quetesAction.abort?.();
+      window.removeEventListener('twiy:quetes-changed', onQuetesChanged);
     };
   }, [dispatch, session, authLoading]);
 

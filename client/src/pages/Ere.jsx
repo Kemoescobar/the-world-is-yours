@@ -94,6 +94,11 @@ export default function Ere() {
           (non bloquant)
         </p>
       )}
+      {dispersion?.ere && !dispersion?.dispersion && dispersion?.note === 'ère pas encore branchée aux quêtes' && (
+        <p className="compteur" style={{ marginBottom: 16, opacity: 0.7 }}>
+          Ère active — pas encore branchée aux quêtes (pas de Dispersion)
+        </p>
+      )}
 
       {active && (
         <article className="os-panel chrome-edge blueprint-grid" style={{ marginBottom: 20 }}>

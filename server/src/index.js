@@ -19,6 +19,7 @@ import eresRouter from './routes/eres.js';
 import competencesRouter from './routes/competences.js';
 import rayonnementRouter from './routes/rayonnement.js';
 import contremaitreRouter from './routes/contremaitre.js';
+import ravitaillementRouter from './routes/ravitaillement.js';
 
 const app = express();
 
@@ -62,6 +63,7 @@ app.use('/api/eres', eresRouter);
 app.use('/api/competences', competencesRouter);
 app.use('/api/rayonnement', rayonnementRouter);
 app.use('/api/contremaitre', contremaitreRouter);
+app.use('/api/ravitaillement', ravitaillementRouter);
 
 app.get('/', (req, res) => {
   res.json({

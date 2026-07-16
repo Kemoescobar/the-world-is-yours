@@ -74,13 +74,36 @@ router.get('/dispersion', async (req, res) => {
     .or(`date_prevue.gte.${iso},cree_le.gte.${debut.toISOString()}`);
   if (error) return res.status(500).json({ error: error.message });
 
-  const sans = (quetes || []).filter((q) => !q.ere_objectif_id);
+  const liste = quetes || [];
+  const avecObjectif = liste.filter((q) => q.ere_objectif_id);
+  const sans = liste.filter((q) => !q.ere_objectif_id);
+
+  // Pas encore branchée : aucune quête n'a ere_objectif_id → pas un signal Dispersion
+  if (avecObjectif.length === 0) {
+    return res.json({
+      ok: true,
+      ere,
+      dispersion: false,
+      sans_objectif: [],
+      total_periode: liste.length,
+      lies_ere: 0,
+      jours,
+      note: 'ère pas encore branchée aux quêtes',
+    });
+  }
+
+  // Soft : banner seulement si % hors objectif significatif (≥50 %) et ≥2 quêtes
+  const pct = sans.length / Math.max(liste.length, 1);
+  const dispersion = sans.length >= 2 && pct >= 0.5;
+
   res.json({
     ok: true,
     ere,
-    dispersion: sans.length > 0,
+    dispersion,
     sans_objectif: sans,
-    total_periode: (quetes || []).length,
+    total_periode: liste.length,
+    lies_ere: avecObjectif.length,
+    pct_hors: Math.round(pct * 100),
     jours,
   });
 });

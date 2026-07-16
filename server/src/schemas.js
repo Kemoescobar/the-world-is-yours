@@ -125,6 +125,14 @@ export const feedbackSuggestionSchema = z.object({
   statut: z.enum(['utile', 'pas_utile']),
 });
 
+export const ravitaillementProposerSchema = z.object({
+  arc_id: z.enum(['dev', 'beatmaker']).optional(),
+}).strict();
+
+export const ravitaillementRepondreSchema = z.object({
+  action: z.enum(['accepter', 'refuser']),
+});
+
 export const createInstrumentalSchema = z.object({
   titre: z.string().trim().min(1).max(300),
   bpm: z.number().int().positive().optional().nullable(),

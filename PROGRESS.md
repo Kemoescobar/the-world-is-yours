@@ -45,32 +45,28 @@ Doc : `docs/phase-3.md` · roadmaps : `docs/roadmaps/README.md`
 | Chantier session-gated | Pas de fetch API sans JWT ; loading puis compteurs stables (LIVE 13/13) |
 | Paramètres probes réels | health / streaks / webhook / AI → **OK** ou **—** (Claude honnêtement — sans clé) |
 | Routes catalogue | `/instrus` → `/catalogue/instrus`, `/projets` → `/catalogue/projets` |
-| Dispersion gate | Banner **uniquement** si Ère `active` (API + UI) |
+| Dispersion gate | Banner **uniquement** si Ère `active` **et** au moins 1 quête déjà liée à un `ere_objectif_id` **et** ≥50 % hors objectif (≥2) — sinon « pas encore branchée » |
 | Drops spiral | Vue spiral / liste |
 | Insights sans IA | Bouton désactivé si Anthropic soft-off |
 | Demo freelance | Prospect seedé retiré (migration) |
 | Compétences interactives | Expand + preuves + prérequis roadmap (`66402fe`, migration appliquée) |
 | Contremaître | Bandeau Chantier OK en LIVE |
+| **Ravitaillement** | Propositions Dev/Beatmaker → accepter/refuser (jamais inject silencieux) · Croisement skipped |
 
 ### OPEN
 
 | Item | Notes |
 |---|---|
-| **Dispersion banner LIVE** | Gate code OK ; banner encore visible dès qu’une Ère est active et que des quêtes n’ont pas `ere_objectif_id` (cas courant). Affiner le signal ou rattacher les quêtes aux objectifs d’ère. |
 | Auth signup public | Dashboard Supabase / Management API — `audit-followups.md` |
 | `ANTHROPIC_API_KEY` | Soft-off volontaire tant que pas posé |
 | Clearance assets / samples | `clearance-checklist.md` |
+| Ravitaillement Croisement | Aside jusqu’à seed arbre Croisement |
 
-### NEXT — Ravitaillement
+### NEXT
 
-Design figé (pas de code encore) : [`docs/ravitaillement.md`](docs/ravitaillement.md).
-
-Ordre de travail unifié :
-
-1. ~~Fondation audit runtime (session, Paramètres, routes, compétences/preuves)~~ ✅
-2. **Ravitaillement** — proposer 3–4 quêtes actives depuis la roadmap (brouillon Contremaître / matin / Revue) ; Croisement aside
-3. Affiner Dispersion (seuils / `ere_objectif_id`) si le bruit LIVE gêne encore
-4. Toi : clé Anthropic + signup fermé + clearance si ouverture publique large
+1. ~~Ravitaillement Dev/Beatmaker~~ ✅
+2. Toi : clé Anthropic + signup fermé + clearance si ouverture publique large
+3. Croisement ravitaillement après peuplement compétences
 
 ---
 

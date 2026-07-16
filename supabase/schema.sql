@@ -252,3 +252,15 @@ create table if not exists suggestions_contremaitre (
   date_feedback timestamptz
 );
 
+create table if not exists ravitaillement_propositions (
+  id uuid primary key default gen_random_uuid(),
+  arc_id text not null references arcs(id),
+  competence_id uuid references competences(id),
+  drafts jsonb not null default '[]'::jsonb,
+  statut text not null default 'proposee'
+    check (statut in ('proposee', 'acceptee', 'refusee')),
+  note text,
+  date_proposition timestamptz default now(),
+  date_reponse timestamptz
+);
+

@@ -273,15 +273,16 @@ Cet addendum **ne remplace pas** la spec ci-dessus ; il ancre le réel post-scaf
 - Audit runtime `fec7fa2` : Chantier session-gated, Paramètres probes réels (OK/—), redirects catalogue, Insights soft-off sans IA, Drops spiral, demo freelance retirée, dispersion **seulement** avec Ère active
 - Compétences `66402fe` : UI interactive, preuves, prérequis roadmap + migration
 - LIVE vérifié : Paramètres probes ; Chantier loading → 13/13 ; Contremaître OK
+- **Ravitaillement** Dev/Beatmaker : propositions + accepter/refuser (`docs/ravitaillement.md`) ; Croisement skipped
+- Dispersion soft : pas de banner si ère pas encore branchée aux quêtes (`ere_objectif_id`)
 
 ### OPEN
 
-- Bandeau **Dispersion** encore visible en LIVE si Ère active + quêtes sans `ere_objectif_id` (gate « sans Ère » OK ; seuil / données à affiner)
 - Actions owner : signup Auth, clé Anthropic, clearance assets — voir `docs/audit-followups.md`
+- Ravitaillement **Croisement** (après seed arbre)
 
 ### NEXT
 
-- **Ravitaillement** — design : `docs/ravitaillement.md` (déclencheur ≤1 quête active/arc → 3–4 quêtes concrètes liées à une compétence roadmap, toujours en proposition, Croisement aside). Code non commencé.
 - Cartographie audit → statut : `docs/audit-reconcile-2026-07.md`
 - Avancement vivant : `PROGRESS.md`
 
