@@ -4,6 +4,12 @@ import { requireAuthOrApiKey } from '../middleware/auth.js';
 import { aiRateLimit } from '../middleware/rateLimit.js';
 import { askClaude, anthropicConfigured } from '../lib/claude.js';
 import { lireMemoire, appendLecon } from '../lib/coachingMemory.js';
+import {
+  genererRevueHeuristique,
+  genererTitreChapitreHeuristique,
+} from '../lib/chronique.js';
+import { parserCheckinHeuristique } from '../lib/checkinHeuristique.js';
+import { incrementerStreak } from './streaks.js';
 
 const router = express.Router();
 
@@ -58,30 +64,62 @@ router.post('/revue', async (req, res) => {
       .eq('statut', 'proposee')
       .maybeSingle();
 
-    const { text } = await askClaude(
-      `Tu es le rédacteur des Chroniques TWIY (THE WORLD IS YOURS).
-Tone: direct, culturel, pas corporate. Français.
-Structure: titre de semaine + 6 points (cert/commit, Dev, Beatmaker, freelance proposals, LinkedIn/post, délais) + 1 leçon + section "ce que tu as appris" si apprentissages fournis.
-Mémoire coaching à respecter:\n${ctx.memoire}`,
-      `Données 7 jours:\n${JSON.stringify({
-        entrees: ctx.entrees.slice(0, 40),
-        quetes_faites: faites.length,
-        quetes_total: ctx.quetes.length,
-        streaks: ctx.streaks,
-        apprentissages: apprentissages || [],
-        contremaitre: suggestion || null,
-        proposals: (ctx.prospects || []).filter((p) => p.statut === 'proposal_envoye').length,
-      }, null, 2)}\n\nRédige la revue dominicale.`,
-      1100,
-    );
-    res.json({
-      ok: true,
-      revue: text,
+    const heuristic = genererRevueHeuristique({
+      entrees: ctx.entrees,
+      quetes: ctx.quetes,
+      streaks: ctx.streaks,
       apprentissages: apprentissages || [],
       contremaitre: suggestion || null,
     });
+
+    if (!anthropicConfigured()) {
+      return res.json({
+        ok: true,
+        revue: heuristic,
+        source: 'heuristic',
+        apprentissages: apprentissages || [],
+        contremaitre: suggestion || null,
+      });
+    }
+
+    try {
+      const { text } = await askClaude(
+        `Tu es le rédacteur des Chroniques TWIY (THE WORLD IS YOURS).
+Tone: direct, culturel, pas corporate. Français.
+Structure: titre de semaine + récit (pas un dump de stats) + 1 leçon + section "ce que tu as appris" si apprentissages fournis.
+Mémoire coaching à respecter:\n${ctx.memoire}`,
+        `Données 7 jours:\n${JSON.stringify({
+          entrees: ctx.entrees.slice(0, 40),
+          quetes_faites: faites.length,
+          quetes_total: ctx.quetes.length,
+          streaks: ctx.streaks,
+          apprentissages: apprentissages || [],
+          contremaitre: suggestion || null,
+          proposals: (ctx.prospects || []).filter((p) => p.statut === 'proposal_envoye').length,
+          brouillon_heuristique: heuristic,
+        }, null, 2)}\n\nRédige la revue dominicale en prose.`,
+        1100,
+      );
+      return res.json({
+        ok: true,
+        revue: text,
+        source: 'ia',
+        apprentissages: apprentissages || [],
+        contremaitre: suggestion || null,
+      });
+    } catch (err) {
+      // Soft: jamais 503 pour absence de récit — heuristique toujours dispo
+      return res.json({
+        ok: true,
+        revue: heuristic,
+        source: 'heuristic',
+        note: err.message,
+        apprentissages: apprentissages || [],
+        contremaitre: suggestion || null,
+      });
+    }
   } catch (err) {
-    res.status(err.code === 'NO_KEY' ? 503 : 500).json({ error: err.message });
+    res.status(500).json({ error: err.message });
   }
 });
 
@@ -103,54 +141,96 @@ Mémoire:\n${lireMemoire()}`,
   }
 });
 
+const TYPES_FAIT_OK = new Set([
+  'commit', 'certif', 'session_prod', 'sport', 'proposal', 'instru', 'projet', 'quete', 'bilan_ere',
+]);
+const ARCS_OK = new Set(['dev', 'beatmaker', 'croisement']);
+
+async function insererEntreesCheckin(entrees, source = 'checkin') {
+  const creees = [];
+  const streakParArc = { dev: 'dev', beatmaker: 'miprod' };
+  for (const e of (entrees || []).slice(0, 8)) {
+    const type_fait = TYPES_FAIT_OK.has(e.type_fait) ? e.type_fait : 'quete';
+    const detail = String(e.detail || '').trim();
+    if (!detail) continue;
+    let arc_id = e.arc_id === 'null' || !e.arc_id ? null : e.arc_id;
+    if (arc_id && !ARCS_OK.has(arc_id)) arc_id = null;
+    const row = { type_fait, detail, arc_id, source };
+    const { data, error } = await supabase.from('entrees').insert(row).select().single();
+    if (!error && data) {
+      creees.push(data);
+      if (type_fait === 'sport') await incrementerStreak('sport');
+      else if (streakParArc[arc_id]) await incrementerStreak(streakParArc[arc_id]);
+    }
+  }
+  return creees;
+}
+
 router.post('/checkin', async (req, res) => {
   const texte = (req.body?.texte || '').trim();
   if (!texte) return res.status(400).json({ error: 'texte requis' });
 
+  const heuristic = parserCheckinHeuristique(texte);
+  const creer = req.body?.creer === true;
+
   try {
-    const { text } = await askClaude(
-      `Tu transformes un check-in libre en faits Chroniques TWIY.
+    let parsed = heuristic;
+    let source = 'heuristic';
+
+    if (anthropicConfigured()) {
+      try {
+        const { text } = await askClaude(
+          `Tu transformes un check-in libre en faits Chroniques TWIY.
 Réponds UNIQUEMENT en JSON valide: {"entrees":[{"type_fait":"commit|session_prod|sport|proposal|instru|projet|certif|quete","detail":"...","arc_id":"dev|beatmaker|croisement|null"}],"lecon":"optionnel","apprentissages_brouillon":[{"titre":"...","contenu":"...","type":"blocage_resolu|declic|principe","arc_id":"dev|beatmaker|croisement|null","tags":[]}]}
 Types autorisés stricts. arc_id null si sport/proposal générique.
 Si tu detects un blocage résolu ou un déclic, remplis apprentissages_brouillon (max 2) — JAMAIS auto-créés, brouillons seulement.
 Mémoire:\n${lireMemoire()}`,
-      texte,
-      900,
-    );
-
-    let parsed;
-    try {
-      const jsonMatch = text.match(/\{[\s\S]*\}/);
-      parsed = JSON.parse(jsonMatch ? jsonMatch[0] : text);
-    } catch {
-      return res.status(502).json({ error: 'réponse IA non JSON', brut: text });
-    }
-
-    const creer = req.body?.creer === true;
-    const creees = [];
-    if (creer && Array.isArray(parsed.entrees)) {
-      for (const e of parsed.entrees.slice(0, 8)) {
-        const row = {
-          type_fait: e.type_fait,
-          detail: e.detail,
-          arc_id: e.arc_id === 'null' || !e.arc_id ? null : e.arc_id,
-          source: 'checkin_ia',
-        };
-        const { data, error } = await supabase.from('entrees').insert(row).select().single();
-        if (!error && data) creees.push(data);
+          `Texte:\n${texte}\n\nBrouillon heuristique:\n${JSON.stringify(heuristic)}`,
+          900,
+        );
+        const jsonMatch = text.match(/\{[\s\S]*\}/);
+        const iaParsed = JSON.parse(jsonMatch ? jsonMatch[0] : text);
+        if (Array.isArray(iaParsed?.entrees) && iaParsed.entrees.length) {
+          parsed = iaParsed;
+          source = 'ia';
+        }
+      } catch {
+        /* soft — heuristique */
       }
     }
 
+    const creees = creer
+      ? await insererEntreesCheckin(parsed.entrees, source === 'ia' ? 'checkin_ia' : 'checkin')
+      : [];
+
     if (parsed.lecon) appendLecon(parsed.lecon);
 
-    // Brouillons apprentissages — jamais auto-insert
     const brouillons = Array.isArray(parsed.apprentissages_brouillon)
       ? parsed.apprentissages_brouillon.slice(0, 2)
       : [];
 
-    res.json({ ok: true, suggestion: parsed, creees, apprentissages_brouillon: brouillons });
+    res.json({
+      ok: true,
+      suggestion: parsed,
+      creees,
+      apprentissages_brouillon: brouillons,
+      source,
+    });
   } catch (err) {
-    res.status(err.code === 'NO_KEY' ? 503 : 500).json({ error: err.message });
+    // Dernier filet : toujours pouvoir créer via heuristique
+    try {
+      const creees = creer ? await insererEntreesCheckin(heuristic.entrees, 'checkin') : [];
+      res.json({
+        ok: true,
+        suggestion: heuristic,
+        creees,
+        apprentissages_brouillon: heuristic.apprentissages_brouillon || [],
+        source: 'heuristic',
+        note: err.message,
+      });
+    } catch (err2) {
+      res.status(500).json({ error: err2.message || err.message });
+    }
   }
 });
 
@@ -169,20 +249,42 @@ router.post('/chapitre-titre', async (req, res) => {
       .order('cree_le', { ascending: false })
       .limit(30);
 
-    const { text } = await askClaude(
-      `Tu titres un chapitre Chroniques TWIY (affiche street, Bricolage vibe).
-Réponds JSON: {"titre":"...","resume_public":"1-2 phrases"}
-Titre court, punchy, pas générique.`,
-      JSON.stringify({ chapitre: chap, entrees: entrees || [] }),
-      400,
-    );
+    const { data: quetes } = await supabase
+      .from('quetes')
+      .select('*')
+      .eq('chapitre_id', chapitreId);
 
-    let parsed;
-    try {
-      const jsonMatch = text.match(/\{[\s\S]*\}/);
-      parsed = JSON.parse(jsonMatch ? jsonMatch[0] : text);
-    } catch {
-      return res.status(502).json({ error: 'réponse IA non JSON', brut: text });
+    const quetesFaites = (quetes || []).filter((q) => q.statut === 'fait');
+    const heuristic = genererTitreChapitreHeuristique({
+      chapitre: chap,
+      quetesFaites,
+      entrees: entrees || [],
+    });
+
+    let parsed = heuristic;
+    let source = 'heuristic';
+
+    if (anthropicConfigured()) {
+      try {
+        const { text } = await askClaude(
+          `Tu titres un chapitre Chroniques TWIY (affiche street, Bricolage vibe).
+Réponds JSON: {"titre":"...","resume_public":"1-2 phrases"}
+Titre court, punchy, pas générique. Basé UNIQUEMENT sur les faits.`,
+          JSON.stringify({ chapitre: chap, entrees: entrees || [], quetes_faites: quetesFaites, brouillon: heuristic }),
+          400,
+        );
+        const jsonMatch = text.match(/\{[\s\S]*\}/);
+        const iaParsed = JSON.parse(jsonMatch ? jsonMatch[0] : text);
+        if (iaParsed?.titre) {
+          parsed = {
+            titre: iaParsed.titre,
+            resume_public: iaParsed.resume_public || heuristic.resume_public,
+          };
+          source = 'ia';
+        }
+      } catch {
+        /* keep heuristic */
+      }
     }
 
     if (req.body?.appliquer === true) {
@@ -197,12 +299,12 @@ Titre court, punchy, pas générique.`,
         .select()
         .single();
       if (upErr) return res.status(500).json({ error: upErr.message });
-      return res.json({ ok: true, suggestion: parsed, chapitre: data });
+      return res.json({ ok: true, suggestion: parsed, chapitre: data, source });
     }
 
-    res.json({ ok: true, suggestion: parsed });
+    res.json({ ok: true, suggestion: parsed, source });
   } catch (err) {
-    res.status(err.code === 'NO_KEY' ? 503 : 500).json({ error: err.message });
+    res.status(500).json({ error: err.message });
   }
 });
 

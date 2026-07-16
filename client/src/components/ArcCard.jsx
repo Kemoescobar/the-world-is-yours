@@ -15,8 +15,19 @@ function quetesPourAffichage(quetes) {
   return [...unfinished, ...finished.slice(0, pad)];
 }
 
-export default function ArcCard({ nom, streak, progression, quetes = [], enRetard, badge, onValider }) {
+export default function ArcCard({
+  nom,
+  streak,
+  streakRecord = 0,
+  progression,
+  quetes = [],
+  enRetard,
+  badge,
+  accumulation,
+  onValider,
+}) {
   const liste = quetesPourAffichage(quetes);
+  const acc = accumulation || null;
 
   return (
     <div className="poster-panel blueprint-grid chrome-edge os-panel arc-console">
@@ -35,6 +46,16 @@ export default function ArcCard({ nom, streak, progression, quetes = [], enRetar
       </div>
 
       <div className="arc-console__body">
+        {acc && (
+          <p className="arc-console__fil compteur" style={{ margin: '0 0 10px', lineHeight: 1.4 }}>
+            {acc.titreChapitre || acc.semaine || 'Chapitre'}
+            {' · '}
+            {acc.faits ?? 0} fait{(acc.faits ?? 0) !== 1 ? 's' : ''}
+            {' · '}
+            {acc.quetesFaites ?? 0}/{acc.quetesTotal ?? 0} quêtes
+            {streakRecord > 0 ? ` · record ${streakRecord}j` : ''}
+          </p>
+        )}
         <p
           className="compteur"
           style={{

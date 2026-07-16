@@ -10,7 +10,7 @@
     "dev": "node --watch src/index.js",
     "start": "node src/index.js",
     "build": "node -e \"console.log('no build step')\"",
-    "test": "node --test src/lib/ravitaillement.test.js src/lib/emploiDuTemps.test.js"
+    "test": "node --test src/lib/ravitaillement.test.js src/lib/emploiDuTemps.test.js src/lib/chronique.test.js src/lib/checkinHeuristique.test.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.0",

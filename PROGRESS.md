@@ -53,6 +53,12 @@ Doc : `docs/phase-3.md` · roadmaps : `docs/roadmaps/README.md`
 | Contremaître | Bandeau Chantier OK en LIVE |
 | **Ravitaillement** | Auto-fill Dev/Beatmaker (cible 3 actifs / chapitre courant) · Croisement skipped |
 | **Emploi du temps** | Plan du jour heuristique (pas d’IA requise) · slots liés aux quêtes réelles · HUD Chantier |
+| **Chronique** | Bloc récit hero Chantier · `GET /api/chronique/jour` + `/chapitre-actif` · heuristique toujours, Claude soft |
+| **Titres chapitre** | Heuristique sur faits réels · clôture + auto-remplace seed générique · header Chantier |
+| **Revue récit** | `POST /ai/revue` prose heuristique sans 503 · stats secondaires |
+| **Capture +** | FAB z-index fixé · crée `entrees` · events refresh Chronique/quetes · toast |
+| **Check-in soir** | `POST /ai/checkin` heuristique sans Claude · modes FAB / Contremaître / Chronique |
+| **Horizon fil** | Aujourd’hui → Chapitre → Ère + accumulation sur ArcCards |
 
 ### OPEN
 
@@ -66,9 +72,11 @@ Doc : `docs/phase-3.md` · roadmaps : `docs/roadmaps/README.md`
 ### NEXT
 
 1. ~~Ravitaillement Dev/Beatmaker~~ ✅
-2. ~~Emploi du temps intelligent~~ ✅ — `GET /api/emploi-du-temps` heuristique TZ Antananarivo (Matin Dev / Après-midi Beatmaker / Soir catch-up + streaks à risque) · UI HUD Chantier · IA optionnelle `?ia=1` seulement
-3. Toi : clé Anthropic + signup fermé + clearance si ouverture publique large
-4. Croisement ravitaillement après peuplement compétences
+2. ~~Emploi du temps intelligent~~ ✅
+3. ~~Chronique / Capture / Horizon~~ ✅ — sang dans le système (entrees → récit → fil Ère)
+4. Toi : clé Anthropic + signup fermé + clearance si ouverture publique large
+5. Croisement ravitaillement après peuplement compétences
+6. UI attacher `ere_objectif_id` depuis ArcCard (prompt soft + lien `/ere` déjà en place)
 
 ---
 

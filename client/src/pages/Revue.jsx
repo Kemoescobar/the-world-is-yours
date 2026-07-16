@@ -9,6 +9,7 @@ export default function Revue() {
   const [apprentissages, setApprentissages] = useState([]);
   const [contremaitre, setContremaitre] = useState(null);
   const [revue, setRevue] = useState('');
+  const [source, setSource] = useState('');
   const [statut, setStatut] = useState('idle');
   const [erreur, setErreur] = useState('');
 
@@ -30,11 +31,10 @@ export default function Revue() {
     return {
       recentes,
       faites,
-      resumeLocal: [
-        `Cette semaine : ${recentes.length} faits capturés.`,
-        `Quêtes closes : ${faites.length}/${quetes.length}.`,
-        `Streaks — ${streaks.map((s) => `${s.id}:${s.jours_consecutifs}j`).join(' · ') || 'n/a'}.`,
-        `Apprentissages : ${apprentissages.length}.`,
+      statsSecondaires: [
+        `${recentes.length} faits · ${faites.length}/${quetes.length} quêtes`,
+        `Streaks — ${streaks.map((s) => `${s.id}:${s.jours_consecutifs}j`).join(' · ') || 'n/a'}`,
+        `Apprentissages : ${apprentissages.length}`,
       ],
     };
   }, [entrees, quetes, streaks, apprentissages]);
@@ -45,6 +45,7 @@ export default function Revue() {
     try {
       const data = await apiPost('/ai/revue', {});
       setRevue(data.revue || '');
+      setSource(data.source || (data.revue ? 'ia' : 'heuristic'));
       if (data.apprentissages) setApprentissages(data.apprentissages);
       if (data.contremaitre !== undefined) setContremaitre(data.contremaitre);
       setStatut('ok');
@@ -69,10 +70,10 @@ export default function Revue() {
       <OsHeader
         kicker="OS · REVUE"
         title="REVUE"
-        meta="Hebdo · apprentissages · Contremaître"
+        meta="Récit hebdo · apprentissages · Contremaître"
         actions={(
           <button type="button" className="btn-poster" onClick={generer} disabled={statut === 'gen'}>
-            {statut === 'gen' ? 'Génération…' : '› Générer la revue IA'}
+            {statut === 'gen' ? 'Génération…' : '› Générer le récit'}
           </button>
         )}
       />
@@ -99,17 +100,33 @@ export default function Revue() {
         </article>
       )}
 
-      <article className="os-panel chrome-edge blueprint-grid">
+      <article className="os-panel chrome-edge blueprint-grid chronique-poster" style={{ marginBottom: 16 }}>
         <div className="os-panel__bar">
-          <span>{revue ? 'REVUE IA' : 'RÉSUMÉ LOCAL'}</span>
-          <span className="compteur-dot">HEBDO</span>
+          <span>{revue ? 'RÉCIT' : 'EN ATTENTE DU RÉCIT'}</span>
+          <span className="compteur-dot">{source ? source.toUpperCase() : 'HEBDO'}</span>
         </div>
         <div className="os-panel__body">
-          {(revue ? revue.split('\n') : semaine.resumeLocal).map((l, i) => (
-            <p key={`${i}-${l.slice(0, 24)}`} style={{ marginBottom: 12, lineHeight: 1.55, whiteSpace: 'pre-wrap' }}>{l}</p>
-          ))}
+          {revue ? (
+            revue.split('\n').map((l, i) => (
+              <p key={`${i}-${l.slice(0, 24)}`} style={{ marginBottom: 12, lineHeight: 1.55, whiteSpace: 'pre-wrap' }}>{l}</p>
+            ))
+          ) : (
+            <p style={{ lineHeight: 1.55, color: 'var(--text-muted)' }}>
+              Génère le récit de la semaine — prose toujours disponible (heuristique sans Claude).
+              Les compteurs restent secondaires, en bas.
+            </p>
+          )}
         </div>
       </article>
+
+      <div className="os-stat-rail" aria-label="Stats secondaires" style={{ marginBottom: 24 }}>
+        {semaine.statsSecondaires.map((s) => (
+          <div key={s}>
+            <p className="compteur">STAT</p>
+            <p style={{ margin: '4px 0 0', fontSize: '0.85rem', lineHeight: 1.35 }}>{s}</p>
+          </div>
+        ))}
+      </div>
 
       <h2 style={{ marginTop: 'var(--space-4)', marginBottom: 8, fontSize: '1.1rem', textTransform: 'uppercase' }}>
         Ce que tu as appris
@@ -121,7 +138,7 @@ export default function Revue() {
             <span>{a.type} · {a.titre}</span>
           </li>
         ))}
-        {!apprentissages.length && <li>Aucun apprentissage cette semaine — check-in IA peut proposer des brouillons</li>}
+        {!apprentissages.length && <li>Aucun apprentissage cette semaine — check-in peut proposer des brouillons</li>}
       </ul>
 
       <h2 style={{ marginTop: 'var(--space-4)', marginBottom: 8, fontSize: '1.1rem', textTransform: 'uppercase' }}>
@@ -134,7 +151,18 @@ export default function Revue() {
             <span>{String(e.cree_le).slice(0, 10)} · {e.type_fait} · {e.detail}</span>
           </li>
         ))}
-        {!semaine.recentes.length && <li>Aucun fait cette semaine</li>}
+        {!semaine.recentes.length && (
+          <li>
+            Aucun fait cette semaine —{' '}
+            <button
+              type="button"
+              className="btn-ghost"
+              onClick={() => window.dispatchEvent(new CustomEvent('twiy:open-capture', { detail: { mode: 'checkin' } }))}
+            >
+              check-in
+            </button>
+          </li>
+        )}
       </ul>
     </div>
   );

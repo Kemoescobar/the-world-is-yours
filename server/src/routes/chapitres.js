@@ -2,6 +2,9 @@ import express from 'express';
 import { supabase } from '../supabaseClient.js';
 import { requireAuth } from '../middleware/auth.js';
 import { askClaude, anthropicConfigured } from '../lib/claude.js';
+import {
+  genererTitreChapitreHeuristique,
+} from '../lib/chronique.js';
 
 const router = express.Router();
 
@@ -17,35 +20,61 @@ router.get('/', async (req, res) => {
   res.json(data);
 });
 
-/** Clôture + titre Claude (Phase 3). Si ere_id, peut créer un brouillon apprentissage. */
+/** Clôture + titre (Claude si clé, sinon heuristique depuis faits réels). */
 router.post('/:id/cloturer', async (req, res) => {
   const { id } = req.params;
   const { data: chap, error } = await supabase.from('chapitres').select('*').eq('id', id).single();
   if (error || !chap) return res.status(404).json({ error: 'chapitre introuvable' });
 
-  const closePayload = { statut: 'clos' };
+  const { data: entrees } = await supabase
+    .from('entrees')
+    .select('*')
+    .eq('arc_id', chap.arc_id)
+    .order('cree_le', { ascending: false })
+    .limit(25);
+
+  const { data: quetes } = await supabase
+    .from('quetes')
+    .select('*')
+    .eq('chapitre_id', id);
+
+  const quetesFaites = (quetes || []).filter((q) => q.statut === 'fait');
+  const heuristic = genererTitreChapitreHeuristique({
+    chapitre: chap,
+    quetesFaites,
+    entrees: entrees || [],
+  });
+
   if (!anthropicConfigured()) {
     const { data, error: upErr } = await supabase
       .from('chapitres')
-      .update(closePayload)
+      .update({
+        titre: heuristic.titre,
+        resume_public: heuristic.resume_public,
+        statut: 'clos',
+      })
       .eq('id', id)
       .select()
       .single();
     if (upErr) return res.status(500).json({ error: upErr.message });
-    return res.json({ ok: true, chapitre: data, ia: false, note: 'clos sans titre IA (pas de clé)' });
+    return res.json({
+      ok: true,
+      chapitre: data,
+      ia: false,
+      source: 'heuristic',
+      note: 'clos avec titre heuristique (pas de clé Anthropic)',
+    });
   }
 
   try {
-    const { data: entrees } = await supabase
-      .from('entrees')
-      .select('*')
-      .eq('arc_id', chap.arc_id)
-      .order('cree_le', { ascending: false })
-      .limit(25);
-
     const { text } = await askClaude(
-      'Titre de chapitre Chroniques TWIY. JSON only: {"titre":"...","resume_public":"..."}',
-      JSON.stringify({ chapitre: chap, entrees: entrees || [] }),
+      'Titre de chapitre Chroniques TWIY. JSON only: {"titre":"...","resume_public":"..."}. Basé UNIQUEMENT sur les faits — n\'invente rien.',
+      JSON.stringify({
+        chapitre: chap,
+        entrees: entrees || [],
+        quetes_faites: quetesFaites,
+        brouillon: heuristic,
+      }),
       350,
     );
     const m = text.match(/\{[\s\S]*\}/);
@@ -54,17 +83,35 @@ router.post('/:id/cloturer', async (req, res) => {
     const { data, error: upErr } = await supabase
       .from('chapitres')
       .update({
-        titre: parsed.titre || chap.titre,
-        resume_public: parsed.resume_public || chap.resume_public,
+        titre: parsed.titre || heuristic.titre || chap.titre,
+        resume_public: parsed.resume_public || heuristic.resume_public || chap.resume_public,
         statut: 'clos',
       })
       .eq('id', id)
       .select()
       .single();
     if (upErr) return res.status(500).json({ error: upErr.message });
-    res.json({ ok: true, chapitre: data, ia: true });
+    res.json({ ok: true, chapitre: data, ia: true, source: 'ia' });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    // Soft: clôturer quand même avec heuristique
+    const { data, error: upErr } = await supabase
+      .from('chapitres')
+      .update({
+        titre: heuristic.titre,
+        resume_public: heuristic.resume_public,
+        statut: 'clos',
+      })
+      .eq('id', id)
+      .select()
+      .single();
+    if (upErr) return res.status(500).json({ error: upErr.message || err.message });
+    res.json({
+      ok: true,
+      chapitre: data,
+      ia: false,
+      source: 'heuristic',
+      note: `IA échouée — titre heuristique (${err.message})`,
+    });
   }
 });
 

@@ -1952,12 +1952,12 @@ textarea.os-input {
   color: var(--jaune);
 }
 
-/* Capture FAB ? chrome disc, not flat SaaS + */
+/* Capture FAB — above halftone (z 9999) so + always clickable */
 .capture-fab {
   position: fixed;
   bottom: 22px;
   right: 22px;
-  z-index: 1000;
+  z-index: 10050;
   width: 56px;
   height: 56px;
   border: none;
@@ -1986,7 +1986,7 @@ textarea.os-input {
 .capture-modal {
   position: fixed;
   inset: 0;
-  z-index: 1001;
+  z-index: 10060;
   display: grid;
   place-items: center;
   background:
@@ -2509,5 +2509,242 @@ textarea.os-input {
 
   .cover-flow__hint {
     display: none;
+  }
+}
+
+/* —— Chantier : Chronique + horizon + moodboard —— */
+.chantier-page {
+  position: relative;
+  isolation: isolate;
+}
+
+.chantier-atmosphere {
+  position: absolute;
+  inset: -24px -12px auto -12px;
+  height: min(52vh, 420px);
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+  opacity: 0.38;
+}
+
+.chantier-atmosphere__img {
+  position: absolute;
+  object-fit: cover;
+  mix-blend-mode: screen;
+  filter: saturate(0.85) contrast(1.05);
+}
+
+.chantier-atmosphere__img--a {
+  width: 55%;
+  max-width: 320px;
+  top: -8%;
+  right: -4%;
+  opacity: 0.55;
+  animation: atmosphere-drift 18s var(--ease-poster) infinite alternate;
+}
+
+.chantier-atmosphere__img--b {
+  width: 42%;
+  max-width: 240px;
+  bottom: 8%;
+  left: -6%;
+  opacity: 0.4;
+  transform: rotate(-8deg);
+  animation: atmosphere-drift 22s var(--ease-poster) infinite alternate-reverse;
+}
+
+.chantier-atmosphere__wash {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, transparent 20%, var(--bg-0) 92%),
+    radial-gradient(ellipse at 70% 20%, rgba(42, 111, 176, 0.35), transparent 55%),
+    radial-gradient(ellipse at 15% 70%, rgba(255, 59, 48, 0.12), transparent 45%),
+    radial-gradient(ellipse at 50% 90%, rgba(255, 210, 63, 0.08), transparent 40%);
+}
+
+.chantier-page > *:not(.chantier-atmosphere) {
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes atmosphere-drift {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  to { transform: translate3d(-12px, 10px, 0) scale(1.04); }
+}
+
+.chronique-poster {
+  position: relative;
+  overflow: hidden;
+  margin-bottom: var(--space-3);
+  background:
+    linear-gradient(145deg, rgba(200, 210, 230, 0.16), transparent 42%),
+    linear-gradient(200deg, rgba(26, 74, 138, 0.22), transparent 55%),
+    linear-gradient(320deg, rgba(255, 59, 48, 0.08), transparent 40%),
+    var(--bg-1);
+}
+
+.chronique-poster__media {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.22;
+}
+
+.chronique-poster__img {
+  position: absolute;
+  object-fit: cover;
+  mix-blend-mode: screen;
+}
+
+.chronique-poster__img--a {
+  width: 48%;
+  right: -6%;
+  top: -20%;
+  opacity: 0.7;
+}
+
+.chronique-poster__img--b {
+  width: 36%;
+  left: -8%;
+  bottom: -30%;
+  opacity: 0.55;
+  transform: rotate(12deg);
+}
+
+.chronique-poster__bar {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 12px;
+  border-bottom: 1px solid rgba(200, 220, 255, 0.1);
+  background: rgba(4, 8, 18, 0.45);
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.chronique-poster__body {
+  position: relative;
+  z-index: 2;
+  padding: var(--space-3);
+}
+
+.chronique-poster__titre {
+  margin: 0 0 12px;
+  font-size: clamp(1.15rem, 3.2vw, 1.65rem);
+  color: var(--jaune);
+  letter-spacing: 0.04em;
+}
+
+.chronique-poster__corps {
+  margin: 0;
+  max-width: 62ch;
+  font-size: 1.02rem;
+  line-height: 1.55;
+  font-family: var(--font-body);
+}
+
+.chronique-poster__actions {
+  margin-top: 14px;
+}
+
+.horizon-fil {
+  margin: 0 0 var(--space-3);
+  padding: 12px 14px;
+  border: 1px solid rgba(200, 220, 255, 0.16);
+  background:
+    linear-gradient(90deg, rgba(26, 74, 138, 0.18), transparent 55%),
+    rgba(4, 8, 18, 0.55);
+}
+
+.horizon-fil__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 10px 14px;
+}
+
+.horizon-fil__node {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  flex: 1 1 140px;
+}
+
+.horizon-fil__node strong {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.horizon-fil__meta {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.horizon-fil__sep {
+  color: var(--rouge);
+  font-family: var(--font-mono);
+  align-self: center;
+  opacity: 0.85;
+}
+
+.horizon-fil__prompt {
+  margin: 10px 0 0;
+  font-family: var(--font-hand);
+  color: var(--rouge);
+  font-size: 1.1rem;
+  transform: rotate(-1deg);
+}
+
+.horizon-fil__prompt a {
+  color: var(--jaune);
+}
+
+.chantier-toast {
+  margin: 0 0 12px;
+  padding: 8px 12px;
+  border: 1px solid rgba(255, 210, 63, 0.35);
+  background: rgba(255, 210, 63, 0.08);
+  color: var(--jaune);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  animation: toast-in 220ms var(--ease-poster) both;
+}
+
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.arc-console__fil {
+  opacity: 0.85;
+  letter-spacing: 0.06em !important;
+}
+
+@media (max-width: 640px) {
+  .horizon-fil__sep {
+    display: none;
+  }
+
+  .chantier-atmosphere__img--a {
+    width: 70%;
   }
 }

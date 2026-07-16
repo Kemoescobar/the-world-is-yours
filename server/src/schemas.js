@@ -10,7 +10,7 @@ const optionalUrl = z.union([z.string().url(), z.literal('')]).optional().nullab
 
 export const createEntreeSchema = z.object({
   type_fait: TYPE_FAIT,
-  detail: z.string().trim().min(1).max(2000).optional().nullable(),
+  detail: z.string().trim().min(1).max(2000),
   arc_id: ARC_ID.optional().nullable(),
   quete_id: z.string().uuid().optional().nullable(),
 });

@@ -21,6 +21,7 @@ import rayonnementRouter from './routes/rayonnement.js';
 import contremaitreRouter from './routes/contremaitre.js';
 import ravitaillementRouter from './routes/ravitaillement.js';
 import emploiDuTempsRouter from './routes/emploiDuTemps.js';
+import chroniqueRouter from './routes/chronique.js';
 
 const app = express();
 
@@ -66,6 +67,7 @@ app.use('/api/rayonnement', rayonnementRouter);
 app.use('/api/contremaitre', contremaitreRouter);
 app.use('/api/ravitaillement', ravitaillementRouter);
 app.use('/api/emploi-du-temps', emploiDuTempsRouter);
+app.use('/api/chronique', chroniqueRouter);
 
 app.get('/', (req, res) => {
   res.json({

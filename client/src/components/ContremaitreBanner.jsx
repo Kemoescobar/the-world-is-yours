@@ -79,8 +79,6 @@ export default function ContremaitreBanner() {
 
   const hasContre = Boolean(data?.contremaitre || data?.message);
   const hasRav = Boolean(noteRav) || signauxTerminee.length > 0;
-  if (!data && !erreur && !hasRav) return null;
-  if (!hasContre && !hasRav && !erreur) return null;
 
   return (
     <aside
@@ -89,8 +87,8 @@ export default function ContremaitreBanner() {
       aria-label="Contremaître"
     >
       <div className="os-panel__bar">
-        <span>CONTREMAÎTRE · MATIN</span>
-        <span className="compteur-dot">MAX 1</span>
+        <span>CONTREMAÎTRE</span>
+        <span className="compteur-dot">{hasContre ? 'MAX 1' : 'SOIR'}</span>
       </div>
       <div className="os-panel__body">
         {erreur && <p className="annotation-manuscrite">{erreur}</p>}
@@ -144,6 +142,17 @@ export default function ContremaitreBanner() {
             {noteRav}
           </p>
         )}
+
+        <p style={{ marginTop: 12, marginBottom: 0 }}>
+          <button
+            type="button"
+            className="btn-ghost"
+            style={{ fontSize: '0.7rem' }}
+            onClick={() => window.dispatchEvent(new CustomEvent('twiy:open-capture', { detail: { mode: 'checkin' } }))}
+          >
+            › Soir — t’as fait quoi aujourd’hui ?
+          </button>
+        </p>
       </div>
     </aside>
   );
