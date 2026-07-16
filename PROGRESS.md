@@ -51,7 +51,8 @@ Doc : `docs/phase-3.md` · roadmaps : `docs/roadmaps/README.md`
 | Demo freelance | Prospect seedé retiré (migration) |
 | Compétences interactives | Expand + preuves + prérequis roadmap (`66402fe`, migration appliquée) |
 | Contremaître | Bandeau Chantier OK en LIVE |
-| **Ravitaillement** | Propositions Dev/Beatmaker → accepter/refuser (jamais inject silencieux) · Croisement skipped |
+| **Ravitaillement** | Auto-fill Dev/Beatmaker (cible 3 actifs / chapitre courant) · Croisement skipped |
+| **Emploi du temps** | Plan du jour heuristique (pas d’IA requise) · slots liés aux quêtes réelles · HUD Chantier |
 
 ### OPEN
 
@@ -65,8 +66,9 @@ Doc : `docs/phase-3.md` · roadmaps : `docs/roadmaps/README.md`
 ### NEXT
 
 1. ~~Ravitaillement Dev/Beatmaker~~ ✅
-2. Toi : clé Anthropic + signup fermé + clearance si ouverture publique large
-3. Croisement ravitaillement après peuplement compétences
+2. ~~Emploi du temps intelligent~~ ✅ — `GET /api/emploi-du-temps` heuristique TZ Antananarivo (Matin Dev / Après-midi Beatmaker / Soir catch-up + streaks à risque) · UI HUD Chantier · IA optionnelle `?ia=1` seulement
+3. Toi : clé Anthropic + signup fermé + clearance si ouverture publique large
+4. Croisement ravitaillement après peuplement compétences
 
 ---
 

@@ -6,6 +6,7 @@ import { fetchQuetes, validerQuete } from '../store/slices/questsSlice.js';
 import ArcCard from '../components/ArcCard.jsx';
 import OsHeader from '../components/OsHeader.jsx';
 import ContremaitreBanner from '../components/ContremaitreBanner.jsx';
+import EmploiDuTemps from '../components/EmploiDuTemps.jsx';
 import { apiGet } from '../lib/api.js';
 import { useAuth } from '../auth/AuthContext.jsx';
 
@@ -31,6 +32,7 @@ export default function Chantier() {
   const [dispersion, setDispersion] = useState(null);
   const [sideErreur, setSideErreur] = useState('');
   const [sideStatut, setSideStatut] = useState('idle');
+  const [edtRefresh, setEdtRefresh] = useState(0);
 
   useEffect(() => {
     // RequireAuth already gates, but never dispatch until JWT exists —
@@ -68,6 +70,7 @@ export default function Chantier() {
 
     function onQuetesChanged() {
       dispatch(fetchQuetes());
+      setEdtRefresh((n) => n + 1);
     }
     window.addEventListener('twiy:quetes-changed', onQuetesChanged);
 
@@ -186,9 +189,15 @@ export default function Chantier() {
         </div>
       </div>
 
-      <div className="routine-frise" aria-label="Emploi du temps">
-        <span className="actuel">Emploi du temps</span>
-      </div>
+      {!authLoading && session && (
+        <EmploiDuTemps
+          refreshKey={edtRefresh}
+          onValider={async (id) => {
+            await dispatch(validerQuete(id));
+            setEdtRefresh((n) => n + 1);
+          }}
+        />
+      )}
 
       {!chargement && !erreurPrincipale && !arcsVisibles.length && (
         <div className="empty-wall" style={{ marginTop: 16, textAlign: 'center' }}>
