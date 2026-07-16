@@ -260,3 +260,31 @@ Trois captures d'écran de sites/apps envoyées, analysées image par image (fra
 ## 9. Prêt pour scaffold
 
 Plus aucun point ouvert. Mécanisme, palette, sitemap, modèle de données, catalogue, stack front/back, hébergement, robustesse, et identité de marque sont tous figés dans ce document.
+
+---
+
+## Addendum — état shippé & ordre de travail (2026-07-16)
+
+Cet addendum **ne remplace pas** la spec ci-dessus ; il ancre le réel post-scaffold et corrige les claims d’audit devenus faux.
+
+### DONE (sur `main`)
+
+- Phases 0–3 fondations + 5 modules (Apprentissages, Ère, Compétences, Rayonnement, Contremaître)
+- Audit runtime `fec7fa2` : Chantier session-gated, Paramètres probes réels (OK/—), redirects catalogue, Insights soft-off sans IA, Drops spiral, demo freelance retirée, dispersion **seulement** avec Ère active
+- Compétences `66402fe` : UI interactive, preuves, prérequis roadmap + migration
+- LIVE vérifié : Paramètres probes ; Chantier loading → 13/13 ; Contremaître OK
+
+### OPEN
+
+- Bandeau **Dispersion** encore visible en LIVE si Ère active + quêtes sans `ere_objectif_id` (gate « sans Ère » OK ; seuil / données à affiner)
+- Actions owner : signup Auth, clé Anthropic, clearance assets — voir `docs/audit-followups.md`
+
+### NEXT
+
+- **Ravitaillement** — design : `docs/ravitaillement.md` (déclencheur ≤1 quête active/arc → 3–4 quêtes concrètes liées à une compétence roadmap, toujours en proposition, Croisement aside). Code non commencé.
+- Cartographie audit → statut : `docs/audit-reconcile-2026-07.md`
+- Avancement vivant : `PROGRESS.md`
+
+### Note d’honnêteté
+
+Les formulations anciennes du type « Paramètres entièrement fake », « compétences sans preuves », « tout le OS est encore statique » ne doivent plus être reprises telles quelles : les correctifs ci-dessus sont shippés. Relire `docs/audit-reconcile-2026-07.md` avant de prioriser un correctif.
