@@ -13,20 +13,8 @@ const streakParArc = { dev: 'dev', beatmaker: 'miprod' };
 /** Croisement mis de côté — UI hide seulement (DB inchangée). */
 const ARCS_CACHES = new Set(['croisement']);
 
-const ROUTINES = ['Aube', 'Miprod', 'Dev', 'Étude', 'Odin', 'Miprod+'];
-
 function jourISO() {
   return new Date().toISOString().slice(0, 10);
-}
-
-function blocRoutineActuel() {
-  const h = new Date().getHours();
-  if (h < 8) return 0;
-  if (h < 11) return 1;
-  if (h < 14) return 2;
-  if (h < 17) return 3;
-  if (h < 20) return 4;
-  return 5;
 }
 
 export default function Chantier() {
@@ -43,7 +31,6 @@ export default function Chantier() {
   const [dispersion, setDispersion] = useState(null);
   const [sideErreur, setSideErreur] = useState('');
   const [sideStatut, setSideStatut] = useState('idle');
-  const actuel = blocRoutineActuel();
 
   useEffect(() => {
     // RequireAuth already gates, but never dispatch until JWT exists —
@@ -199,12 +186,8 @@ export default function Chantier() {
         </div>
       </div>
 
-      <div className="routine-frise" aria-label="Routine du jour">
-        {ROUTINES.map((label, i) => (
-          <span key={label} className={i === actuel ? 'actuel' : undefined}>
-            {label}
-          </span>
-        ))}
+      <div className="routine-frise" aria-label="Emploi du temps">
+        <span className="actuel">Emploi du temps</span>
       </div>
 
       {!chargement && !erreurPrincipale && !arcsVisibles.length && (

@@ -164,6 +164,32 @@ describe('ravitaillement', () => {
     assert.match(prep.note, /assez d'actifs \(3\)/);
   });
 
+  it('compte routine/freelance comme actifs Dev (aligné carte Chantier)', () => {
+    const quetes = [
+      { type: 'routine', statut: 'a_faire', titre: 'R', chapitre_id: chapDev.id },
+      { type: 'freelance', statut: 'en_cours', titre: 'F', chapitre_id: chapDev.id },
+      { type: 'dev', statut: 'a_faire', titre: 'D', chapitre_id: chapDev.id },
+    ];
+    assert.equal(quetesActivesArc(quetes, 'dev', { chapitreId: chapDev.id }).length, 3);
+    const prep = preparerPropositionArc({
+      arcId: 'dev',
+      competences: comps,
+      quetes,
+      preuves: [],
+      chapitres: [chapDev],
+    });
+    assert.equal(prep.trigger, false);
+    assert.equal(prep.actives, 3);
+  });
+
+  it('ne compte pas routine sur Beatmaker', () => {
+    const quetes = [
+      { type: 'routine', statut: 'a_faire', titre: 'R', chapitre_id: 'chap-bm' },
+      { type: 'beatmaker', statut: 'a_faire', titre: 'B1', chapitre_id: 'chap-bm' },
+    ];
+    assert.equal(quetesActivesArc(quetes, 'beatmaker', { chapitreId: 'chap-bm' }).length, 1);
+  });
+
   it('signale roadmap terminée (couverture complète)', () => {
     const preuves = new Set(['c1', 'c2', 'c3']);
     const quetes = [

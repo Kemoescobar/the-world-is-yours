@@ -47,13 +47,24 @@ export function chapitreCourantArc(chapitres, arcId) {
 }
 
 /**
- * Actifs pour refill. Si `chapitreId` est fourni, ignore les a_faire hors chapitre
- * (orphelin / anciens chapitres) — aligné sur ce que le Chantier affiche pour l’arc.
+ * Types affichés sur la carte Chantier pour un arc (même filtre que `quetesPourArc`).
+ * Dev regroupe routine + freelance + dev ; les autres arcs = type === arcId.
+ */
+export function typesAffichesArc(arcId) {
+  if (arcId === 'dev') return ['dev', 'routine', 'freelance'];
+  return [arcId];
+}
+
+/**
+ * Actifs pour refill = quêtes non faites / non abandonnées visibles sur la carte arc.
+ * Si `chapitreId` est fourni, ignore les a_faire hors chapitre (orphelins / anciens).
+ * Aligné Chantier : refill quand la carte montre &lt; 3 non-fait.
  */
 export function quetesActivesArc(quetes, arcId, opts = {}) {
   const chapitreId = opts.chapitreId;
+  const types = new Set(typesAffichesArc(arcId));
   return (quetes || []).filter((q) => {
-    if (q.type !== arcId) return false;
+    if (!types.has(q.type)) return false;
     if (q.statut === 'fait' || q.statut === 'abandonne') return false;
     if (chapitreId != null) return q.chapitre_id === chapitreId;
     return true;

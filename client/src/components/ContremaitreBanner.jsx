@@ -31,10 +31,11 @@ export default function ContremaitreBanner() {
           const auto = await apiPost('/ravitaillement/auto', {});
           const n = auto?.total_ajoutees || 0;
 
+          // Toujours rafraîchir : les a_faire (nouveaux ou déjà en DB) doivent apparaître sur les cartes
+          window.dispatchEvent(new CustomEvent('twiy:quetes-changed'));
+
           if (n > 0) {
             note = auto.message || `Ravitaillement auto · ${n} quête${n > 1 ? 's' : ''} ajoutée${n > 1 ? 's' : ''}`;
-            // Chantier écoute twiy:quetes-changed → fetchQuetes()
-            window.dispatchEvent(new CustomEvent('twiy:quetes-changed'));
           } else if (auto?.message) {
             // debounce / assez d'actifs / bloqué prereqs / roadmap — message honnête du serveur
             note = auto.message;

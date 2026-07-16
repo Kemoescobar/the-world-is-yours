@@ -16,8 +16,10 @@ Les compétences seedées (Dev + Beatmaker) existent ; les quêtes actives ne so
 ## Déclencheur
 
 - **Condition** : actifs (`a_faire` / `en_cours`) **&lt; 3** **par arc** dans le **chapitre ouvert** (même filtre que Chantier `quetesPourArc`) — les `a_faire` hors chapitre / orphelins sont **ignorés** pour le compte.
+- **Types** : Dev = `dev` + `routine` + `freelance` (comme la carte) ; Beatmaker = `beatmaker` seulement. Les quêtes auto créées restent `type = arc_id`.
+- **Carte ArcCard** : affiche **toutes** les non-fait d’abord (plus de `slice(0,4)` qui masquait les actifs derrière le seed `fait`).
 - **Scan** : **tous** les arcs Dev + Beatmaker en un seul passage (pas un arc à la fois).
-- **Quand** : chargement Chantier → bandeau Contremaître appelle `POST /api/ravitaillement/auto`.
+- **Quand** : chargement Chantier → bandeau Contremaître appelle `POST /api/ravitaillement/auto` puis `twiy:quetes-changed`.
 - **Hors scope** : arc **Croisement** — pas de ravitaillement ; carte / route Chantier masquées (DB conservée).
 
 ---

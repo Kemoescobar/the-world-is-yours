@@ -1,6 +1,23 @@
 import { playTick } from '../lib/sounds.js';
 
+/**
+ * Priorise les a_faire / en_cours (toutes visibles), puis quelques fait pour contexte.
+ * Évite le bug slice(0,4) qui masquait des actifs derrière d’anciennes quêtes seedées.
+ */
+function quetesPourAffichage(quetes) {
+  const unfinished = [];
+  const finished = [];
+  for (const q of quetes || []) {
+    if (q.statut === 'fait' || q.statut === 'abandonne') finished.push(q);
+    else unfinished.push(q);
+  }
+  const pad = Math.max(0, 4 - unfinished.length);
+  return [...unfinished, ...finished.slice(0, pad)];
+}
+
 export default function ArcCard({ nom, streak, progression, quetes = [], enRetard, badge, onValider }) {
+  const liste = quetesPourAffichage(quetes);
+
   return (
     <div className="poster-panel blueprint-grid chrome-edge os-panel arc-console">
       <div className="os-panel__bar">
@@ -50,7 +67,7 @@ export default function ArcCard({ nom, streak, progression, quetes = [], enRetar
         </div>
 
         <ul className="os-list os-list--dense" style={{ fontFamily: 'var(--font-body)', fontSize: '0.88rem' }}>
-          {quetes.slice(0, 4).map((q) => {
+          {liste.map((q) => {
             const faite = q.statut === 'fait';
             const retardQuete = !faite && q.date_prevue && q.date_prevue < new Date().toISOString().slice(0, 10);
             return (
@@ -85,7 +102,7 @@ export default function ArcCard({ nom, streak, progression, quetes = [], enRetar
               </li>
             );
           })}
-          {!quetes.length && (
+          {!liste.length && (
             <li className="compteur" style={{ border: 'none', paddingTop: 4 }}>
               Aucune quête — capture un fait
             </li>
