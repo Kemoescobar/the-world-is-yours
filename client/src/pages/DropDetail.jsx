@@ -1,11 +1,83 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { apiGet } from '../lib/api.js';
 import { playImpact } from '../lib/sounds.js';
 
+function exportDropCard({ detail, typeFait, date }) {
+  const w = 1080;
+  const h = 1350;
+  const canvas = document.createElement('canvas');
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+
+  const g = ctx.createLinearGradient(0, 0, w, h);
+  g.addColorStop(0, '#1a0f0d');
+  g.addColorStop(0.45, '#2b1512');
+  g.addColorStop(1, '#4a231d');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, w, h);
+
+  // Magenta/cyan iridescent accents (registre fort)
+  const iris = ctx.createRadialGradient(w * 0.3, h * 0.2, 40, w * 0.3, h * 0.2, 420);
+  iris.addColorStop(0, 'rgba(255,43,214,0.35)');
+  iris.addColorStop(1, 'transparent');
+  ctx.fillStyle = iris;
+  ctx.fillRect(0, 0, w, h);
+
+  const iris2 = ctx.createRadialGradient(w * 0.8, h * 0.75, 20, w * 0.8, h * 0.75, 380);
+  iris2.addColorStop(0, 'rgba(45,226,230,0.28)');
+  iris2.addColorStop(1, 'transparent');
+  ctx.fillStyle = iris2;
+  ctx.fillRect(0, 0, w, h);
+
+  ctx.fillStyle = '#a89484';
+  ctx.font = '28px monospace';
+  ctx.fillText(`${String(typeFait || 'drop').toUpperCase()} · ${date || ''}`, 72, 120);
+
+  ctx.fillStyle = '#f5c542';
+  ctx.font = 'bold 28px sans-serif';
+  ctx.fillText('THE WORLD IS YOURS', 72, 180);
+
+  ctx.fillStyle = '#f2e8da';
+  ctx.font = 'bold 72px sans-serif';
+  const words = String(detail || 'Drop').split(/\s+/);
+  let line = '';
+  let y = 320;
+  const maxW = w - 144;
+  for (const word of words) {
+    const test = line ? `${line} ${word}` : word;
+    if (ctx.measureText(test).width > maxW && line) {
+      ctx.fillText(line, 72, y);
+      line = word;
+      y += 88;
+      if (y > h - 200) break;
+    } else {
+      line = test;
+    }
+  }
+  if (line && y <= h - 200) ctx.fillText(line, 72, y);
+
+  ctx.fillStyle = '#ff5a3c';
+  ctx.font = 'italic 36px Georgia, serif';
+  ctx.fillText('shippé.', 72, h - 120);
+
+  canvas.toBlob((blob) => {
+    if (!blob) return;
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `twiy-drop-${(date || 'card').slice(0, 10)}.png`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, 'image/png');
+}
+
 export default function DropDetail() {
   const { id } = useParams();
   const [item, setItem] = useState(null);
+  const cardRef = useRef(null);
 
   useEffect(() => {
     apiGet('/entrees')
@@ -26,9 +98,12 @@ export default function DropDetail() {
     );
   }
 
+  const date = String(item.cree_le).slice(0, 10);
+
   return (
     <div
-      className="anim-drop collage-frame"
+      ref={cardRef}
+      className="anim-drop collage-frame registre-fort"
       style={{
         minHeight: '100vh',
         display: 'grid',
@@ -37,7 +112,7 @@ export default function DropDetail() {
         position: 'relative',
         overflow: 'hidden',
         background:
-          'radial-gradient(circle at 25% 20%, rgba(91,45,158,0.45), transparent 40%), radial-gradient(circle at 80% 70%, #13275a, #060a1a 55%)',
+          'radial-gradient(circle at 25% 20%, rgba(255,43,214,0.35), transparent 40%), radial-gradient(circle at 80% 70%, rgba(45,226,230,0.18), transparent 45%), linear-gradient(165deg, #1a0f0d, #2b1512 55%, #4a231d)',
       }}
     >
       <div className="halftone-overlay halftone-live" style={{ position: 'absolute', opacity: 0.22 }} />
@@ -75,7 +150,7 @@ export default function DropDetail() {
 
       <article style={{ position: 'relative', zIndex: 3, maxWidth: 720, textAlign: 'center' }}>
         <p className="compteur">
-          {item.type_fait} · {String(item.cree_le).slice(0, 10)}
+          {item.type_fait} · {date}
         </p>
         <h1
           className="title-dither"
@@ -90,13 +165,22 @@ export default function DropDetail() {
         <p style={{ color: 'var(--text-muted)', maxWidth: 420, margin: '0 auto' }}>
           Brouillon de post — jamais auto-publié. Preuve datée, à partager toi-même.
         </p>
-        <Link
-          to="/drops"
-          className="btn-ghost"
-          style={{ display: 'inline-flex', marginTop: 'var(--space-4)', textDecoration: 'none' }}
-        >
-          ← Drops
-        </Link>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, justifyContent: 'center', marginTop: 'var(--space-4)' }}>
+          <button
+            type="button"
+            className="btn-poster"
+            onClick={() => exportDropCard({ detail: item.detail, typeFait: item.type_fait, date })}
+          >
+            › Exporter carte
+          </button>
+          <Link
+            to="/drops"
+            className="btn-ghost"
+            style={{ display: 'inline-flex', textDecoration: 'none' }}
+          >
+            ← Drops
+          </Link>
+        </div>
       </article>
     </div>
   );

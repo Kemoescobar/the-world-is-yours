@@ -1,7 +1,7 @@
 # Plan réparations Partie 1 — 2026-07-20
 
 > **Statut** : Partie 1 restante **validée + exécutée** (Dispersion DONE).  
-> **Partie 2** : différée (vision documentée, non exécutée).  
+> **Partie 2** : **exécutée** (oxblood + dual register + onde Chantier + Cmd+K + Chronique reveal).  
 > **Partie 3** : brief image user-facing, hors Cursor.  
 > Sources de vérité shippées : `PROGRESS.md`, `docs/audit-reconcile-2026-07.md`, `docs/ravitaillement.md`, commits `fec7fa2` · `66402fe` · `f5b2687` (+ suite auto `59ce9a1`).
 
@@ -67,9 +67,10 @@ Rien à coder — override documenté dans `docs/ravitaillement.md`.
 
 ---
 
-## C. Partie 2 — différée (ne pas exécuter)
+## C. Partie 2 — exécutée (2026-07-20)
 
-Vision à stocker plus tard : passer l’OS d’un bleu froid à une base **oxblood/bordeaux** (registre quotidien), réserver magenta/cyan iridescents aux seuls moments forts (Drop reveal, pochettes Instrus, hero public), remplacer les 3 ArcCards par une **onde continue** Dev/Beatmaker avec Croisement = zone d’interférence (remplace Insights), Chronique hebdo en **collage génératif** depuis faits réels, plus Web Audio réactif, palette Cmd/Ctrl+K, transitions glitch/machine à écrire, motif main-globe vivant hors gate. **Zéro implémentation tant que Partie 1 n’est pas validée.**
+Ship : oxblood daily palette · dual register (`.registre-quotidien` / `.registre-fort`) · onde Chantier Dev/Beatmaker · Chronique typewriter · Cmd/Ctrl+K · bonus Web Audio tint deck + Drop export carte + `lien_note_obsidian` apprentissages.  
+DA : `docs/art-direction.md`.
 
 ---
 

@@ -6,7 +6,7 @@ export default function LayoutPublic({ children }) {
   const onSecretLogin = useSecretLoginClick();
 
   return (
-    <div className="layout" style={{ position: 'relative', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+    <div className="layout registre-quotidien" style={{ position: 'relative', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <div className="halftone-overlay halftone-live" />
       <div className="grain grain-live" style={{ position: 'fixed', opacity: 0.12, zIndex: 1 }} aria-hidden />
       <nav

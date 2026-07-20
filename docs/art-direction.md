@@ -13,36 +13,49 @@ OS personnel présenté comme une **affiche de rue cosmique** : porte d’entré
 4. **Cosmos / profondeur** — jamais fond plat  
 5. **Chrome SOUND** — matière Beatmaker  
 
+## Dual register (Partie 2 — 2026-07-20)
+
+### Registre quotidien (défaut) — oxblood / bordeaux
+Base UI partout (Chantier, nav, forms, panels OS) :
+
+| Token | Hex | Rôle |
+|---|---|---|
+| `--fond` / `--bg-0` | `#1a0f0d` | Fond void |
+| `--cartes` / `--bg-1` | `#2b1512` | Panels |
+| `--bordures` / `--bg-3` | `#4a231d` | Bordures / profondeur |
+| `--texte` / `--text` | `#f2e8da` | Texte |
+| `--texte-secondary` / `--text-muted` | `#a89484` | Secondaire |
+| `--accent-alerte` / `--rouge` | `#ff5a3c` | Vermillon |
+| `--accent-secondaire` / `--jaune` | `#f5c542` | Moutarde |
+
+Legacy `--bleu-*` mappés vers bordeaux chaud (`#6b2a22` / `#8a3d32`) pour ne pas casser le site.  
+Classe : `.registre-quotidien` (body layouts).
+
+### Registre fort — magenta / cyan iridescent
+**Uniquement** moments forts — **jamais** Chantier / nav / forms :
+
+- Drop reveal fullscreen (`.registre-fort`)
+- Pochettes catalogue Instrus (sleeves + deck écoute)
+- Hero public CODE / SOUND (`Home` panes)
+
+Tokens documentés : `--fort-magenta` `#ff2bd6` · `--fort-cyan` `#2de2e6` · `--fort-iris` / `--fort-iris-hot`.
+
 ## Cohérence
-- Palette : bleu nuit de base ; violet/chrome/rouge/jaune = ponctuation  
+- Palette quotidienne = **oxblood** ; registre fort = ponctuation magenta/cyan  
 - Maximalisme dans les **images/Drops**, discipline dans l’**UI**  
 - Public = affiche ; Privé = OS dense même ADN  
+- Halftone, annotations manuscrites, densité HUD inchangés  
 
 ## Ne pas faire
-Clone CRT beige AWGE · néons partout · SaaS cards · hero typo seule  
-
-## Suite Phase 2
-1. Brand kit 1 page  
-2. SoundGate + Home  
-3. Assets globe + textures  
-4. Template Drop  
-5. Empty states catalogues  
-6. Polish Chantier  
-
-## Moodboard vidéos (Phase 2.2)
-Frames analysées → voir [`moodboard-videos.md`](./moodboard-videos.md).
-
-**Ajouts DA issus des clips :**
-- Void + grille technique (spiral showreel) · bloom chrome
-- Titres ghostés / display plus wide · HUD `›` `•` mono
-- Split catalogue street (bleu plein / panneaux) sans crème de fond site
-- Grain / scanlines / iridescent edge intensifiés  
-Palette identité **bleu nuit · rouge · jaune** inchangée.
+Clone CRT beige AWGE · néons partout · SaaS cards · hero typo seule · copier symboles Partie 3 (3ᵉ œil / lune / fleur) · magenta/cyan dans le quotidien  
 
 ## Private OS pass
 Privé = même ADN que le public, en **console HUD** (pas admin SaaS) :
-- Shell `layout-os` : void grid, bloom, grain/scanlines, coins HUD, chrome nav
-- Pages : `OsHeader` (ghost title + kicker mono), rails archive, panels chrome (`os-panel`), forms `os-input`
-- Surfaces : Chantier / arcs, Streaks, Drops, Revue, Insights, Analytics, Freelance, Portefeuille, Paramètres, QuickCapture
-- Usability : validation quêtes restée dense et lisible ; `prefers-reduced-motion` respecté via tokens existants
-- Pass chrome/Cover Flow : Login = gate AUTH HUD ; panels OS plus iridescents ; headers wide + chrome-bar
+- Shell `layout-os` + `.registre-quotidien` : void grid, bloom oxblood, grain/scanlines, coins HUD
+- Chantier : **onde continue** Dev/Beatmaker (interférence = corrélation) à la place des ArcCards side-by-side
+- Chronique : reveal machine à écrire / glitch soft (`prefers-reduced-motion` → texte plein)
+- Palette **Cmd/Ctrl+K** : jump Chantier / Capture / Revue / Studio / Ère / Rayonnement / arcs / Paramètres
+
+## Moodboard vidéos
+Frames → [`moodboard-videos.md`](./moodboard-videos.md).  
+Grain / scanlines / HUD mono inchangés ; base froide **bleu nuit** remplacée par oxblood.

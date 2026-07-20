@@ -70,6 +70,7 @@ export const createApprentissageSchema = z.object({
   type: z.enum(['blocage_resolu', 'declic', 'principe']),
   tags: z.array(z.string()).optional(),
   publie: z.boolean().optional(),
+  lien_note_obsidian: z.string().max(1000).optional().nullable(),
 });
 
 export const patchApprentissageSchema = z.object({
@@ -79,6 +80,7 @@ export const patchApprentissageSchema = z.object({
   tags: z.array(z.string()).optional(),
   publie: z.boolean().optional(),
   reutilise_count: z.number().int().optional(),
+  lien_note_obsidian: z.string().max(1000).optional().nullable(),
 }).strict();
 
 export const createCompetenceSchema = z.object({

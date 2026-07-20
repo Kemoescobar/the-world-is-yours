@@ -1,6 +1,60 @@
 import { useEffect, useMemo, useState } from 'react';
 import OsHeader from '../components/OsHeader.jsx';
-import { apiGet, apiPost } from '../lib/api.js';
+import { apiGet, apiPost, apiPatch } from '../lib/api.js';
+
+function ApprentissageRow({ item, onSaved }) {
+  const [url, setUrl] = useState(item.lien_note_obsidian || '');
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
+
+  async function sauver(e) {
+    e.preventDefault();
+    setBusy(true);
+    setErr('');
+    try {
+      const cleaned = url.trim() || null;
+      const updated = await apiPatch(`/apprentissages/${item.id}`, { lien_note_obsidian: cleaned });
+      onSaved?.(updated);
+    } catch (ex) {
+      setErr(ex.message || 'échec');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <li style={{ flexDirection: 'column', alignItems: 'stretch', gap: 8 }}>
+      <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+        <span style={{ color: 'var(--jaune)' }}>›</span>
+        <span style={{ flex: 1 }}>
+          {item.type} · {item.titre}
+          {item.lien_note_obsidian && (
+            <>
+              {' · '}
+              <a href={item.lien_note_obsidian} target="_blank" rel="noreferrer" style={{ color: 'var(--jaune)' }}>
+                note Obsidian
+              </a>
+            </>
+          )}
+        </span>
+      </div>
+      <form onSubmit={sauver} className="os-form--inline" style={{ paddingLeft: 18 }}>
+        <input
+          className="os-input"
+          type="url"
+          placeholder="URL note Obsidian (optionnel)"
+          value={url}
+          onChange={(e) => setUrl(e.target.value)}
+          aria-label={`Lien Obsidian pour ${item.titre}`}
+        />
+        <button type="submit" className="btn-ghost" disabled={busy}>
+          {busy ? '…' : 'Lier'}
+        </button>
+      </form>
+      {err && <p className="annotation-manuscrite" style={{ margin: '0 0 0 18px' }}>{err}</p>}
+    </li>
+  );
+}
 
 export default function Revue() {
   const [entrees, setEntrees] = useState([]);
@@ -133,10 +187,13 @@ export default function Revue() {
       </h2>
       <ul className="os-list">
         {apprentissages.map((a) => (
-          <li key={a.id}>
-            <span style={{ color: 'var(--jaune)' }}>›</span>
-            <span>{a.type} · {a.titre}</span>
-          </li>
+          <ApprentissageRow
+            key={a.id}
+            item={a}
+            onSaved={(updated) => {
+              setApprentissages((prev) => prev.map((x) => (x.id === updated.id ? updated : x)));
+            }}
+          />
         ))}
         {!apprentissages.length && <li>Aucun apprentissage cette semaine — check-in peut proposer des brouillons</li>}
       </ul>

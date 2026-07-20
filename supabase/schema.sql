@@ -176,6 +176,7 @@ create table if not exists apprentissages (
   tags text[] default '{}',
   reutilise_count int default 0,
   publie boolean default false,
+  lien_note_obsidian text,
   cree_le timestamptz default now()
 );
 

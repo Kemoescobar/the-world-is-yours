@@ -81,7 +81,7 @@ export default function Login() {
           position: 'absolute',
           inset: 0,
           background:
-            'radial-gradient(ellipse at 70% 20%, rgba(42,111,176,0.38), transparent 50%), radial-gradient(ellipse at 20% 80%, rgba(255,59,48,0.1), transparent 45%), var(--bg-0)',
+            'radial-gradient(ellipse at 70% 20%, rgba(138,61,50,0.38), transparent 50%), radial-gradient(ellipse at 20% 80%, rgba(255,90,60,0.1), transparent 45%), var(--bg-0)',
         }}
       />
       <div className="halftone-overlay halftone-live" style={{ position: 'absolute', opacity: 0.18 }} />

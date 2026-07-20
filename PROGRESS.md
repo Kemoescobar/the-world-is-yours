@@ -78,6 +78,7 @@ Doc : `docs/phase-3.md` · roadmaps : `docs/roadmaps/README.md`
 4. ~~UI Dispersion / `ere_objectif_id`~~ ✅ — ArcDetail + soft prompts (décision 2026-07-20)
 5. Toi : clé Anthropic + signup fermé + clearance si ouverture publique large
 6. Croisement ravitaillement après peuplement compétences (aside jusqu’à décision contraire)
+7. ~~Partie 2 oxblood / onde / Cmd+K~~ ✅
 
 ---
 

@@ -3,12 +3,12 @@ import { Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchArcs } from '../store/slices/arcsSlice.js';
 import { fetchQuetes, validerQuete } from '../store/slices/questsSlice.js';
-import ArcCard from '../components/ArcCard.jsx';
 import OsHeader from '../components/OsHeader.jsx';
 import ContremaitreBanner from '../components/ContremaitreBanner.jsx';
 import EmploiDuTemps from '../components/EmploiDuTemps.jsx';
 import ChroniquePanel from '../components/ChroniquePanel.jsx';
 import HorizonFil from '../components/HorizonFil.jsx';
+import WaveDashboard from '../components/WaveDashboard.jsx';
 import { apiGet } from '../lib/api.js';
 import { useAuth } from '../auth/AuthContext.jsx';
 
@@ -146,26 +146,10 @@ export default function Chantier() {
     || sideStatut === 'idle';
   const erreurPrincipale = arcsErreur || quetesErreur || sideErreur;
 
-  /** Toutes les quêtes de l’arc (type) — ArcCard priorise les non-fait. Pas de filtre chapitre. */
-  function quetesPourArc(arcId) {
-    return quetes.filter((q) => {
-      if (arcId === 'dev') {
-        return q.type === 'dev' || q.type === 'routine' || q.type === 'freelance';
-      }
-      return q.type === arcId;
-    });
-  }
-
   function chapitrePourArc(arcId) {
     return chapitres
       .filter((c) => c.arc_id === arcId)
       .sort((a, b) => String(b.date_debut).localeCompare(String(a.date_debut)))[0];
-  }
-
-  function progression(liste) {
-    if (!liste.length) return 0;
-    const faites = liste.filter((q) => q.statut === 'fait').length;
-    return Math.round((faites / liste.length) * 100);
   }
 
   function streakPour(arcId) {
@@ -178,14 +162,6 @@ export default function Chantier() {
     const id = streakParArc[arcId];
     if (!id) return 0;
     return streaks.find((s) => s.id === id)?.record ?? 0;
-  }
-
-  function faitsPourArc(arcId) {
-    return entreesRecent.filter((e) => e.arc_id === arcId).length;
-  }
-
-  function enRetard(liste) {
-    return liste.some((q) => q.statut !== 'fait' && q.date_prevue && q.date_prevue < aujourdhui);
   }
 
   const chapitreHero = useMemo(() => {
@@ -325,42 +301,18 @@ export default function Chantier() {
         </div>
       )}
 
-      <div className="os-arcs">
-        {arcsVisibles.map((a) => {
-          const liste = quetesPourArc(a.id);
-          const chap = chapitrePourArc(a.id);
-          const rompu = chap?.statut === 'rompu';
-          const reprise = chap?.statut === 'reprise';
-          const faitesArc = liste.filter((q) => q.statut === 'fait').length;
-          return (
-            <div key={a.id}>
-              <ArcCard
-                nom={a.nom}
-                streak={streakPour(a.id)}
-                streakRecord={streakRecord(a.id)}
-                progression={progression(liste)}
-                quetes={liste}
-                enRetard={enRetard(liste) || rompu}
-                badge={rompu ? 'rompu' : reprise ? 'reprise' : null}
-                accumulation={{
-                  faits: faitsPourArc(a.id),
-                  quetesFaites: faitesArc,
-                  quetesTotal: liste.length,
-                  semaine: chap?.semaine || null,
-                  titreChapitre: chap?.titre && !estTitreGenerique(chap.titre) ? chap.titre : null,
-                }}
-                onValider={(id) => {
-                  dispatch(validerQuete(id));
-                  setChroniqueRefresh((n) => n + 1);
-                }}
-              />
-              <Link to={`/chantier/${a.id}`} className="arc-console__link">
-                › Voir l’arc
-              </Link>
-            </div>
-          );
-        })}
-      </div>
+      {!chargement && arcsVisibles.length > 0 && (
+        <WaveDashboard
+          arcs={arcsVisibles}
+          quetes={quetes}
+          streakPour={streakPour}
+          streakRecord={streakRecord}
+          onValider={(id) => {
+            dispatch(validerQuete(id));
+            setChroniqueRefresh((n) => n + 1);
+          }}
+        />
+      )}
     </div>
   );
 }

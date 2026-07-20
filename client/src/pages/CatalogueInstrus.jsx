@@ -5,24 +5,62 @@ import { apiGet, apiPost, apiPatch } from '../lib/api.js';
 import { uploadCapture } from '../lib/storageUpload.js';
 import CoverFlow from '../components/CoverFlow.jsx';
 
-function Player({ url, peaks }) {
+function Player({ url, peaks, onEnergy }) {
   const ref = useRef(null);
   const ws = useRef(null);
+  const raf = useRef(0);
+  const peaksFlat = useRef([]);
 
   useEffect(() => {
     if (!ref.current || !url) return undefined;
+    const flat = Array.isArray(peaks?.[0]) ? peaks[0] : (Array.isArray(peaks) ? peaks : []);
+    peaksFlat.current = flat;
+
     ws.current = WaveSurfer.create({
       container: ref.current,
-      waveColor: '#8a95b8',
-      progressColor: '#ffd23f',
-      cursorColor: '#ff3b30',
+      waveColor: '#a89484',
+      progressColor: '#f5c542',
+      cursorColor: '#ff5a3c',
       height: 48,
       barWidth: 2,
       url,
       peaks: peaks || undefined,
     });
-    return () => ws.current?.destroy();
-  }, [url, peaks]);
+
+    const sampleEnergy = () => {
+      const inst = ws.current;
+      if (!inst || !onEnergy) return;
+      const dur = inst.getDuration?.() || 0;
+      const t = inst.getCurrentTime?.() || 0;
+      const arr = peaksFlat.current;
+      if (arr.length && dur > 0) {
+        const i = Math.min(arr.length - 1, Math.floor((t / dur) * arr.length));
+        const v = Math.abs(arr[i] || 0);
+        onEnergy(Math.min(1, v * 2.2));
+      } else {
+        onEnergy(0.25 + 0.35 * Math.abs(Math.sin(t * 5.5)));
+      }
+      raf.current = requestAnimationFrame(sampleEnergy);
+    };
+
+    const onPlay = () => {
+      cancelAnimationFrame(raf.current);
+      raf.current = requestAnimationFrame(sampleEnergy);
+    };
+    const onPause = () => {
+      cancelAnimationFrame(raf.current);
+      onEnergy?.(0);
+    };
+
+    ws.current.on('play', onPlay);
+    ws.current.on('pause', onPause);
+    ws.current.on('finish', onPause);
+
+    return () => {
+      cancelAnimationFrame(raf.current);
+      ws.current?.destroy();
+    };
+  }, [url, peaks, onEnergy]);
 
   return (
     <div>
@@ -59,7 +97,7 @@ function InstruSleeve({ item, index, focused }) {
   const n = String(index + 1).padStart(2, '0');
   const cover = item.cover_url;
   return (
-    <div className={`cover-sleeve cover-sleeve--vinyl chrome-specular${cover ? ' has-cover' : ''}`}>
+    <div className={`cover-sleeve cover-sleeve--vinyl chrome-specular registre-fort${cover ? ' has-cover' : ''}`}>
       <div className="cover-sleeve__media">
         {cover ? (
           <img
@@ -207,6 +245,7 @@ export default function CatalogueInstrus({ mode = 'public' }) {
   const [actif, setActif] = useState(null);
   const [focusItem, setFocusItem] = useState(null);
   const [editingId, setEditingId] = useState(null);
+  const [playEnergy, setPlayEnergy] = useState(0);
 
   async function charger() {
     const data = await apiGet('/instrumentaux', { auth: editable });
@@ -337,7 +376,20 @@ export default function CatalogueInstrus({ mode = 'public' }) {
           />
 
           {listening && (
-            <div className="chrome-panel chrome-edge" style={{ padding: 'var(--space-3)', marginTop: 'var(--space-3)' }}>
+            <div
+              className="chrome-panel chrome-edge registre-fort instru-deck"
+              style={{
+                padding: 'var(--space-3)',
+                marginTop: 'var(--space-3)',
+                ['--instru-energy']: String(playEnergy),
+                boxShadow: playEnergy > 0.05
+                  ? `0 0 ${24 + playEnergy * 48}px rgba(255,43,214,${0.12 + playEnergy * 0.35}), 0 0 ${18 + playEnergy * 36}px rgba(45,226,230,${0.1 + playEnergy * 0.3})`
+                  : undefined,
+                borderColor: playEnergy > 0.08
+                  ? `rgba(45, 226, 230, ${0.25 + playEnergy * 0.45})`
+                  : undefined,
+              }}
+            >
               <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'baseline', flexWrap: 'wrap' }}>
                 <p className="compteur">
                   <span className="caret-blink" aria-hidden>›</span> DECK · {listening.titre}
@@ -364,7 +416,11 @@ export default function CatalogueInstrus({ mode = 'public' }) {
               </p>
               {actif === listening.id ? (
                 <div style={{ marginTop: 12 }}>
-                  <Player url={listening.fichier_url} peaks={listening.waveform_data ? [listening.waveform_data] : undefined} />
+                  <Player
+                    url={listening.fichier_url}
+                    peaks={listening.waveform_data ? [listening.waveform_data] : undefined}
+                    onEnergy={setPlayEnergy}
+                  />
                 </div>
               ) : null}
               {editable && editingId === listening.id && (

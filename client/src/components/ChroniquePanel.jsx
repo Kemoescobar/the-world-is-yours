@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { apiGet } from '../lib/api.js';
+import TypeReveal from './TypeReveal.jsx';
 
 /**
  * Bloc Chronique — récit hero en tête du Chantier.
@@ -98,8 +99,8 @@ export default function ChroniquePanel({ refreshKey = 0, onTitreChange }) {
         </span>
       </div>
       <div className="chronique-poster__body">
-        <h2 className="chronique-poster__titre title-wide">{data.titre}</h2>
-        <p className="chronique-poster__corps">{data.corps}</p>
+        <TypeReveal as="h2" className="chronique-poster__titre title-wide" text={data.titre} />
+        <TypeReveal as="p" className="chronique-poster__corps type-reveal--glitch" text={data.corps} />
         <div className="chronique-poster__actions">
           <button
             type="button"

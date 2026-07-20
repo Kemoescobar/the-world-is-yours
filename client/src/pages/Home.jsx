@@ -24,7 +24,7 @@ export default function Home() {
   const lookN = String(stats.projets + stats.instrus).padStart(2, '0');
 
   return (
-    <div className="hud-frame" style={{ position: 'relative', minHeight: '100vh', overflow: 'hidden' }}>
+    <div className="hud-frame registre-quotidien" style={{ position: 'relative', minHeight: '100vh', overflow: 'hidden' }}>
       <div className="halftone-overlay halftone-live" />
       <div className="grain grain-live" style={{ position: 'fixed' }} />
       <div
@@ -38,7 +38,7 @@ export default function Home() {
           position: 'absolute',
           inset: 0,
           background:
-            'radial-gradient(ellipse at 50% 0%, rgba(42,111,176,0.32), transparent 42%), radial-gradient(ellipse at 12% 70%, rgba(255,59,48,0.1), transparent 40%), radial-gradient(ellipse at 88% 65%, rgba(200,220,255,0.08), transparent 42%), linear-gradient(165deg, #040812, #0a1128 42%, #0d1b3e)',
+            'radial-gradient(ellipse at 50% 0%, rgba(138,61,50,0.28), transparent 42%), radial-gradient(ellipse at 12% 70%, rgba(255,90,60,0.1), transparent 40%), radial-gradient(ellipse at 88% 65%, rgba(245,197,66,0.08), transparent 42%), linear-gradient(165deg, #1a0f0d, #2b1512 42%, #351a16)',
         }}
       />
 
@@ -112,7 +112,7 @@ export default function Home() {
       >
         <Link
           to="/catalogue/projets"
-          className="anim-split home-pane home-pane--code"
+          className="anim-split home-pane home-pane--code registre-fort"
           style={{ animationDelay: '80ms', textDecoration: 'none', color: 'var(--text)' }}
         >
           <div className="blueprint-grid" aria-hidden style={{ position: 'absolute', inset: 0, opacity: 0.5 }} />
@@ -126,7 +126,7 @@ export default function Home() {
 
         <Link
           to="/catalogue/instrus"
-          className="anim-split home-pane home-pane--sound chrome-edge chrome-edge-live"
+          className="anim-split home-pane home-pane--sound chrome-edge chrome-edge-live registre-fort"
           style={{ animationDelay: '160ms', textDecoration: 'none', color: 'var(--text)' }}
         >
           <img

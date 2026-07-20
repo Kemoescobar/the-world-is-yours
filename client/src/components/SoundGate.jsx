@@ -31,7 +31,7 @@ export default function SoundGate({ onEnter }) {
           position: 'absolute',
           inset: 0,
           background:
-            'radial-gradient(ellipse at 72% 38%, rgba(42,111,176,0.42), transparent 52%), radial-gradient(ellipse at 18% 78%, rgba(255,59,48,0.12), transparent 45%), radial-gradient(ellipse at 50% 100%, rgba(19,39,90,0.85), transparent 50%)',
+            'radial-gradient(ellipse at 72% 38%, rgba(138,61,50,0.42), transparent 52%), radial-gradient(ellipse at 18% 78%, rgba(255,90,60,0.12), transparent 45%), radial-gradient(ellipse at 50% 100%, rgba(74,35,29,0.85), transparent 50%)',
         }}
       />
       <img
