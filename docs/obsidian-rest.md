@@ -8,7 +8,7 @@ Sans Obsidian ouvert + plugin actif, les workflows vault échouent.
 | | |
 |--|--|
 | **Chemin** | `C:\Users\HP Ryzen 7\OneDrive\Documents\Midas` |
-| **Dossiers utilisés** | `02-Projets/` (sync), `00-Veille/` (revue), `00-Veille/Backups/` (backup hebdo) |
+| **Dossiers utilisés** | `02-Projets/` (sync), `00-Veille/` (revue + check-in matin), `00-Veille/Backups/` (backup hebdo) |
 | **Port HTTP (insecure)** | `27123` (celui des workflows n8n) |
 | **Port HTTPS** | `27124` (optionnel ; n8n utilise HTTP) |
 
@@ -58,9 +58,16 @@ docker compose up -d --force-recreate
 |----------|---------|---------------------|--------|
 | `sync-obsidian-supabase.json` | GET | `http://host.docker.internal:27123/vault/02-Projets/` | `Authorization: Bearer {{$env.OBSIDIAN_API_KEY}}` |
 | `revue-dominicale.json` | PUT | `http://host.docker.internal:27123/vault/00-Veille/Revue-Dominicale.md` | Bearer + `Content-Type: text/markdown` |
+| `message-matin.json` | PUT | `http://host.docker.internal:27123/vault/00-Veille/Check-in-matin-YYYY-MM-DD.md` | Bearer + `Content-Type: text/markdown` |
 | `backup-hebdo.json` | PUT | `http://host.docker.internal:27123/vault/00-Veille/Backups/twiy-YYYY-MM-DD.json` | Bearer |
 
 `alerte-streak-soir.json` n’utilise **pas** Obsidian (API TWIY seulement).
+
+### Check-in matin — Claude Pro lit cette note
+
+Chaque jour à 6h (Madagascar), `message-matin.json` écrit `00-Veille/Check-in-matin-YYYY-MM-DD.md` avec streaks, quêtes actives Dev/Beatmaker, note Contremaître (`POST /ai/message-matin`), emploi du temps, et la question **« LA chose ce soir »**.
+
+**Claude Pro lit cette note** : ouvrir le fichier du jour (ou coller son markdown) dans Claude pour le briefing matinal.
 
 ## Tests
 

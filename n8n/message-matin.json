@@ -1,5 +1,5 @@
 {
-  "name": "TWIY — Message matin Contremaître",
+  "name": "TWIY — Check-in matin Obsidian",
   "id": "twiy-message-matin",
   "nodes": [
     {
@@ -12,7 +12,7 @@
       "name": "Tous les jours 6h",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1,
-      "position": [240, 300]
+      "position": [160, 300]
     },
     {
       "parameters": {
@@ -34,17 +34,120 @@
       "name": "TWIY message matin",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [520, 300]
+      "position": [380, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{$env.TWIY_API_URL}}/streaks",
+        "method": "GET",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [{ "name": "x-api-key", "value": "={{$env.TWIY_WEBHOOK_KEY}}" }]
+        },
+        "options": {}
+      },
+      "id": "get-streaks",
+      "name": "Lire les streaks",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [600, 300],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "url": "={{$env.TWIY_API_URL}}/quetes",
+        "method": "GET",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [{ "name": "x-api-key", "value": "={{$env.TWIY_WEBHOOK_KEY}}" }]
+        },
+        "options": {}
+      },
+      "id": "get-quetes",
+      "name": "Lire les quêtes",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [820, 300],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "url": "={{$env.TWIY_API_URL}}/emploi-du-temps",
+        "method": "GET",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [{ "name": "x-api-key", "value": "={{$env.TWIY_WEBHOOK_KEY}}" }]
+        },
+        "options": {}
+      },
+      "id": "get-emploi",
+      "name": "Emploi du temps",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1040, 300],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const TZ = 'Indian/Antananarivo';\nconst date = new Intl.DateTimeFormat('en-CA', {\n  timeZone: TZ,\n  year: 'numeric',\n  month: '2-digit',\n  day: '2-digit',\n}).format(new Date());\n\nfunction asList(nodeName) {\n  try {\n    const items = $(nodeName).all();\n    if (!items.length) return [];\n    if (items.length === 1 && Array.isArray(items[0].json)) return items[0].json;\n    if (items.length === 1 && items[0].json?.error) return [];\n    const rows = items.map((i) => i.json).filter((j) => j && typeof j === 'object' && j.id != null);\n    return rows.length ? rows : [];\n  } catch {\n    return [];\n  }\n}\n\nfunction asObject(nodeName) {\n  try {\n    const j = $(nodeName).first().json;\n    if (!j || j.error) return {};\n    return j;\n  } catch {\n    return {};\n  }\n}\n\nconst matin = asObject('TWIY message matin');\nconst streaks = asList('Lire les streaks');\nconst quetes = asList('Lire les quêtes');\nconst emploi = asObject('Emploi du temps');\n\nconst actives = quetes.filter(\n  (q) => ['dev', 'beatmaker'].includes(q.type) && q.statut !== 'fait' && q.statut !== 'abandonne',\n);\nconst dev = actives.filter((q) => q.type === 'dev');\nconst beat = actives.filter((q) => q.type === 'beatmaker');\n\nfunction lineQuete(q) {\n  const due = q.date_prevue ? ` · prévu ${q.date_prevue}` : '';\n  return `- [${q.statut}] ${q.titre || q.id}${due}`;\n}\n\nfunction lineStreak(s) {\n  const risque = s.dernier_jour !== date ? \" ⚠ pas alimenté aujourd'hui\" : '';\n  return `- **${s.id}** : ${s.jours_consecutifs ?? 0} j (record ${s.record ?? 0})${risque}`;\n}\n\nlet contreBlock = matin.message || '—';\nconst contre = matin.contremaitre;\nif (contre?.ressource_titre) {\n  contreBlock += `\\n\\nSuggestion : ${contre.ressource_titre}` + (contre.ressource_url ? ` → ${contre.ressource_url}` : '');\n}\n\nlet emploiBlock = '_non disponible_';\nif (emploi.slots || emploi.bloc_actuel) {\n  const lines = [];\n  if (emploi.bloc_actuel) lines.push(`Bloc actuel : **${emploi.bloc_actuel}**`);\n  const risques = emploi.streaks_a_risque || [];\n  if (risques.length) {\n    lines.push(`Streaks à risque : ${risques.map((r) => r.id || r).join(', ')}`);\n  }\n  for (const s of emploi.slots || []) {\n    const actions = (s.actions || []).map((a) => a.titre || a).join(', ') || '—';\n    lines.push(`- **${s.id || s.focus}**${s.focus ? ` (${s.focus})` : ''} : ${actions}`);\n  }\n  if (emploi.note_contexte) lines.push(`\\n_Note : ${emploi.note_contexte}_`);\n  emploiBlock = lines.join('\\n') || '_vide_';\n}\n\nconst md = `# Check-in matin — ${date}\\n\\n> Claude Pro lit cette note — ouvrir ou coller dans le chat pour le briefing du jour.\\n\\n## Streaks\\n${streaks.length ? streaks.map(lineStreak).join('\\n') : '_aucun_'}\\n\\n## Quêtes actives — Dev\\n${dev.length ? dev.map(lineQuete).join('\\n') : '_aucune_'}\\n\\n## Quêtes actives — Beatmaker\\n${beat.length ? beat.map(lineQuete).join('\\n') : '_aucune_'}\\n\\n## Contremaître\\n${contreBlock}\\n\\n## Emploi du temps\\n${emploiBlock}\\n\\n## LA chose ce soir\\n\\n**Quelle est LA chose à faire ce soir ?**\\n`;\n\nreturn [{ json: { date, markdown: md, ok: true } }];"
+      },
+      "id": "agregat-md",
+      "name": "Agrégat markdown",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1260, 300]
+    },
+    {
+      "parameters": {
+        "url": "=http://host.docker.internal:27123/vault/00-Veille/Check-in-matin-{{$json.date}}.md",
+        "method": "PUT",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "Bearer {{$env.OBSIDIAN_API_KEY}}" },
+            { "name": "Content-Type", "value": "text/markdown" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "text/markdown",
+        "body": "={{ $json.markdown }}"
+      },
+      "id": "ecrire-obsidian",
+      "name": "Écrire Check-in Obsidian",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1480, 300]
     }
   ],
   "connections": {
     "Tous les jours 6h": {
       "main": [[{ "node": "TWIY message matin", "type": "main", "index": 0 }]]
+    },
+    "TWIY message matin": {
+      "main": [[{ "node": "Lire les streaks", "type": "main", "index": 0 }]]
+    },
+    "Lire les streaks": {
+      "main": [[{ "node": "Lire les quêtes", "type": "main", "index": 0 }]]
+    },
+    "Lire les quêtes": {
+      "main": [[{ "node": "Emploi du temps", "type": "main", "index": 0 }]]
+    },
+    "Emploi du temps": {
+      "main": [[{ "node": "Agrégat markdown", "type": "main", "index": 0 }]]
+    },
+    "Agrégat markdown": {
+      "main": [[{ "node": "Écrire Check-in Obsidian", "type": "main", "index": 0 }]]
     }
   },
+  "active": false,
   "settings": { "executionOrder": "v1" },
   "staticData": null,
   "tags": [{ "name": "twiy" }],
   "pinData": {},
-  "versionId": "1"
+  "versionId": "2",
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "description": "6h Madagascar : POST /ai/message-matin + streaks + quêtes + emploi-du-temps (x-api-key) → PUT Check-in-matin-YYYY-MM-DD.md dans Obsidian. Claude Pro lit cette note."
+  }
 }

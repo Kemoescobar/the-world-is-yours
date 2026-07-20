@@ -100,8 +100,14 @@ Le nœud « Notifier » d’`alerte-streak-soir.json` crée une entrée via `/ap
 | `sync-obsidian-supabase.json` | Toutes les heures | Frontmatter du vault (`02-Projets`) → table `quetes` |
 | `alerte-streak-soir.json` | Chaque soir 21h | Repère les streaks non alimentés aujourd'hui, notifie |
 | `revue-dominicale.json` | Dimanche 8h | `POST /ai/revue` (x-api-key) → écrit la revue dans Obsidian |
-| `message-matin.json` | Chaque jour 6h | `POST /ai/message-matin` — Contremaître (max 1) |
+| `message-matin.json` | Chaque jour 6h | `POST /ai/message-matin` + streaks/quêtes/EDT → `00-Veille/Check-in-matin-YYYY-MM-DD.md` |
 | `backup-hebdo.json` | Lundi 4h | Exporte toutes les tables Supabase (`/api/export`) vers le vault |
+
+### Check-in matin → Claude Pro
+
+Le cron 6h (TZ `Indian/Antananarivo`) agrège Contremaître + streaks + quêtes actives Dev/Beatmaker + emploi du temps, puis **PUT** la note datée dans le vault.
+
+**Claude Pro lit cette note** : ouvre `00-Veille/Check-in-matin-YYYY-MM-DD.md` (ou colle son contenu) dans le chat pour le briefing du jour — streaks, quêtes, note Contremaître, question « LA chose ce soir ».
 
 ## Workflows à assembler toi-même (même schéma)
 
