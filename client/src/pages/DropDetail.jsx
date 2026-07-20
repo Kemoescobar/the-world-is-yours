@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { apiGet } from '../lib/api.js';
 import { playImpact } from '../lib/sounds.js';
@@ -77,7 +77,6 @@ function exportDropCard({ detail, typeFait, date }) {
 export default function DropDetail() {
   const { id } = useParams();
   const [item, setItem] = useState(null);
-  const cardRef = useRef(null);
 
   useEffect(() => {
     apiGet('/entrees')
@@ -102,7 +101,6 @@ export default function DropDetail() {
 
   return (
     <div
-      ref={cardRef}
       className="anim-drop collage-frame registre-fort"
       style={{
         minHeight: '100vh',
