@@ -3,7 +3,7 @@ import { Link, useParams, Navigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { validerQuete } from '../store/slices/questsSlice.js';
 import OsHeader from '../components/OsHeader.jsx';
-import { apiGet, apiPost } from '../lib/api.js';
+import { apiGet, apiPost, apiPatch } from '../lib/api.js';
 import { playTick } from '../lib/sounds.js';
 
 function extractFirstUrl(desc) {
@@ -42,6 +42,8 @@ export default function ArcDetail() {
   const [instrumentaux, setInstrumentaux] = useState([]);
   const [msg, setMsg] = useState('');
   const [preuveBusy, setPreuveBusy] = useState(false);
+  const [lienBusyId, setLienBusyId] = useState(null);
+  const [ereActive, setEreActive] = useState(null);
   const [chargement, setChargement] = useState(true);
   const [erreur, setErreur] = useState('');
 
@@ -59,20 +61,23 @@ export default function ArcDetail() {
     setChapitres([]);
     setQuetes([]);
     setCompetences([]);
+    setEreActive(null);
     setExpandedId(null);
 
     (async () => {
       try {
-        const [chaps, qs, comps] = await Promise.all([
+        const [chaps, qs, comps, ere] = await Promise.all([
           apiGet(`/chapitres?arc=${arc}`),
           apiGet(`/quetes?type=${arc}`),
           apiGet(`/competences?arc=${arc}`),
+          apiGet('/eres/active').catch(() => null),
         ]);
         if (cancelled) return;
         if (!Array.isArray(comps)) throw new Error('réponse /competences invalide');
         setChapitres(Array.isArray(chaps) ? chaps : []);
         setQuetes(Array.isArray(qs) ? qs : []);
         setCompetences(comps);
+        setEreActive(ere && ere.id ? ere : null);
 
         // Catalogue pour lier preuves repo/track (best-effort)
         const [projs, instrus] = await Promise.all([
@@ -89,6 +94,7 @@ export default function ArcDetail() {
           setChapitres([]);
           setQuetes([]);
           setCompetences([]);
+          setEreActive(null);
         }
       } finally {
         if (!cancelled) setChargement(false);
@@ -144,7 +150,31 @@ export default function ArcDetail() {
 
   const faites = quetes.filter((q) => q.statut === 'fait').length;
   const sansObjectif = quetes.filter((q) => q.statut !== 'fait' && !q.ere_objectif_id).length;
+  const objectifsEre = Array.isArray(ereActive?.objectifs) ? ereActive.objectifs : [];
+  const objectifById = useMemo(() => {
+    const map = {};
+    for (const o of objectifsEre) map[o.id] = o;
+    return map;
+  }, [objectifsEre]);
+  const liesEre = quetes.filter((q) => q.ere_objectif_id).length;
+  // Soft only when Ère active with objectifs — never alarm if zero liens (ère pas encore branchée)
+  const showSoftLienEre = Boolean(ereActive && objectifsEre.length > 0 && sansObjectif > 0);
   const prouveesCount = competences.filter(isProuvee).length;
+
+  async function lierObjectif(queteId, ereObjectifId) {
+    setMsg('');
+    setLienBusyId(queteId);
+    try {
+      await apiPatch(`/quetes/${queteId}`, {
+        ere_objectif_id: ereObjectifId || null,
+      });
+      setQuetes(await apiGet(`/quetes?type=${arc}`));
+    } catch (err) {
+      setMsg(err?.message || String(err));
+    } finally {
+      setLienBusyId(null);
+    }
+  }
 
   function toggleExpand(c) {
     if (expandedId === c.id) {
@@ -210,10 +240,17 @@ export default function ArcDetail() {
         <p className="annotation-manuscrite" style={{ marginBottom: 12 }}>API — {erreur}</p>
       )}
 
-      {sansObjectif > 0 && (
-        <p className="annotation-manuscrite" style={{ marginBottom: 12 }}>
-          {sansObjectif} quête(s) sans lien Ère — flag doux
+      {showSoftLienEre && (
+        <p className="compteur" style={{ marginBottom: 12, opacity: 0.85, lineHeight: 1.45 }}>
+          {liesEre === 0
+            ? `Ère « ${ereActive.nom} » active — lie une première quête à un objectif ci-dessous (pas de Dispersion tant que rien n’est branché).`
+            : `${sansObjectif} quête(s) sans objectif d’ère — choisis un objectif sur chaque ligne.`}
+          {' '}
+          <Link to="/ere" style={{ color: 'var(--jaune)' }}>Voir Ère</Link>
         </p>
+      )}
+      {msg && (
+        <p className="annotation-manuscrite" style={{ marginBottom: 12 }}>{msg}</p>
       )}
 
       <section className="os-panel chrome-edge blueprint-grid" style={{ marginBottom: 24, maxWidth: 720 }}>
@@ -469,32 +506,72 @@ export default function ArcDetail() {
                 {chapitre.titre || 'Sans titre'}
               </h2>
               <ul className="os-list" style={{ marginTop: 8, fontFamily: 'var(--font-body)', fontSize: '0.9rem' }}>
-                {qs.map((q) => (
-                  <li key={q.id} style={{ opacity: q.statut === 'fait' ? 0.5 : 1, color: 'var(--text)', letterSpacing: 0 }}>
-                    <input
-                      type="checkbox"
-                      className="quest-check"
-                      checked={q.statut === 'fait'}
-                      disabled={q.statut === 'fait'}
-                      onChange={async () => {
-                        playTick();
-                        try {
-                          await dispatch(validerQuete(q.id)).unwrap();
-                        } catch (err) {
-                          setMsg(err?.message || String(err));
-                        }
-                        setQuetes(await apiGet(`/quetes?type=${arc}`));
+                {qs.map((q) => {
+                  const obj = q.ere_objectif_id ? objectifById[q.ere_objectif_id] : null;
+                  const canLier = q.statut !== 'fait' && objectifsEre.length > 0;
+                  return (
+                    <li
+                      key={q.id}
+                      style={{
+                        opacity: q.statut === 'fait' ? 0.5 : 1,
+                        color: 'var(--text)',
+                        letterSpacing: 0,
+                        flexWrap: 'wrap',
+                        gap: 8,
                       }}
-                      style={{ accentColor: 'var(--jaune)' }}
-                    />
-                    <span style={{ textDecoration: q.statut === 'fait' ? 'line-through' : 'none' }}>
-                      {q.titre}
-                      {!q.ere_objectif_id && q.statut !== 'fait' && (
-                        <span className="compteur" style={{ marginLeft: 6, opacity: 0.6 }}>sans ère</span>
+                    >
+                      <input
+                        type="checkbox"
+                        className="quest-check"
+                        checked={q.statut === 'fait'}
+                        disabled={q.statut === 'fait'}
+                        onChange={async () => {
+                          playTick();
+                          try {
+                            await dispatch(validerQuete(q.id)).unwrap();
+                          } catch (err) {
+                            setMsg(err?.message || String(err));
+                          }
+                          setQuetes(await apiGet(`/quetes?type=${arc}`));
+                        }}
+                        style={{ accentColor: 'var(--jaune)' }}
+                      />
+                      <span style={{ textDecoration: q.statut === 'fait' ? 'line-through' : 'none', flex: 1, minWidth: 120 }}>
+                        {q.titre}
+                        {obj && (
+                          <span className="compteur" style={{ marginLeft: 6, opacity: 0.7, color: 'var(--jaune)' }}>
+                            → {obj.titre}
+                          </span>
+                        )}
+                        {!q.ere_objectif_id && q.statut !== 'fait' && !canLier && (
+                          <span className="compteur" style={{ marginLeft: 6, opacity: 0.6 }}>sans ère</span>
+                        )}
+                      </span>
+                      {canLier && (
+                        <select
+                          className="os-input"
+                          aria-label={`Objectif d’ère pour ${q.titre}`}
+                          value={q.ere_objectif_id || ''}
+                          disabled={lienBusyId === q.id}
+                          onChange={(e) => lierObjectif(q.id, e.target.value || null)}
+                          style={{
+                            width: 'auto',
+                            minWidth: 140,
+                            maxWidth: 220,
+                            padding: '4px 8px',
+                            fontSize: '0.75rem',
+                            fontFamily: 'var(--font-mono)',
+                          }}
+                        >
+                          <option value="">— objectif ère —</option>
+                          {objectifsEre.map((o) => (
+                            <option key={o.id} value={o.id}>{o.titre}</option>
+                          ))}
+                        </select>
                       )}
-                    </span>
-                  </li>
-                ))}
+                    </li>
+                  );
+                })}
                 {!qs.length && <li className="compteur">Aucune quête</li>}
               </ul>
             </div>

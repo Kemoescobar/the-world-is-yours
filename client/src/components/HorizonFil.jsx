@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 /**
  * Fil légende : aujourd’hui → chapitre → ère.
  * Affiche accumulation / objectifs, pas seulement les cases du jour.
+ * Soft prompt si Ère active + quêtes hors fil ; jamais d’alarme si ère pas encore branchée.
  */
 export default function HorizonFil({
   aujourdhui,
@@ -12,6 +13,7 @@ export default function HorizonFil({
   quetesChapitreFaites = 0,
   quetesChapitreTotal = 0,
   sansObjectif = 0,
+  erePasBranchee = false,
 }) {
   const titreChap = chapitre?.titre && !/amor[cç]age|chapitre\s*0/i.test(chapitre.titre)
     ? chapitre.titre
@@ -53,8 +55,14 @@ export default function HorizonFil({
                 <Link to="/ere" style={{ color: 'inherit', textDecoration: 'none' }}>{ere.nom}</Link>
               </strong>
               <span className="horizon-fil__meta">
-                {progresEre != null ? `${progresEre}% objectifs` : `${objectifs.length} objectif${objectifs.length !== 1 ? 's' : ''}`}
-                {sansObjectif > 0 ? ` · ${sansObjectif} quête(s) hors fil` : ''}
+                {erePasBranchee
+                  ? 'pas encore branchée aux quêtes'
+                  : (
+                    <>
+                      {progresEre != null ? `${progresEre}% objectifs` : `${objectifs.length} objectif${objectifs.length !== 1 ? 's' : ''}`}
+                      {sansObjectif > 0 ? ` · ${sansObjectif} quête(s) hors fil` : ''}
+                    </>
+                  )}
               </span>
             </>
           ) : (
@@ -67,11 +75,23 @@ export default function HorizonFil({
           )}
         </span>
       </div>
-      {ere?.nom && sansObjectif > 0 && (
+      {ere?.nom && erePasBranchee && (
         <p className="horizon-fil__prompt">
-          Relie tes quêtes actives à un objectif d’ère —{' '}
-          <Link to="/ere">voir Ère</Link>
-          {' '}(sinon le fil reste une checklist du jour).
+          Lie une première quête à un objectif depuis un Arc (ex.{' '}
+          <Link to="/chantier/dev">Dev</Link>
+          {' · '}
+          <Link to="/chantier/beatmaker">Beatmaker</Link>
+          ) — pas de Dispersion tant que rien n’est branché.
+        </p>
+      )}
+      {ere?.nom && !erePasBranchee && sansObjectif > 0 && (
+        <p className="horizon-fil__prompt">
+          Relie tes quêtes actives à un objectif d’ère depuis un Arc —{' '}
+          <Link to="/chantier/dev">Dev</Link>
+          {' · '}
+          <Link to="/chantier/beatmaker">Beatmaker</Link>
+          {' · '}
+          <Link to="/ere">Ère</Link>.
         </p>
       )}
     </nav>

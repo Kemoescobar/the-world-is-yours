@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import OsHeader from '../components/OsHeader.jsx';
 import { apiGet, apiPost } from '../lib/api.js';
 
@@ -91,12 +92,22 @@ export default function Ere() {
       {dispersion?.ere && dispersion?.dispersion && (
         <p className="annotation-manuscrite" style={{ marginBottom: 16 }}>
           Dispersion douce — {dispersion.sans_objectif?.length || 0} quête(s) sans objectif d’ère sur {dispersion.jours}j
-          (non bloquant)
+          (non bloquant). Lie depuis un Arc :{' '}
+          <Link to="/chantier/dev" style={{ color: 'inherit' }}>Dev</Link>
+          {' · '}
+          <Link to="/chantier/beatmaker" style={{ color: 'inherit' }}>Beatmaker</Link>
         </p>
       )}
       {dispersion?.ere && !dispersion?.dispersion && dispersion?.note === 'ère pas encore branchée aux quêtes' && (
-        <p className="compteur" style={{ marginBottom: 16, opacity: 0.7 }}>
-          Ère active — pas encore branchée aux quêtes (pas de Dispersion)
+        <p className="compteur" style={{ marginBottom: 16, opacity: 0.7, lineHeight: 1.45 }}>
+          Ère active — pas encore branchée aux quêtes (pas de Dispersion).
+          Ouvre un Arc et choisis un objectif sur chaque quête.
+        </p>
+      )}
+      {dispersion?.ere && !dispersion?.dispersion && (dispersion.lies_ere > 0) && (dispersion.sans_objectif?.length > 0) && (
+        <p className="compteur" style={{ marginBottom: 16, opacity: 0.75, lineHeight: 1.45 }}>
+          {dispersion.sans_objectif.length} quête(s) hors objectif — sous le seuil Dispersion.
+          Continue à lier depuis les Arcs.
         </p>
       )}
 

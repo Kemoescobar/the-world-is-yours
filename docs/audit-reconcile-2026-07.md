@@ -10,7 +10,7 @@ Ne pas répéter comme « cassé » ce qui est déjà shippé.
 | Claude affiché OK sans clé | **DONE** | LIVE : Claude reste **—** (honnête) tant que pas `ANTHROPIC_API_KEY` |
 | `/instrus` / `/projets` hors sitemap catalogue | **DONE** | redirects → `/catalogue/instrus` · `/catalogue/projets` |
 | Dispersion sans Ère active | **DONE** (gate code) | API + UI : pas de banner si `ere === null` |
-| Dispersion encore visible sur Chantier LIVE | **DONE** | Soft : pas de banner si zéro `ere_objectif_id` (« pas encore branchée ») ; sinon ≥50 % hors objectif et ≥2 |
+| Dispersion encore visible sur Chantier LIVE | **DONE** | Soft : pas de banner si zéro `ere_objectif_id` (« pas encore branchée ») ; sinon ≥50 % hors objectif et ≥2 ; UI attach ArcDetail |
 | Drops spiral | **DONE** | `Drops.jsx` spiral / liste |
 | Insights cliquable sans IA | **DONE** | disabled si `ai/status.anthropic` faux |
 | Prospect freelance démo | **DONE** | migration `20260716_remove_demo_prospect.sql` |

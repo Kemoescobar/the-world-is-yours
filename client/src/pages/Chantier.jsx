@@ -219,7 +219,8 @@ export default function Chantier() {
     : entreesRecent.length;
 
   const showDispersion = Boolean(dispersion?.ere && dispersion?.dispersion);
-  const sansObjectif = dispersion?.sans_objectif?.length || 0;
+  const erePasBranchee = dispersion?.note === 'ère pas encore branchée aux quêtes';
+  const sansObjectif = erePasBranchee ? 0 : (dispersion?.sans_objectif?.length || 0);
 
   const onTitreChange = useCallback(() => {
     reloadSide().catch(() => {});
@@ -260,6 +261,7 @@ export default function Chantier() {
         quetesChapitreFaites={quetesHeroFaites}
         quetesChapitreTotal={quetesHero.length}
         sansObjectif={sansObjectif}
+        erePasBranchee={erePasBranchee}
       />
 
       <ContremaitreBanner />
@@ -281,6 +283,8 @@ export default function Chantier() {
       {showDispersion && (
         <p className="annotation-manuscrite" style={{ marginBottom: 12 }}>
           Dispersion — {dispersion.sans_objectif?.length || 0} quête(s) hors objectif d’ère (14j).{' '}
+          <Link to="/chantier/dev" style={{ color: 'inherit' }}>Lier depuis un Arc</Link>
+          {' · '}
           <Link to="/ere" style={{ color: 'inherit' }}>Voir Ère</Link>
         </p>
       )}

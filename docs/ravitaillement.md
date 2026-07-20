@@ -83,7 +83,7 @@ Signal : **`roadmap [arc] terminée`** (ex. `roadmap Dev terminée`) — pas de 
 1. Persistance quêtes API (déjà là) + `competence_id` sur drafts.
 2. Migration `20260716_ravitaillement` + liens best-effort quêtes existantes (Dev/Beatmaker) — ambigu → `null`.
 3. Script : `server/scripts/link-quetes-competences.mjs` (`--dry-run` ok).
-4. Dispersion soft : pas de banner Contremaître « suggestion » si zéro quête a `ere_objectif_id` (« ère pas encore branchée »).
+4. Dispersion soft : pas de banner Contremaître « suggestion » si zéro quête a `ere_objectif_id` (« ère pas encore branchée »). UI lien objectif : ArcDetail (`PATCH /quetes/:id` → `ere_objectif_id`).
 
 ---
 

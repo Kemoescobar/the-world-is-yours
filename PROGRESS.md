@@ -46,6 +46,7 @@ Doc : `docs/phase-3.md` · roadmaps : `docs/roadmaps/README.md`
 | Paramètres probes réels | health / streaks / webhook / AI → **OK** ou **—** (Claude honnêtement — sans clé) |
 | Routes catalogue | `/instrus` → `/catalogue/instrus`, `/projets` → `/catalogue/projets` |
 | Dispersion gate | Banner **uniquement** si Ère `active` **et** au moins 1 quête déjà liée à un `ere_objectif_id` **et** ≥50 % hors objectif (≥2) — sinon « pas encore branchée » |
+| Dispersion UI lien | ArcDetail : select objectif d’ère par quête (`PATCH /quetes/:id`) · soft prompt HorizonFil / Ère (pas d’alarme si 0 lien) |
 | Drops spiral | Vue spiral / liste |
 | Insights sans IA | Bouton désactivé si Anthropic soft-off |
 | Demo freelance | Prospect seedé retiré (migration) |
@@ -74,9 +75,9 @@ Doc : `docs/phase-3.md` · roadmaps : `docs/roadmaps/README.md`
 1. ~~Ravitaillement Dev/Beatmaker~~ ✅
 2. ~~Emploi du temps intelligent~~ ✅
 3. ~~Chronique / Capture / Horizon~~ ✅ — sang dans le système (entrees → récit → fil Ère)
-4. Toi : clé Anthropic + signup fermé + clearance si ouverture publique large
-5. Croisement ravitaillement après peuplement compétences
-6. UI attacher `ere_objectif_id` depuis ArcCard (prompt soft + lien `/ere` déjà en place)
+4. ~~UI Dispersion / `ere_objectif_id`~~ ✅ — ArcDetail + soft prompts (décision 2026-07-20)
+5. Toi : clé Anthropic + signup fermé + clearance si ouverture publique large
+6. Croisement ravitaillement après peuplement compétences (aside jusqu’à décision contraire)
 
 ---
 

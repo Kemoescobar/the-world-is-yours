@@ -274,7 +274,7 @@ Cet addendum **ne remplace pas** la spec ci-dessus ; il ancre le réel post-scaf
 - Compétences `66402fe` : UI interactive, preuves, prérequis roadmap + migration
 - LIVE vérifié : Paramètres probes ; Chantier loading → 13/13 ; Contremaître OK
 - **Ravitaillement** Dev/Beatmaker : auto-fill à 3 actifs (`docs/ravitaillement.md`) ; Croisement skipped
-- Dispersion soft : pas de banner si ère pas encore branchée aux quêtes (`ere_objectif_id`)
+- Dispersion soft : pas de banner si ère pas encore branchée aux quêtes (`ere_objectif_id`) ; UI lien objectif depuis ArcDetail
 
 ### OPEN
 
