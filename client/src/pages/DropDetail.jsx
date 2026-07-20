@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { apiGet } from '../lib/api.js';
 import { playImpact } from '../lib/sounds.js';
 import GlobeHandVivant from '../components/GlobeHandVivant.jsx';
+import MoodboardPatchwork from '../components/MoodboardPatchwork.jsx';
 
 function exportDropCard({ detail, typeFait, date }) {
   const w = 1080;
@@ -14,13 +15,13 @@ function exportDropCard({ detail, typeFait, date }) {
   if (!ctx) return;
 
   const g = ctx.createLinearGradient(0, 0, w, h);
-  g.addColorStop(0, '#14100e');
-  g.addColorStop(0.45, '#241512');
-  g.addColorStop(1, '#4a281f');
+  g.addColorStop(0, '#0e0c10');
+  g.addColorStop(0.45, '#1a1416');
+  g.addColorStop(1, '#3f261f');
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, w, h);
 
-  // Rouge cosmique / cobalt électrique (registre fort — moodboard)
+  // Patchwork fort accents — rouge cosmique + cobalt
   const iris = ctx.createRadialGradient(w * 0.3, h * 0.2, 40, w * 0.3, h * 0.2, 420);
   iris.addColorStop(0, 'rgba(255,42,74,0.35)');
   iris.addColorStop(1, 'transparent');
@@ -112,15 +113,10 @@ export default function DropDetail() {
         overflow: 'hidden',
       }}
     >
-      <img
-        src="/brand/drop-reveal-fort.png"
-        alt=""
-        aria-hidden
-        className="drop-reveal-fort__bg"
-      />
+      <MoodboardPatchwork variant="drop" />
       <div className="drop-reveal-fort__wash" aria-hidden />
-      <div className="halftone-overlay halftone-live" style={{ position: 'absolute', opacity: 0.22 }} />
-      <div className="grain grain-live" />
+      <div className="halftone-overlay halftone-live" style={{ position: 'absolute', opacity: 0.22, zIndex: 2 }} />
+      <div className="grain grain-live" style={{ zIndex: 2 }} />
       <GlobeHandVivant side="right" opacity={0.52} />
       <span
         className="annotation-manuscrite annotation-pop"

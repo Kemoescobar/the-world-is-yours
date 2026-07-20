@@ -1,26 +1,29 @@
 ﻿/* THE WORLD IS YOURS — World Poster OS
-   Partie 2–3 : oxblood daily · fort accents sampled from moodboard stills
-   (drop mb-10 cosmique · sleeve mb-2 Asake · hero mb-4 globe cobalt) */
+   Patchwork moodboard : dark bases + warm wine/gold + cool electric flashes
+   Purple globe poster = one accent source, not the whole theme */
 
 :root {
-  /* —— Registre quotidien (oxblood + cream paper) — functional UI everywhere —— */
-  --fond: #14100e;
-  --cartes: #241512;
-  --bordures: #4a281f;
+  /* —— Registre quotidien (charcoal / oxblood / cream paper) —— */
+  --fond: #0e0c10;
+  --cartes: #1a1416;
+  --bordures: #3f261f;
   --texte: #f0e6d4;
   --texte-secondary: #a89278;
   --accent-alerte: #ff3d3a;
   --accent-secondaire: #e8c24a;
+  --wine: #7a1830;
+  --patch-orange: #ff6b2c;
+  --patch-violet: #5a3fd4;
 
-  /* Mapped legacy tokens → oxblood (site must not break) */
+  /* Mapped legacy tokens → warm dark (site must not break) */
   --bg-0: var(--fond);
   --bg-1: var(--cartes);
-  --bg-2: #2f1914;
+  --bg-2: #24181a;
   --bg-3: var(--bordures);
   --bleu-plein: #6b2a22;
   --bleu-cerulean: #8a3d32;
 
-  --violet-marque: #5b2d3e;
+  --violet-marque: var(--wine);
   --chrome: #e8d9bd;
   --chrome-glow: rgba(240, 230, 212, 0.45);
   --chrome-metal: linear-gradient(
@@ -32,21 +35,21 @@
     #d4c4b0 72%,
     #8a6e5c 100%
   );
-  /* Daily iris: warm oxblood · vermillon cosmique · or papier (no fort neons) */
+  /* Daily iris: wine · cream · vermillon · gold (no fort neons) */
   --chrome-iris: linear-gradient(
     125deg,
-    rgba(107, 42, 34, 0.85),
+    rgba(122, 24, 48, 0.85),
     rgba(240, 230, 212, 0.45),
     rgba(255, 61, 58, 0.7),
     rgba(232, 194, 74, 0.75),
-    rgba(74, 40, 31, 0.55)
+    rgba(63, 38, 31, 0.55)
   );
   --chrome-iris-hot: linear-gradient(
     90deg,
     transparent,
-    rgba(138, 61, 50, 0.9),
+    rgba(122, 24, 48, 0.9),
     rgba(240, 230, 212, 0.7),
-    rgba(255, 61, 58, 0.85),
+    rgba(255, 107, 44, 0.85),
     rgba(232, 194, 74, 0.9),
     transparent
   );
@@ -57,25 +60,26 @@
   --rouge: var(--accent-alerte);
   --rouge-maron: #6b3a44;
   --jaune: var(--accent-secondaire);
-  --orange-clin-oeil: #ff9d00;
+  --orange-clin-oeil: var(--patch-orange);
 
-  /* —— Registre fort (moments only — NOT Chantier/nav/forms) ——
-     Rouge arc cosmique (mb-10) + cobalt électrique (mb-4) ; activated via .registre-fort */
+  /* —— Registre fort (public + Drop + Instrus + Home only) ——
+     Warm punch + electric blue / cyan flash from moodboard cools */
   --fort-magenta: #ff2a4a;
   --fort-cyan: #2d6bff;
+  --fort-flash: #3ec8ff;
   --fort-iris: linear-gradient(
     125deg,
     rgba(255, 42, 74, 0.85),
     rgba(45, 107, 255, 0.7),
-    rgba(255, 61, 58, 0.55),
-    rgba(232, 194, 74, 0.5),
-    rgba(255, 42, 74, 0.4)
+    rgba(255, 107, 44, 0.55),
+    rgba(62, 200, 255, 0.45),
+    rgba(90, 63, 212, 0.35)
   );
   --fort-iris-hot: linear-gradient(
     90deg,
     transparent,
     rgba(255, 42, 74, 0.95),
-    rgba(255, 255, 255, 0.7),
+    rgba(240, 230, 212, 0.7),
     rgba(45, 107, 255, 0.95),
     rgba(232, 194, 74, 0.7),
     transparent
@@ -113,18 +117,18 @@ body {
 .registre-quotidien {
   --chrome-iris: linear-gradient(
     125deg,
-    rgba(107, 42, 34, 0.85),
+    rgba(122, 24, 48, 0.85),
     rgba(240, 230, 212, 0.45),
     rgba(255, 61, 58, 0.7),
     rgba(232, 194, 74, 0.75),
-    rgba(74, 40, 31, 0.55)
+    rgba(63, 38, 31, 0.55)
   );
   --chrome-iris-hot: linear-gradient(
     90deg,
     transparent,
-    rgba(138, 61, 50, 0.9),
+    rgba(122, 24, 48, 0.9),
     rgba(240, 230, 212, 0.7),
-    rgba(255, 61, 58, 0.85),
+    rgba(255, 107, 44, 0.85),
     rgba(232, 194, 74, 0.9),
     transparent
   );
@@ -167,7 +171,482 @@ body {
   color: var(--fort-cyan);
 }
 
-/* Partie 3 — brand atmospheres (moodboard stills, moments forts only) */
+/* —— Moodboard patchwork (public / fort surfaces) —— */
+.moodboard-patchwork {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.moodboard-scrap {
+  position: absolute;
+  object-fit: cover;
+  border: 1.5px solid rgba(232, 217, 189, 0.55);
+  box-shadow:
+    4px 6px 0 rgba(14, 12, 16, 0.55),
+    0 0 0 1px rgba(255, 61, 58, 0.12);
+  filter: contrast(1.06) saturate(1.08);
+  background: var(--cartes);
+}
+
+.moodboard-patchwork__grain {
+  position: absolute;
+  inset: 0;
+  opacity: 0.18;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
+  background-size: 180px 180px;
+}
+
+.moodboard-patchwork__blocks {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(115deg, transparent 62%, rgba(122, 24, 48, 0.18) 62%, rgba(122, 24, 48, 0.18) 68%, transparent 68%),
+    linear-gradient(200deg, transparent 78%, rgba(45, 107, 255, 0.1) 78%, rgba(45, 107, 255, 0.1) 82%, transparent 82%);
+  mix-blend-mode: soft-light;
+}
+
+/* Gate scraps */
+.moodboard-scrap--gate-a {
+  width: min(42vw, 340px);
+  aspect-ratio: 3/4;
+  left: -4%;
+  top: 8%;
+  transform: rotate(-9deg);
+  opacity: 0.42;
+  clip-path: polygon(3% 0, 100% 2%, 97% 100%, 0 96%);
+  animation: patch-drift 14s ease-in-out infinite alternate;
+}
+.moodboard-scrap--gate-b {
+  width: min(28vw, 200px);
+  aspect-ratio: 1;
+  right: 8%;
+  top: 12%;
+  transform: rotate(7deg);
+  opacity: 0.28;
+  mix-blend-mode: screen;
+  clip-path: polygon(0 4%, 96% 0, 100% 94%, 6% 100%);
+}
+.moodboard-scrap--gate-c {
+  width: min(36vw, 280px);
+  aspect-ratio: 4/5;
+  left: 12%;
+  bottom: -6%;
+  transform: rotate(4deg);
+  opacity: 0.22;
+  mix-blend-mode: soft-light;
+}
+
+/* Home scraps */
+.moodboard-scrap--home-hero {
+  inset: 8% 18% 18% 18%;
+  width: auto;
+  height: auto;
+  opacity: 0.38;
+  transform: rotate(-1.5deg);
+  clip-path: polygon(1% 0, 100% 2%, 99% 100%, 0 97%);
+  z-index: 0;
+}
+.moodboard-scrap--home-code {
+  width: min(22vw, 200px);
+  aspect-ratio: 3/4;
+  left: 2%;
+  top: 28%;
+  transform: rotate(-12deg);
+  opacity: 0.45;
+  mix-blend-mode: luminosity;
+  filter: contrast(1.2) grayscale(0.15);
+  animation: patch-drift 11s ease-in-out infinite alternate;
+}
+.moodboard-scrap--home-sound {
+  width: min(24vw, 220px);
+  aspect-ratio: 3/4;
+  right: 3%;
+  top: 22%;
+  transform: rotate(8deg);
+  opacity: 0.5;
+  clip-path: polygon(4% 0, 100% 3%, 96% 100%, 0 95%);
+  animation: patch-drift-rev 13s ease-in-out infinite alternate;
+}
+.moodboard-scrap--home-wine {
+  width: min(16vw, 140px);
+  aspect-ratio: 1;
+  left: 28%;
+  bottom: 10%;
+  transform: rotate(-18deg);
+  opacity: 0.4;
+  border-color: rgba(232, 194, 74, 0.55);
+}
+.moodboard-scrap--home-mark {
+  width: min(14vw, 120px);
+  aspect-ratio: 3/4;
+  right: 26%;
+  bottom: 8%;
+  transform: rotate(11deg);
+  opacity: 0.35;
+  mix-blend-mode: screen;
+}
+.moodboard-scrap--home-isle {
+  width: min(18vw, 160px);
+  aspect-ratio: 3/4;
+  left: 46%;
+  top: 14%;
+  transform: translateX(-50%) rotate(3deg);
+  opacity: 0.28;
+  mix-blend-mode: soft-light;
+}
+
+/* Drop scraps */
+.moodboard-scrap--drop-base {
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.72;
+  border: none;
+  box-shadow: none;
+  transform: none;
+  filter: saturate(1.1) contrast(1.05);
+  clip-path: none;
+}
+.moodboard-scrap--drop-prism {
+  width: min(32vw, 280px);
+  aspect-ratio: 3/4;
+  right: -2%;
+  top: 18%;
+  transform: rotate(7deg);
+  opacity: 0.48;
+  clip-path: polygon(0 0, 100% 4%, 94% 100%, 3% 96%);
+  animation: patch-drift 12s ease-in-out infinite alternate;
+}
+.moodboard-scrap--drop-sun {
+  width: min(26vw, 220px);
+  aspect-ratio: 3/4;
+  left: -3%;
+  bottom: 8%;
+  transform: rotate(-11deg);
+  opacity: 0.4;
+  mix-blend-mode: soft-light;
+}
+.moodboard-scrap--drop-mark {
+  width: min(18vw, 150px);
+  aspect-ratio: 3/4;
+  right: 14%;
+  bottom: 12%;
+  transform: rotate(14deg);
+  opacity: 0.32;
+  mix-blend-mode: screen;
+}
+
+/* Instrus scraps */
+.moodboard-patchwork--instrus {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  opacity: 0.85;
+}
+.moodboard-scrap--instru-a {
+  width: 120px;
+  aspect-ratio: 1;
+  right: 4%;
+  top: 6%;
+  transform: rotate(9deg);
+  opacity: 0.35;
+}
+.moodboard-scrap--instru-b {
+  width: 96px;
+  aspect-ratio: 1;
+  left: 2%;
+  top: 40%;
+  transform: rotate(-14deg);
+  opacity: 0.28;
+}
+.moodboard-scrap--instru-c {
+  width: 110px;
+  aspect-ratio: 3/4;
+  right: 8%;
+  bottom: 12%;
+  transform: rotate(6deg);
+  opacity: 0.22;
+  mix-blend-mode: soft-light;
+}
+.moodboard-scrap--instru-d {
+  width: 88px;
+  aspect-ratio: 1;
+  left: 12%;
+  bottom: 4%;
+  transform: rotate(-8deg);
+  opacity: 0.26;
+}
+
+/* Projets (CODE catalogue) */
+.moodboard-scrap--proj-a {
+  width: 130px;
+  aspect-ratio: 3/4;
+  right: 3%;
+  top: 8%;
+  transform: rotate(8deg);
+  opacity: 0.32;
+  mix-blend-mode: luminosity;
+}
+.moodboard-scrap--proj-b {
+  width: 100px;
+  aspect-ratio: 1;
+  left: 2%;
+  top: 36%;
+  transform: rotate(-12deg);
+  opacity: 0.26;
+}
+.moodboard-scrap--proj-c {
+  width: 110px;
+  aspect-ratio: 3/4;
+  right: 10%;
+  bottom: 10%;
+  transform: rotate(5deg);
+  opacity: 0.22;
+  mix-blend-mode: soft-light;
+}
+.moodboard-scrap--proj-d {
+  width: 90px;
+  aspect-ratio: 3/4;
+  left: 14%;
+  bottom: 6%;
+  transform: rotate(-7deg);
+  opacity: 0.24;
+}
+
+/* Drops list spiral */
+.moodboard-scrap--drops-a {
+  width: min(28vw, 220px);
+  aspect-ratio: 3/4;
+  left: -2%;
+  top: 12%;
+  transform: rotate(-10deg);
+  opacity: 0.28;
+  clip-path: polygon(2% 0, 100% 3%, 96% 100%, 0 94%);
+}
+.moodboard-scrap--drops-b {
+  width: min(22vw, 180px);
+  aspect-ratio: 3/4;
+  right: -1%;
+  top: 28%;
+  transform: rotate(9deg);
+  opacity: 0.3;
+}
+.moodboard-scrap--drops-c {
+  width: 100px;
+  aspect-ratio: 1;
+  left: 18%;
+  bottom: 8%;
+  transform: rotate(-16deg);
+  opacity: 0.22;
+  border-color: rgba(255, 61, 58, 0.45);
+}
+.moodboard-scrap--drops-d {
+  width: 120px;
+  aspect-ratio: 3/4;
+  right: 16%;
+  bottom: 4%;
+  transform: rotate(6deg);
+  opacity: 0.2;
+  mix-blend-mode: soft-light;
+}
+
+/* Calm OS shell (Layout) — never fight readability */
+.moodboard-patchwork--os {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  opacity: 1;
+}
+.moodboard-scrap--os-a {
+  width: min(18vw, 160px);
+  aspect-ratio: 3/4;
+  right: -2%;
+  top: 18%;
+  transform: rotate(11deg);
+  opacity: 0.12;
+  mix-blend-mode: soft-light;
+  border-color: rgba(232, 217, 189, 0.25);
+}
+.moodboard-scrap--os-b {
+  width: min(14vw, 120px);
+  aspect-ratio: 1;
+  left: -1%;
+  bottom: 22%;
+  transform: rotate(-14deg);
+  opacity: 0.1;
+  mix-blend-mode: luminosity;
+}
+.moodboard-scrap--os-c {
+  width: min(16vw, 140px);
+  aspect-ratio: 4/5;
+  right: 8%;
+  bottom: 6%;
+  transform: rotate(4deg);
+  opacity: 0.08;
+  mix-blend-mode: soft-light;
+}
+.moodboard-scrap--os-d {
+  width: 88px;
+  aspect-ratio: 1;
+  left: 6%;
+  top: 12%;
+  transform: rotate(-8deg);
+  opacity: 0.09;
+  border-color: rgba(232, 194, 74, 0.35);
+}
+
+/* Chantier — soft header scraps */
+.moodboard-patchwork--chantier {
+  position: absolute;
+  inset: -24px -12px auto -12px;
+  height: min(52vh, 420px);
+  z-index: 0;
+}
+.moodboard-scrap--chantier-a {
+  width: 55%;
+  max-width: 300px;
+  top: -6%;
+  right: -4%;
+  aspect-ratio: 3/4;
+  opacity: 0.22;
+  transform: rotate(6deg);
+  mix-blend-mode: screen;
+  filter: saturate(0.9) contrast(1.05);
+  animation: atmosphere-drift 18s ease-in-out infinite alternate;
+}
+.moodboard-scrap--chantier-b {
+  width: 38%;
+  max-width: 200px;
+  bottom: 10%;
+  left: -4%;
+  aspect-ratio: 3/4;
+  opacity: 0.16;
+  transform: rotate(-11deg);
+  mix-blend-mode: soft-light;
+}
+.moodboard-scrap--chantier-c {
+  width: 28%;
+  max-width: 140px;
+  top: 28%;
+  left: 36%;
+  aspect-ratio: 1;
+  opacity: 0.12;
+  transform: rotate(3deg);
+  mix-blend-mode: luminosity;
+}
+
+/* Login scraps */
+.moodboard-scrap--login-a {
+  width: min(36vw, 260px);
+  aspect-ratio: 3/4;
+  left: -6%;
+  top: 10%;
+  transform: rotate(-8deg);
+  opacity: 0.28;
+  clip-path: polygon(3% 0, 100% 2%, 97% 100%, 0 96%);
+}
+.moodboard-scrap--login-b {
+  width: min(30vw, 220px);
+  aspect-ratio: 3/4;
+  right: -4%;
+  bottom: 8%;
+  transform: rotate(7deg);
+  opacity: 0.32;
+  mix-blend-mode: soft-light;
+}
+.moodboard-scrap--login-c {
+  width: min(18vw, 140px);
+  aspect-ratio: 1;
+  right: 18%;
+  top: 14%;
+  transform: rotate(12deg);
+  opacity: 0.18;
+  mix-blend-mode: screen;
+}
+
+/* Public nav strip — overlapping mini scraps under chrome */
+.moodboard-patchwork--strip {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 72px;
+  z-index: 0;
+  overflow: hidden;
+}
+.moodboard-scrap--strip-a,
+.moodboard-scrap--strip-b,
+.moodboard-scrap--strip-c,
+.moodboard-scrap--strip-d,
+.moodboard-scrap--strip-e {
+  width: 56px;
+  height: 72px;
+  top: -4px;
+  border-width: 1px;
+  opacity: 0.22;
+  mix-blend-mode: soft-light;
+}
+.moodboard-scrap--strip-a { left: 8%; transform: rotate(-6deg); }
+.moodboard-scrap--strip-b { left: 22%; transform: rotate(4deg); opacity: 0.18; }
+.moodboard-scrap--strip-c { left: 48%; transform: rotate(-3deg); border-color: rgba(255, 61, 58, 0.4); }
+.moodboard-scrap--strip-d { left: 68%; transform: rotate(7deg); opacity: 0.16; }
+.moodboard-scrap--strip-e { left: 86%; transform: rotate(-9deg); border-color: rgba(45, 107, 255, 0.35); }
+
+/* Drop card moodboard thumb */
+.drop-spiral-card__thumb,
+.drop-list-thumb {
+  width: 100%;
+  height: 72px;
+  object-fit: cover;
+  display: block;
+  border-bottom: 1.5px solid rgba(255, 61, 58, 0.35);
+  filter: contrast(1.08) saturate(1.05);
+}
+.drop-list-thumb {
+  width: 56px;
+  height: 56px;
+  border: 1.5px solid rgba(232, 217, 189, 0.4);
+  flex-shrink: 0;
+  transform: rotate(-3deg);
+}
+
+@keyframes patch-drift {
+  from { transform: translate3d(0, 0, 0) rotate(var(--patch-rot, -8deg)); }
+  to { transform: translate3d(6px, -10px, 0) rotate(calc(var(--patch-rot, -8deg) + 2deg)); }
+}
+@keyframes patch-drift-rev {
+  from { transform: translate3d(0, 0, 0) rotate(8deg); }
+  to { transform: translate3d(-8px, 8px, 0) rotate(5deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .moodboard-scrap--gate-a,
+  .moodboard-scrap--home-code,
+  .moodboard-scrap--home-sound,
+  .moodboard-scrap--drop-prism {
+    animation: none;
+  }
+}
+
+@media (max-width: 720px) {
+  .moodboard-scrap--home-isle,
+  .moodboard-scrap--home-wine,
+  .moodboard-scrap--gate-c,
+  .moodboard-scrap--instru-c {
+    display: none;
+  }
+  .moodboard-scrap--home-code,
+  .moodboard-scrap--home-sound {
+    width: min(36vw, 140px);
+    opacity: 0.32;
+  }
+}
+
+/* Fort atmospheres (legacy class hooks + patchwork wash) */
 .drop-reveal-fort__bg {
   position: absolute;
   inset: 0;
@@ -178,6 +657,7 @@ body {
   z-index: 0;
   pointer-events: none;
   filter: saturate(1.08) contrast(1.04);
+  opacity: 0; /* scraps carry the image; keep hook for fallback */
 }
 
 .drop-reveal-fort__wash {
@@ -186,9 +666,9 @@ body {
   z-index: 1;
   pointer-events: none;
   background:
-    radial-gradient(circle at 25% 20%, rgba(255, 42, 74, 0.22), transparent 42%),
+    radial-gradient(circle at 25% 20%, rgba(255, 42, 74, 0.2), transparent 42%),
     radial-gradient(circle at 80% 70%, rgba(45, 107, 255, 0.14), transparent 48%),
-    linear-gradient(180deg, rgba(20, 16, 14, 0.35), rgba(20, 16, 14, 0.72) 70%, rgba(20, 16, 14, 0.88));
+    linear-gradient(180deg, rgba(14, 12, 16, 0.3), rgba(14, 12, 16, 0.7) 70%, rgba(14, 12, 16, 0.9));
 }
 
 .home-split--fort {
@@ -204,7 +684,7 @@ body {
   object-position: center 40%;
   z-index: 0;
   pointer-events: none;
-  opacity: 0.55;
+  opacity: 0; /* patchwork scraps replace single hero */
   filter: saturate(1.05) contrast(1.02);
 }
 
@@ -214,8 +694,8 @@ body {
   z-index: 0;
   pointer-events: none;
   background:
-    linear-gradient(90deg, rgba(20, 16, 14, 0.55) 0%, rgba(20, 16, 14, 0.2) 45%, rgba(20, 16, 14, 0.55) 100%),
-    linear-gradient(180deg, rgba(20, 16, 14, 0.15), rgba(20, 16, 14, 0.65));
+    linear-gradient(90deg, rgba(14, 12, 16, 0.62) 0%, rgba(14, 12, 16, 0.25) 45%, rgba(14, 12, 16, 0.62) 100%),
+    linear-gradient(180deg, rgba(14, 12, 16, 0.12), rgba(14, 12, 16, 0.7));
 }
 
 .home-split--fort .home-pane {
@@ -225,14 +705,14 @@ body {
 
 .home-split--fort .home-pane--code {
   background:
-    linear-gradient(90deg, rgba(20, 16, 14, 0.35), transparent 70%),
-    radial-gradient(ellipse at 30% 40%, rgba(255, 42, 74, 0.12), transparent 55%);
+    linear-gradient(90deg, rgba(14, 12, 16, 0.4), transparent 70%),
+    radial-gradient(ellipse at 30% 40%, rgba(45, 107, 255, 0.14), transparent 55%);
 }
 
 .home-split--fort .home-pane--sound {
   background:
-    linear-gradient(270deg, rgba(20, 16, 14, 0.35), transparent 70%),
-    radial-gradient(circle at 60% 45%, rgba(45, 107, 255, 0.1), transparent 50%);
+    linear-gradient(270deg, rgba(14, 12, 16, 0.4), transparent 70%),
+    radial-gradient(circle at 60% 45%, rgba(255, 42, 74, 0.12), transparent 50%);
 }
 
 .cover-sleeve__fort-fallback {
@@ -240,6 +720,11 @@ body {
   padding: 0 !important;
   opacity: 0.92;
   filter: contrast(1.06) saturate(1.05) !important;
+}
+
+.catalogue-instrus-shell {
+  position: relative;
+  isolation: isolate;
 }
 
 a { color: inherit; }

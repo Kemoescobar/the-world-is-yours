@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { apiGet } from '../lib/api.js';
 import { useSecretLoginClick } from '../lib/useSecretLoginClick.js';
+import MoodboardPatchwork from '../components/MoodboardPatchwork.jsx';
 
 export default function Home() {
   const onSecretLogin = useSecretLoginClick();
@@ -38,9 +39,10 @@ export default function Home() {
           position: 'absolute',
           inset: 0,
           background:
-            'radial-gradient(ellipse at 50% 0%, rgba(138,61,50,0.28), transparent 42%), radial-gradient(ellipse at 12% 70%, rgba(255,61,58,0.1), transparent 40%), radial-gradient(ellipse at 88% 65%, rgba(232,194,74,0.08), transparent 42%), linear-gradient(165deg, #14100e, #241512 42%, #2f1914)',
+            'radial-gradient(ellipse at 50% 0%, rgba(122,24,48,0.32), transparent 42%), radial-gradient(ellipse at 12% 70%, rgba(255,61,58,0.1), transparent 40%), radial-gradient(ellipse at 88% 65%, rgba(45,107,255,0.08), transparent 42%), linear-gradient(165deg, #0e0c10, #1a1416 42%, #24181a)',
         }}
       />
+      <MoodboardPatchwork variant="home" />
 
       <span className="hud-corner hud-corner--tl" aria-hidden />
       <span className="hud-corner hud-corner--tr" aria-hidden />
@@ -110,12 +112,6 @@ export default function Home() {
           minHeight: 'calc(100vh - 200px)',
         }}
       >
-        <img
-          src="/brand/hero-code-sound-fort.png"
-          alt=""
-          aria-hidden
-          className="home-split__fort-bg"
-        />
         <div className="home-split__fort-wash" aria-hidden />
         <Link
           to="/catalogue/projets"
@@ -150,24 +146,6 @@ export default function Home() {
           </div>
         </Link>
       </main>
-
-      <img
-        src="/brand/globe-youth.png"
-        alt=""
-        aria-hidden
-        style={{
-          position: 'absolute',
-          left: '50%',
-          bottom: '5%',
-          transform: 'translateX(-50%)',
-          width: 'min(26vw, 200px)',
-          opacity: 0.38,
-          zIndex: 1,
-          pointerEvents: 'none',
-          filter: 'contrast(1.08) saturate(1.05)',
-          mixBlendMode: 'screen',
-        }}
-      />
     </div>
   );
 }

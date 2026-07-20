@@ -1,4 +1,5 @@
 import { playEnter, setSoundEnabled } from '../lib/sounds.js';
+import MoodboardPatchwork from './MoodboardPatchwork.jsx';
 
 export default function SoundGate({ onEnter }) {
   function enter(withSound) {
@@ -31,9 +32,10 @@ export default function SoundGate({ onEnter }) {
           position: 'absolute',
           inset: 0,
           background:
-            'radial-gradient(ellipse at 72% 38%, rgba(138,61,50,0.42), transparent 52%), radial-gradient(ellipse at 18% 78%, rgba(255,90,60,0.12), transparent 45%), radial-gradient(ellipse at 50% 100%, rgba(74,35,29,0.85), transparent 50%)',
+            'radial-gradient(ellipse at 72% 38%, rgba(122,24,48,0.42), transparent 52%), radial-gradient(ellipse at 18% 78%, rgba(255,61,58,0.12), transparent 45%), radial-gradient(ellipse at 50% 100%, rgba(14,12,16,0.9), transparent 50%)',
         }}
       />
+      <MoodboardPatchwork variant="gate" />
       <img
         src="/brand/globe-hand.png"
         alt=""
@@ -45,6 +47,7 @@ export default function SoundGate({ onEnter }) {
           bottom: '-10%',
           width: 'min(68vw, 600px)',
           opacity: 0.58,
+          zIndex: 2,
           filter: 'contrast(1.12) saturate(1.08)',
           maskImage: 'linear-gradient(to left, black 45%, transparent 96%)',
           WebkitMaskImage: 'linear-gradient(to left, black 45%, transparent 96%)',

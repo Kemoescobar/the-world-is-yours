@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase.js';
 import { apiGet, apiPost, apiPatch } from '../lib/api.js';
 import { uploadCapture } from '../lib/storageUpload.js';
 import CoverFlow from '../components/CoverFlow.jsx';
+import MoodboardPatchwork, { MOODBOARD } from '../components/MoodboardPatchwork.jsx';
 
 function flattenPeaks(peaks) {
   if (Array.isArray(peaks?.[0])) return peaks[0];
@@ -182,7 +183,7 @@ function InstruSleeve({ item, index, focused }) {
           />
         ) : (
           <img
-            src="/brand/instru-sleeve-fort.png"
+            src={MOODBOARD.sleeve}
             alt=""
             aria-hidden
             className="cover-sleeve__vinyl-fallback cover-sleeve__fort-fallback"
@@ -385,8 +386,9 @@ export default function CatalogueInstrus({ mode = 'public' }) {
   }, [listening?.waveform_data]);
 
   return (
-    <div style={{ padding: 'var(--space-4)', maxWidth: 1100, margin: '0 auto' }}>
-      <header className="catalogue-header hud-frame">
+    <div className="catalogue-instrus-shell" style={{ padding: 'var(--space-4)', maxWidth: 1100, margin: '0 auto', position: 'relative' }}>
+      <MoodboardPatchwork variant="instrus" />
+      <header className="catalogue-header hud-frame" style={{ position: 'relative', zIndex: 1 }}>
         <p className="compteur" style={{ marginBottom: 8 }}>
           <span className="caret-blink" aria-hidden>›</span> 02 • SOUND • CHROME
           <span style={{ color: 'rgba(255,210,63,0.45)' }}> • </span>
@@ -402,6 +404,7 @@ export default function CatalogueInstrus({ mode = 'public' }) {
         <div className="chrome-bar chrome-bar--thin" aria-hidden />
       </header>
 
+      <div style={{ position: 'relative', zIndex: 1 }}>
       {editable && (
         <form onSubmit={uploader} className="chrome-panel" style={{ padding: 'var(--space-3)', margin: 'var(--space-4) 0', display: 'grid', gap: 10 }}>
           <p className="compteur">NOUVEL UPLOAD</p>
@@ -431,7 +434,7 @@ export default function CatalogueInstrus({ mode = 'public' }) {
       {!showcase.length ? (
         <div className="empty-wall" style={{ marginTop: 'var(--space-4)' }}>
           <img
-            src="/brand/instru-sleeve-fort.png"
+            src={MOODBOARD.sleeve}
             alt=""
             aria-hidden
             style={{ position: 'absolute', right: 24, bottom: 16, width: 140, opacity: 0.35, transform: 'rotate(-20deg)' }}
@@ -470,10 +473,10 @@ export default function CatalogueInstrus({ mode = 'public' }) {
                 marginTop: 'var(--space-3)',
                 ['--instru-energy']: String(playEnergy),
                 boxShadow: playEnergy > 0.05
-                  ? `0 0 ${24 + playEnergy * 48}px rgba(255,43,214,${0.12 + playEnergy * 0.35}), 0 0 ${18 + playEnergy * 36}px rgba(45,226,230,${0.1 + playEnergy * 0.3})`
+                  ? `0 0 ${24 + playEnergy * 48}px rgba(255,42,74,${0.12 + playEnergy * 0.35}), 0 0 ${18 + playEnergy * 36}px rgba(45,107,255,${0.1 + playEnergy * 0.3})`
                   : undefined,
                 borderColor: playEnergy > 0.08
-                  ? `rgba(45, 226, 230, ${0.25 + playEnergy * 0.45})`
+                  ? `rgba(45, 107, 255, ${0.25 + playEnergy * 0.45})`
                   : undefined,
               }}
             >
@@ -542,7 +545,7 @@ export default function CatalogueInstrus({ mode = 'public' }) {
                         />
                       ) : (
                         <img
-                          src="/brand/instru-sleeve-fort.png"
+                          src="/brand/moodboard/asake-sleeve.png"
                           alt=""
                           aria-hidden
                           style={{ width: 56, height: 56, objectFit: 'contain', opacity: 0.7 }}
@@ -586,6 +589,7 @@ export default function CatalogueInstrus({ mode = 'public' }) {
           )}
         </>
       )}
+      </div>
     </div>
   );
 }
