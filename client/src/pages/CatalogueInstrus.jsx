@@ -17,7 +17,6 @@ function Player({ url, peaks, onEnergy }) {
   const ws = useRef(null);
   const raf = useRef(0);
   const peaksFlat = useRef(flattenPeaks(peaks));
-  const audioGraph = useRef(null); // { ctx, source, analyser, connected }
   const onEnergyRef = useRef(onEnergy);
   onEnergyRef.current = onEnergy;
 
@@ -29,6 +28,9 @@ function Player({ url, peaks, onEnergy }) {
   useEffect(() => {
     if (!ref.current || !url) return undefined;
 
+    // Do NOT wire createMediaElementSource / AnalyserNode on cross-origin Supabase
+    // audio: without a prior crossOrigin="anonymous" load, the graph outputs silence
+    // while WaveSurfer still "plays". Deck tint uses waveform peaks instead.
     ws.current = WaveSurfer.create({
       container: ref.current,
       waveColor: '#a89484',
@@ -40,82 +42,26 @@ function Player({ url, peaks, onEnergy }) {
       peaks: peaksFlat.current.length ? [peaksFlat.current] : undefined,
     });
 
-    const teardownAudio = () => {
-      const g = audioGraph.current;
-      if (!g) return;
-      try { g.source?.disconnect(); } catch { /* already gone */ }
-      try { g.analyser?.disconnect(); } catch { /* already gone */ }
-      if (g.ctx && g.ctx.state !== 'closed') {
-        g.ctx.close().catch(() => {});
-      }
-      audioGraph.current = null;
-    };
-
-    /** One MediaElementSource per element — try once; fall back to peaks if blocked. */
-    const ensureAnalyser = () => {
-      if (audioGraph.current) return audioGraph.current.analyser ? 'live' : 'peaks';
-      const media = ws.current?.getMediaElement?.();
-      if (!media) return 'peaks';
-      try {
-        const AC = window.AudioContext || window.webkitAudioContext;
-        if (!AC) {
-          audioGraph.current = { ctx: null, source: null, analyser: null, connected: false };
-          return 'peaks';
-        }
-        const ctx = new AC();
-        const source = ctx.createMediaElementSource(media);
-        const analyser = ctx.createAnalyser();
-        analyser.fftSize = 256;
-        analyser.smoothingTimeConstant = 0.72;
-        source.connect(analyser);
-        analyser.connect(ctx.destination);
-        audioGraph.current = { ctx, source, analyser, connected: true };
-        return 'live';
-      } catch {
-        // Already attached elsewhere, or autoplay/policy blocked the graph
-        audioGraph.current = { ctx: null, source: null, analyser: null, connected: false };
-        return 'peaks';
-      }
-    };
-
-    const freqBuf = new Uint8Array(128);
-
     const sampleEnergy = () => {
       const inst = ws.current;
       const emit = onEnergyRef.current;
       if (!inst || !emit) return;
 
-      const mode = ensureAnalyser();
-      const g = audioGraph.current;
-      if (mode === 'live' && g?.analyser) {
-        if (g.ctx?.state === 'suspended') g.ctx.resume().catch(() => {});
-        g.analyser.getByteFrequencyData(freqBuf);
-        let sum = 0;
-        // Bias mid/high bands for punchier tint response
-        const n = freqBuf.length;
-        for (let i = 2; i < n; i += 1) sum += freqBuf[i];
-        const avg = sum / Math.max(1, n - 2) / 255;
-        emit(Math.min(1, avg * 1.85));
+      const dur = inst.getDuration?.() || 0;
+      const t = inst.getCurrentTime?.() || 0;
+      const arr = peaksFlat.current;
+      if (arr.length && dur > 0) {
+        const i = Math.min(arr.length - 1, Math.floor((t / dur) * arr.length));
+        const v = Math.abs(arr[i] || 0);
+        emit(Math.min(1, v * 2.2));
       } else {
-        const dur = inst.getDuration?.() || 0;
-        const t = inst.getCurrentTime?.() || 0;
-        const arr = peaksFlat.current;
-        if (arr.length && dur > 0) {
-          const i = Math.min(arr.length - 1, Math.floor((t / dur) * arr.length));
-          const v = Math.abs(arr[i] || 0);
-          emit(Math.min(1, v * 2.2));
-        } else {
-          emit(0.25 + 0.35 * Math.abs(Math.sin(t * 5.5)));
-        }
+        emit(0.25 + 0.35 * Math.abs(Math.sin(t * 5.5)));
       }
       raf.current = requestAnimationFrame(sampleEnergy);
     };
 
     const onPlay = () => {
       cancelAnimationFrame(raf.current);
-      ensureAnalyser();
-      const g = audioGraph.current;
-      if (g?.ctx?.state === 'suspended') g.ctx.resume().catch(() => {});
       raf.current = requestAnimationFrame(sampleEnergy);
     };
     const onPause = () => {
@@ -129,12 +75,11 @@ function Player({ url, peaks, onEnergy }) {
 
     return () => {
       cancelAnimationFrame(raf.current);
-      teardownAudio();
       ws.current?.destroy();
       ws.current = null;
     };
     // Remount only when the track URL changes. peaks/onEnergy update via refs —
-    // otherwise each energy frame (setState) destroyed WaveSurfer + closed AudioContext.
+    // otherwise each energy frame (setState) destroyed WaveSurfer mid-play.
   }, [url]);
 
   return (
