@@ -17,7 +17,10 @@ OS personnel présenté comme une **affiche de rue cosmique** : porte d’entré
 
 Assets dans `client/public/brand/moodboard/` (uploads utilisateur, pas Nano Banana).  
 Composant : `MoodboardPatchwork.jsx` — scraps rotatifs / torn edges / grain / blocs contraste.  
-**Fort** sur SoundGate · Home · Drop · Instrus. **Calme** sur Chantier / nav / forms.
+**Fort** sur SoundGate · Home · Drop · Instrus · Projets.  
+**Calme** sur Layout OS · OsHeader strip · Chantier · Login · Chronique — scraps derrière le contenu, lisibilité préservée.  
+Variants : `gate` · `home` · `drop` · `drops` · `instrus` · `projets` · `os` · `chantier` · `login` · `strip`.  
+Drops list/spiral : thumbs moodboard cyclés via `moodboardThumb()`.
 
 | Fichier | Source | Rôle |
 |---|---|---|

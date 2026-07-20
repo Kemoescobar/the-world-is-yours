@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import OsHeader from '../components/OsHeader.jsx';
+import MoodboardPatchwork, { moodboardThumb } from '../components/MoodboardPatchwork.jsx';
 import { apiGet } from '../lib/api.js';
 
 const DROP_TYPES = new Set(['certif', 'instru', 'projet', 'quete', 'bilan_ere']);
@@ -27,6 +28,13 @@ function truncate(text, max = 72) {
   return `${s.slice(0, max - 1)}…`;
 }
 
+function thumbSeed(item, index) {
+  const id = String(item?.id || '');
+  let h = index * 17;
+  for (let i = 0; i < id.length; i += 1) h = (h + id.charCodeAt(i) * (i + 3)) % 997;
+  return h;
+}
+
 export default function Drops() {
   const [items, setItems] = useState([]);
   const [mode, setMode] = useState('spiral');
@@ -42,7 +50,8 @@ export default function Drops() {
   }, []);
 
   return (
-    <div className="os-page" style={{ minHeight: '80vh' }}>
+    <div className="os-page" style={{ minHeight: '80vh', position: 'relative' }}>
+      <MoodboardPatchwork variant="drops" />
       <OsHeader
         kicker="OS · DROPS"
         title="DROPS"
@@ -66,11 +75,17 @@ export default function Drops() {
       {erreur && <p className="annotation-manuscrite" style={{ marginBottom: 12 }}>{erreur}</p>}
 
       {mode === 'liste' ? (
-        <div className="os-stack">
+        <div className="os-stack" style={{ position: 'relative', zIndex: 1 }}>
           {items.map((e, i) => (
             <Link key={e.id} to={`/drops/${e.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-              <article className="os-row chrome-edge">
-                <div>
+              <article className="os-row chrome-edge" style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
+                <img
+                  src={moodboardThumb(thumbSeed(e, i))}
+                  alt=""
+                  className="drop-list-thumb"
+                  loading="lazy"
+                />
+                <div style={{ flex: 1, minWidth: 0 }}>
                   <p className="compteur" style={{ margin: 0 }}>
                     {String(i + 1).padStart(2, '0')} · {e.type_fait} · {String(e.cree_le).slice(0, 10)}
                   </p>
@@ -92,7 +107,7 @@ export default function Drops() {
           )}
         </div>
       ) : (
-        <div className="drop-spiral void-grid" style={{ position: 'relative', minHeight: 560 }}>
+        <div className="drop-spiral void-grid" style={{ position: 'relative', minHeight: 560, zIndex: 1 }}>
           {items.map((e, i) => {
             const pos = spiralPosition(i, items.length);
             return (
@@ -106,13 +121,23 @@ export default function Drops() {
                   top: pos.top,
                   transform: 'translate(-50%, -50%)',
                   zIndex: pos.zIndex,
+                  overflow: 'hidden',
+                  padding: 0,
                 }}
                 title={e.detail || 'Drop'}
               >
-                <p className="compteur drop-spiral-card__type">{e.type_fait}</p>
-                <p className="drop-spiral-card__detail">
-                  {truncate(e.detail)}
-                </p>
+                <img
+                  src={moodboardThumb(thumbSeed(e, i))}
+                  alt=""
+                  className="drop-spiral-card__thumb"
+                  loading="lazy"
+                />
+                <div style={{ padding: '10px 12px 12px' }}>
+                  <p className="compteur drop-spiral-card__type">{e.type_fait}</p>
+                  <p className="drop-spiral-card__detail">
+                    {truncate(e.detail)}
+                  </p>
+                </div>
               </Link>
             );
           })}

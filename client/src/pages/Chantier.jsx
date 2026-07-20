@@ -9,6 +9,7 @@ import EmploiDuTemps from '../components/EmploiDuTemps.jsx';
 import ChroniquePanel from '../components/ChroniquePanel.jsx';
 import HorizonFil from '../components/HorizonFil.jsx';
 import WaveDashboard from '../components/WaveDashboard.jsx';
+import MoodboardPatchwork from '../components/MoodboardPatchwork.jsx';
 import { apiGet } from '../lib/api.js';
 import { useAuth } from '../auth/AuthContext.jsx';
 
@@ -205,8 +206,7 @@ export default function Chantier() {
   return (
     <div className="os-page chantier-page">
       <div className="chantier-atmosphere" aria-hidden="true">
-        <img src="/brand/globe-youth.png" alt="" className="chantier-atmosphere__img chantier-atmosphere__img--a" />
-        <img src="/brand/vinyl-chrome.png" alt="" className="chantier-atmosphere__img chantier-atmosphere__img--b" />
+        <MoodboardPatchwork variant="chantier" />
         <div className="chantier-atmosphere__wash" />
       </div>
 

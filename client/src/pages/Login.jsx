@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Navigate, useLocation, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext.jsx';
+import MoodboardPatchwork from '../components/MoodboardPatchwork.jsx';
 
 const LOGIN_ATTEMPTS_KEY = 'twiy_login_attempts';
 const LOGIN_MAX = 8;
@@ -81,9 +82,10 @@ export default function Login() {
           position: 'absolute',
           inset: 0,
           background:
-            'radial-gradient(ellipse at 70% 20%, rgba(138,61,50,0.38), transparent 50%), radial-gradient(ellipse at 20% 80%, rgba(255,90,60,0.1), transparent 45%), var(--bg-0)',
+            'radial-gradient(ellipse at 70% 20%, rgba(122,24,48,0.38), transparent 50%), radial-gradient(ellipse at 20% 80%, rgba(45,107,255,0.1), transparent 45%), var(--bg-0)',
         }}
       />
+      <MoodboardPatchwork variant="login" />
       <div className="halftone-overlay halftone-live" style={{ position: 'absolute', opacity: 0.18 }} />
       <div className="grain grain-live" style={{ position: 'absolute' }} />
       <div className="scanlines scanlines-live" style={{ opacity: 0.5 }} />

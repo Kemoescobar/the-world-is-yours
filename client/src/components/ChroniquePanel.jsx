@@ -94,7 +94,14 @@ export default function ChroniquePanel({ refreshKey = 0, onTitreChange }) {
   }
 
   return (
-    <article className="chronique-poster chrome-edge chrome-edge-live" aria-label="Chronique du chantier">
+    <article className="chronique-poster chrome-edge chrome-edge-live" aria-label="Chronique du chantier" style={{ position: 'relative', overflow: 'hidden' }}>
+      <img
+        src="/brand/moodboard/ukiyo-sun.png"
+        alt=""
+        aria-hidden
+        className="chronique-poster__scrap"
+        loading="lazy"
+      />
       <div className="chronique-poster__bar">
         <span>CHRONIQUE</span>
         <span className="compteur-dot">

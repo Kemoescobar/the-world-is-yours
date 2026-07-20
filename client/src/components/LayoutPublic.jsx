@@ -1,5 +1,6 @@
 import { Link, NavLink } from 'react-router-dom';
 import { useSecretLoginClick } from '../lib/useSecretLoginClick.js';
+import MoodboardPatchwork from './MoodboardPatchwork.jsx';
 
 /** Layout vitrine — pas de QuickCapture, pas de nav dashboard. */
 export default function LayoutPublic({ children }) {
@@ -12,19 +13,21 @@ export default function LayoutPublic({ children }) {
       <nav
         className="nav-chrome nav-public chrome-specular"
         aria-label="Navigation publique"
+        style={{ position: 'relative', overflow: 'hidden' }}
       >
+        <MoodboardPatchwork variant="strip" />
         <div className="chrome-bar--nav" aria-hidden style={{ top: 0, bottom: 'auto' }} />
-        <Link to="/" className="nav-brand nav-public__brand">
+        <Link to="/" className="nav-brand nav-public__brand" style={{ position: 'relative', zIndex: 1 }}>
           <span className="nav-os__brand-mark">TWIY</span>
           <span className="nav-os__brand-full">THE WORLD IS YOURS</span>
         </Link>
-        <span className="nav-os__tick" aria-hidden>
+        <span className="nav-os__tick" aria-hidden style={{ position: 'relative', zIndex: 1 }}>
           › PUBLIC
         </span>
-        <span className="nav-os__sep" aria-hidden>
+        <span className="nav-os__sep" aria-hidden style={{ position: 'relative', zIndex: 1 }}>
           •
         </span>
-        <div className="nav-public__rail">
+        <div className="nav-public__rail" style={{ position: 'relative', zIndex: 1 }}>
           <NavLink to="/catalogue/projets" className="nav-os__link">
             Code
           </NavLink>

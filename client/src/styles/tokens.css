@@ -596,6 +596,13 @@ body {
 .moodboard-scrap--strip-d { left: 68%; transform: rotate(7deg); opacity: 0.16; }
 .moodboard-scrap--strip-e { left: 86%; transform: rotate(-9deg); border-color: rgba(45, 107, 255, 0.35); }
 
+.os-header__strip.moodboard-patchwork--strip {
+  opacity: 0.85;
+}
+.os-header__strip .moodboard-patchwork__blocks {
+  opacity: 0.6;
+}
+
 /* Drop card moodboard thumb */
 .drop-spiral-card__thumb,
 .drop-list-thumb {
@@ -627,7 +634,8 @@ body {
   .moodboard-scrap--gate-a,
   .moodboard-scrap--home-code,
   .moodboard-scrap--home-sound,
-  .moodboard-scrap--drop-prism {
+  .moodboard-scrap--drop-prism,
+  .moodboard-scrap--chantier-a {
     animation: none;
   }
 }
@@ -636,13 +644,23 @@ body {
   .moodboard-scrap--home-isle,
   .moodboard-scrap--home-wine,
   .moodboard-scrap--gate-c,
-  .moodboard-scrap--instru-c {
+  .moodboard-scrap--instru-c,
+  .moodboard-scrap--proj-c,
+  .moodboard-scrap--os-c,
+  .moodboard-scrap--os-d,
+  .moodboard-scrap--chantier-c,
+  .moodboard-scrap--strip-d,
+  .moodboard-scrap--strip-e {
     display: none;
   }
   .moodboard-scrap--home-code,
   .moodboard-scrap--home-sound {
     width: min(36vw, 140px);
     opacity: 0.32;
+  }
+  .moodboard-scrap--os-a,
+  .moodboard-scrap--os-b {
+    opacity: 0.08;
   }
 }
 
@@ -3177,6 +3195,7 @@ textarea.os-input {
   pointer-events: none;
   z-index: 0;
   overflow: hidden;
+  overflow: hidden;
   opacity: 0.38;
 }
 
@@ -3221,6 +3240,11 @@ textarea.os-input {
   z-index: 1;
 }
 
+.chantier-atmosphere .moodboard-patchwork {
+  position: absolute;
+  inset: 0;
+}
+
 @keyframes atmosphere-drift {
   from { transform: translate3d(0, 0, 0) scale(1); }
   to { transform: translate3d(-12px, 10px, 0) scale(1.04); }
@@ -3263,6 +3287,22 @@ textarea.os-input {
   bottom: -30%;
   opacity: 0.55;
   transform: rotate(12deg);
+}
+
+.chronique-poster__scrap {
+  position: absolute;
+  right: -4%;
+  top: -12%;
+  width: min(42%, 220px);
+  aspect-ratio: 3/4;
+  object-fit: cover;
+  opacity: 0.2;
+  mix-blend-mode: soft-light;
+  transform: rotate(8deg);
+  pointer-events: none;
+  z-index: 0;
+  border: 1.5px solid rgba(232, 217, 189, 0.35);
+  box-shadow: 3px 4px 0 rgba(14, 12, 16, 0.4);
 }
 
 .chronique-poster__bar {

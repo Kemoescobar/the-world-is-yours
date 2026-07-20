@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { apiGet, apiPost, apiPatch } from '../lib/api.js';
 import { uploadCapture } from '../lib/storageUpload.js';
 import CoverFlow from '../components/CoverFlow.jsx';
+import MoodboardPatchwork, { MOODBOARD } from '../components/MoodboardPatchwork.jsx';
 
 const empty = {
   titre: '',
@@ -33,7 +34,7 @@ function ProjetSleeve({ projet, index }) {
           <>
             <div className="blueprint-grid" aria-hidden style={{ position: 'absolute', inset: 0, opacity: 0.55 }} />
             <img
-              src="/brand/globe-hand.png"
+              src={MOODBOARD.hero}
               alt=""
               aria-hidden
               className="cover-sleeve__brand-fallback"
@@ -225,8 +226,9 @@ export default function CatalogueProjets({ mode = 'public' }) {
     : [];
 
   return (
-    <div style={{ padding: 'var(--space-4)', maxWidth: 1100, margin: '0 auto' }}>
-      <header className="catalogue-header hud-frame">
+    <div className="catalogue-projets-shell" style={{ padding: 'var(--space-4)', maxWidth: 1100, margin: '0 auto', position: 'relative' }}>
+      <MoodboardPatchwork variant="projets" />
+      <header className="catalogue-header hud-frame" style={{ position: 'relative', zIndex: 1 }}>
         <p className="compteur" style={{ marginBottom: 8 }}>
           <span className="caret-blink" aria-hidden>›</span> 01 • CODE • BLUEPRINT
           <span style={{ color: 'rgba(255,210,63,0.45)' }}> • </span>
@@ -243,7 +245,7 @@ export default function CatalogueProjets({ mode = 'public' }) {
       </header>
 
       {editable && (
-        <form onSubmit={creer} className="chrome-panel chrome-edge" style={{ padding: 'var(--space-3)', margin: 'var(--space-4) 0', display: 'grid', gap: 10 }}>
+        <form onSubmit={creer} className="chrome-panel chrome-edge" style={{ padding: 'var(--space-3)', margin: 'var(--space-4) 0', display: 'grid', gap: 10, position: 'relative', zIndex: 1 }}>
           <p className="compteur">NOUVEAU PROJET</p>
           {['titre', 'description', 'lien_github', 'lien_live', 'stack'].map((k) => (
             k === 'description' ? (
@@ -285,7 +287,7 @@ export default function CatalogueProjets({ mode = 'public' }) {
           <span className="annotation-manuscrite" style={{ position: 'relative', marginTop: 16, display: 'block' }}>en construction</span>
         </div>
       ) : (
-        <>
+        <div style={{ position: 'relative', zIndex: 1 }}>
           <CoverFlow
             items={items}
             label="Projets shippés"
@@ -412,7 +414,7 @@ export default function CatalogueProjets({ mode = 'public' }) {
               })}
             </div>
           )}
-        </>
+        </div>
       )}
     </div>
   );
