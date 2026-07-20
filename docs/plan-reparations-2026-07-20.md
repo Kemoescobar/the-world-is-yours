@@ -75,6 +75,7 @@ DA : `docs/art-direction.md`.
 
 ---
 
-## D. Partie 3 — hors Cursor
+## D. Partie 3 — images registre fort ✅
 
-Brief DA pour outil de génération d’image (user) : marbre liquide iridescent, mains vers le centre (écho motif), magenta+cyan réservés, pas de copie de la référence (pas 3ᵉ œil / lune / fleur). Alimente uniquement le registre « moments forts » de la Partie 2.
+Assets dans `client/public/brand/` : `drop-reveal-fort.png` · `instru-sleeve-fort.png` · `hero-code-sound-fort.png`.  
+Branchés sur Drop reveal / sleeves Instrus / hero CODE·SOUND (`.registre-fort`). SoundGate = `globe-hand` static ; pas de magenta/cyan dans Chantier/nav.

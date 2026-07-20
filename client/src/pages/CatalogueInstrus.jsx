@@ -168,10 +168,15 @@ function InstruSleeve({ item, index, focused }) {
           />
         ) : (
           <img
-            src="/brand/vinyl-chrome.png"
+            src="/brand/instru-sleeve-fort.png"
             alt=""
             aria-hidden
-            className="cover-sleeve__vinyl-fallback"
+            className="cover-sleeve__vinyl-fallback cover-sleeve__fort-fallback"
+            onError={(e) => {
+              e.currentTarget.onerror = null;
+              e.currentTarget.src = '/brand/vinyl-chrome.png';
+              e.currentTarget.classList.remove('cover-sleeve__fort-fallback');
+            }}
           />
         )}
         <span className="compteur cover-sleeve__badge" style={{ color: 'var(--jaune)' }}>
@@ -408,10 +413,14 @@ export default function CatalogueInstrus({ mode = 'public' }) {
       {!showcase.length ? (
         <div className="empty-wall" style={{ marginTop: 'var(--space-4)' }}>
           <img
-            src="/brand/vinyl-chrome.png"
+            src="/brand/instru-sleeve-fort.png"
             alt=""
             aria-hidden
             style={{ position: 'absolute', right: 24, bottom: 16, width: 140, opacity: 0.35, transform: 'rotate(-20deg)' }}
+            onError={(e) => {
+              e.currentTarget.onerror = null;
+              e.currentTarget.src = '/brand/vinyl-chrome.png';
+            }}
           />
           <p className="compteur">MUR DE PREUVES • SOUND</p>
           <h2 style={{ fontSize: 'clamp(1.6rem, 4vw, 2.4rem)', margin: '12px 0' }}>Aucune instru encore</h2>
@@ -515,10 +524,14 @@ export default function CatalogueInstrus({ mode = 'public' }) {
                         />
                       ) : (
                         <img
-                          src="/brand/vinyl-chrome.png"
+                          src="/brand/instru-sleeve-fort.png"
                           alt=""
                           aria-hidden
                           style={{ width: 56, height: 56, objectFit: 'contain', opacity: 0.7 }}
+                          onError={(e) => {
+                            e.currentTarget.onerror = null;
+                            e.currentTarget.src = '/brand/vinyl-chrome.png';
+                          }}
                         />
                       )}
                       <span className="compteur" style={{ color: 'var(--jaune)' }}>{n} / SHOWCASE</span>

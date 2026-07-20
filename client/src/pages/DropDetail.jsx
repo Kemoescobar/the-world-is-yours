@@ -102,7 +102,7 @@ export default function DropDetail() {
 
   return (
     <div
-      className="anim-drop collage-frame registre-fort"
+      className="anim-drop collage-frame registre-fort drop-reveal-fort"
       style={{
         minHeight: '100vh',
         display: 'grid',
@@ -110,10 +110,15 @@ export default function DropDetail() {
         padding: 'var(--space-4)',
         position: 'relative',
         overflow: 'hidden',
-        background:
-          'radial-gradient(circle at 25% 20%, rgba(255,43,214,0.35), transparent 40%), radial-gradient(circle at 80% 70%, rgba(45,226,230,0.18), transparent 45%), linear-gradient(165deg, #1a0f0d, #2b1512 55%, #4a231d)',
       }}
     >
+      <img
+        src="/brand/drop-reveal-fort.png"
+        alt=""
+        aria-hidden
+        className="drop-reveal-fort__bg"
+      />
+      <div className="drop-reveal-fort__wash" aria-hidden />
       <div className="halftone-overlay halftone-live" style={{ position: 'absolute', opacity: 0.22 }} />
       <div className="grain grain-live" />
       <GlobeHandVivant side="right" opacity={0.52} />

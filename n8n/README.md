@@ -70,6 +70,18 @@ docker compose exec n8n n8n publish:workflow --id=twiy-alerte-streak-soir
 
 Sinon : UI → ouvrir chaque workflow → toggle **Active**.
 
+**Execute once** : préfère le bouton **Execute Workflow** dans l’UI (`http://localhost:5678`).  
+`n8n execute --id=…` depuis `docker compose exec` échoue si l’instance n8n tourne déjà (port Task Broker 5679 déjà pris).
+
+### Sync Obsidian — caveats
+
+Le workflow `sync-obsidian-supabase.json` (2026-07-20) :
+1. `GET` liste `02-Projets/` via `host.docker.internal:27123` + `Authorization: Bearer`
+2. Parse frontmatter de chaque `.md` (recurse **1 niveau** de sous-dossiers)
+3. Upsert `POST`/`PATCH /api/quetes` avec `x-api-key` (match sur `lien_note_obsidian`)
+
+Requis : Obsidian ouvert + Local REST API ON + `OBSIDIAN_API_KEY` / `TWIY_WEBHOOK_KEY` dans `n8n/.env`.
+
 ## Activation (checklist)
 
 1. Railway : `ANTHROPIC_API_KEY` sur le service `server` → Redeploy (requis pour `/ai/revue`)
@@ -97,7 +109,7 @@ Le nœud « Notifier » d’`alerte-streak-soir.json` crée une entrée via `/ap
 
 | Fichier | Déclencheur | Rôle |
 |---|---|---|
-| `sync-obsidian-supabase.json` | Toutes les heures | Frontmatter du vault (`02-Projets`) → table `quetes` |
+| `sync-obsidian-supabase.json` | Toutes les heures | Liste `02-Projets` (+ 1 niveau sous-dossiers) → parse frontmatter → upsert `quetes` (`POST` ou `PATCH` via `lien_note_obsidian`) |
 | `alerte-streak-soir.json` | Chaque soir 21h | Repère les streaks non alimentés aujourd'hui, notifie |
 | `revue-dominicale.json` | Dimanche 8h | `POST /ai/revue` (x-api-key) → écrit la revue dans Obsidian |
 | `message-matin.json` | Chaque jour 6h | `POST /ai/message-matin` + streaks/quêtes/EDT → `00-Veille/Check-in-matin-YYYY-MM-DD.md` |

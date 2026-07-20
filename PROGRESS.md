@@ -81,6 +81,7 @@ Doc : `docs/phase-3.md` · roadmaps : `docs/roadmaps/README.md`
 6. Croisement ravitaillement après peuplement compétences (aside jusqu’à décision contraire)
 7. ~~Partie 2 oxblood / onde / Cmd+K~~ ✅
 8. ~~Partie 2 deferred~~ ✅ (2026-07-20) — collage Chronique/Revue · main-globe vivant Drop · AnalyserNode deck instrus · Insights → `/chantier`
+9. ~~Partie 3 images registre fort~~ ✅ — `drop-reveal-fort` · `instru-sleeve-fort` · `hero-code-sound-fort` dans `client/public/brand/` branchés sur Drop / Instrus / Home (SoundGate / Chantier / nav restent oxblood)
 
 ---
 

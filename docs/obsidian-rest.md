@@ -56,7 +56,7 @@ docker compose up -d --force-recreate
 
 | Workflow | Méthode | URL (depuis Docker) | Header |
 |----------|---------|---------------------|--------|
-| `sync-obsidian-supabase.json` | GET | `http://host.docker.internal:27123/vault/02-Projets/` | `Authorization: Bearer {{$env.OBSIDIAN_API_KEY}}` |
+| `sync-obsidian-supabase.json` | GET (liste + notes `.md`) | `http://host.docker.internal:27123/vault/02-Projets/` puis chaque fichier / sous-dossier (1 niveau) | `Authorization: Bearer {{$env.OBSIDIAN_API_KEY}}` → upsert TWIY `x-api-key` |
 | `revue-dominicale.json` | PUT | `http://host.docker.internal:27123/vault/00-Veille/Revue-Dominicale.md` | Bearer + `Content-Type: text/markdown` |
 | `message-matin.json` | PUT | `http://host.docker.internal:27123/vault/00-Veille/Check-in-matin-YYYY-MM-DD.md` | Bearer + `Content-Type: text/markdown` |
 | `backup-hebdo.json` | PUT | `http://host.docker.internal:27123/vault/00-Veille/Backups/twiy-YYYY-MM-DD.json` | Bearer |

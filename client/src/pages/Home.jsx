@@ -101,7 +101,7 @@ export default function Home() {
       </div>
 
       <main
-        className="home-split"
+        className="home-split registre-fort home-split--fort"
         style={{
           position: 'relative',
           zIndex: 2,
@@ -110,13 +110,20 @@ export default function Home() {
           minHeight: 'calc(100vh - 200px)',
         }}
       >
+        <img
+          src="/brand/hero-code-sound-fort.png"
+          alt=""
+          aria-hidden
+          className="home-split__fort-bg"
+        />
+        <div className="home-split__fort-wash" aria-hidden />
         <Link
           to="/catalogue/projets"
           className="anim-split home-pane home-pane--code registre-fort"
           style={{ animationDelay: '80ms', textDecoration: 'none', color: 'var(--text)' }}
         >
-          <div className="blueprint-grid" aria-hidden style={{ position: 'absolute', inset: 0, opacity: 0.5 }} />
-          <div className="scanlines scanlines-live" aria-hidden style={{ opacity: 0.35 }} />
+          <div className="blueprint-grid" aria-hidden style={{ position: 'absolute', inset: 0, opacity: 0.4 }} />
+          <div className="scanlines scanlines-live" aria-hidden style={{ opacity: 0.3 }} />
           <div style={{ position: 'relative', textAlign: 'center', padding: 'var(--space-4)' }}>
             <p className="compteur" style={{ marginBottom: 12 }}>01 • BLUEPRINT</p>
             <h1 className="home-pane__title title-ghost-wrap" data-ghost="CODE">CODE</h1>
@@ -135,7 +142,7 @@ export default function Home() {
             aria-hidden
             className="home-pane__vinyl"
           />
-          <div className="scanlines scanlines-live" aria-hidden style={{ opacity: 0.4 }} />
+          <div className="scanlines scanlines-live" aria-hidden style={{ opacity: 0.35 }} />
           <div style={{ position: 'relative', textAlign: 'center', padding: 'var(--space-4)' }}>
             <p className="compteur" style={{ marginBottom: 12, color: 'var(--chrome)' }}>02 • CHROME</p>
             <h1 className="home-pane__title title-ghost-wrap" data-ghost="SOUND">SOUND</h1>

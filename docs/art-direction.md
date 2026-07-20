@@ -34,9 +34,9 @@ Classe : `.registre-quotidien` (body layouts).
 ### Registre fort — magenta / cyan iridescent
 **Uniquement** moments forts — **jamais** Chantier / nav / forms :
 
-- Drop reveal fullscreen (`.registre-fort`) + **main-globe vivant** (`.globe-hand-vivant`, CSS iris ; SoundGate reste static)
-- Pochettes catalogue Instrus (sleeves + deck écoute + **AnalyserNode** tint)
-- Hero public CODE / SOUND (`Home` panes)
+- Drop reveal fullscreen (`.registre-fort` + `/brand/drop-reveal-fort.png`) + **main-globe vivant** (`.globe-hand-vivant`, CSS iris ; SoundGate reste static `globe-hand.png`)
+- Pochettes catalogue Instrus (sleeves + deck écoute + **AnalyserNode** tint) — fallback `/brand/instru-sleeve-fort.png` puis `vinyl-chrome.png`
+- Hero public CODE / SOUND (`Home` panes) — atmosphère `/brand/hero-code-sound-fort.png`
 
 Tokens documentés : `--fort-magenta` `#ff2bd6` · `--fort-cyan` `#2de2e6` · `--fort-iris` / `--fort-iris-hot`.
 

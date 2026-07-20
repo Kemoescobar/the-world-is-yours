@@ -8,61 +8,98 @@
       "name": "Toutes les heures",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1,
-      "position": [200, 300]
+      "position": [160, 300]
     },
     {
       "parameters": {
         "url": "http://host.docker.internal:27123/vault/02-Projets/",
         "method": "GET",
+        "sendHeaders": true,
         "headerParameters": {
           "parameters": [{ "name": "Authorization", "value": "Bearer {{$env.OBSIDIAN_API_KEY}}" }]
-        }
+        },
+        "options": {}
       },
       "id": "get-notes",
       "name": "Lister notes 02-Projets",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [450, 300]
+      "position": [420, 300]
     },
     {
       "parameters": {
-        "jsCode": "// Parse le frontmatter (statut, resultat, revenu_genere, type) de chaque note\n// et prépare le payload pour l'upsert Supabase.\nconst notes = $input.all();\nreturn notes.map(n => ({ json: { titre: n.json.filename, frontmatter: n.json.frontmatter } }));"
+        "jsCode": "const OBS = 'http://host.docker.internal:27123';\nconst KEY = $env.OBSIDIAN_API_KEY;\nconst TWIY = $env.TWIY_API_URL;\nconst WH = $env.TWIY_WEBHOOK_KEY;\nconst ROOT = '02-Projets';\n\nconst STATUTS = new Set(['a_faire', 'en_cours', 'fait', 'abandonne']);\nconst TYPES = new Set(['dev', 'beatmaker', 'croisement', 'freelance', 'routine']);\nconst STATUT_ALIAS = {\n  a_faire: 'a_faire', todo: 'a_faire', 'à_faire': 'a_faire',\n  en_cours: 'en_cours', doing: 'en_cours', wip: 'en_cours',\n  fait: 'fait', done: 'fait', shippe: 'fait', shippé: 'fait',\n  abandonne: 'abandonne', abandoned: 'abandonne',\n};\n\nasync function listDir(rel) {\n  const url = `${OBS}/vault/${rel.replace(/^\\/+|\\/+$/g, '')}/`;\n  const data = await this.helpers.httpRequest({\n    method: 'GET',\n    url,\n    headers: { Authorization: `Bearer ${KEY}` },\n    json: true,\n  });\n  return Array.isArray(data?.files) ? data.files : [];\n}\n\nasync function readNote(relPath) {\n  const url = `${OBS}/vault/${relPath.replace(/^\\/+/, '')}`;\n  return await this.helpers.httpRequest({\n    method: 'GET',\n    url,\n    headers: {\n      Authorization: `Bearer ${KEY}`,\n      Accept: 'text/markdown',\n    },\n    encoding: 'text',\n  });\n}\n\nfunction parseFrontmatter(raw) {\n  const text = typeof raw === 'string' ? raw : (raw?.data ?? raw?.content ?? String(raw ?? ''));\n  const m = text.match(/^---\\r?\\n([\\s\\S]*?)\\r?\\n---/);\n  if (!m) return { frontmatter: {} };\n  const fm = {};\n  for (const line of m[1].split(/\\r?\\n/)) {\n    const i = line.indexOf(':');\n    if (i <= 0) continue;\n    const k = line.slice(0, i).trim();\n    let v = line.slice(i + 1).trim();\n    if ((v.startsWith('\"') && v.endsWith('\"')) || (v.startsWith(\"'\") && v.endsWith(\"'\"))) {\n      v = v.slice(1, -1);\n    }\n    fm[k] = v;\n  }\n  return { frontmatter: fm };\n}\n\nfunction mapStatut(v) {\n  if (v == null || v === '') return undefined;\n  const key = String(v).trim().toLowerCase().replace(/\\s+/g, '_');\n  const mapped = STATUT_ALIAS[key] || key;\n  return STATUTS.has(mapped) ? mapped : undefined;\n}\n\nfunction mapType(v) {\n  if (v == null || v === '') return 'dev';\n  const key = String(v).trim().toLowerCase();\n  return TYPES.has(key) ? key : 'dev';\n}\n\nif (!KEY) {\n  return [{ json: { upsert: false, error: 'OBSIDIAN_API_KEY manquante' } }];\n}\nif (!TWIY || !WH) {\n  return [{ json: { upsert: false, error: 'TWIY_API_URL ou TWIY_WEBHOOK_KEY manquant' } }];\n}\n\nconst listJson = $input.first().json;\nconst topFiles = Array.isArray(listJson?.files) ? listJson.files : [];\n\nconst mdPaths = [];\nfor (const name of topFiles) {\n  if (name.endsWith('/')) {\n    const sub = `${ROOT}/${name.replace(/\\/$/, '')}`;\n    try {\n      const nested = await listDir(sub);\n      for (const f of nested) {\n        if (f.endsWith('.md')) mdPaths.push(`${sub}/${f}`);\n      }\n    } catch {\n      // ignore sous-dossier\n    }\n  } else if (name.endsWith('.md')) {\n    mdPaths.push(`${ROOT}/${name}`);\n  }\n}\n\nlet existing = [];\ntry {\n  const q = await this.helpers.httpRequest({\n    method: 'GET',\n    url: `${TWIY}/quetes`,\n    headers: { 'x-api-key': WH },\n    json: true,\n  });\n  if (Array.isArray(q)) existing = q;\n  else if (Array.isArray(q?.data)) existing = q.data;\n} catch {\n  existing = [];\n}\n\nconst byLien = new Map();\nfor (const q of existing) {\n  if (q?.lien_note_obsidian) byLien.set(String(q.lien_note_obsidian), q);\n}\n\nconst out = [];\nfor (const rel of mdPaths) {\n  let raw;\n  try {\n    raw = await readNote(rel);\n  } catch (e) {\n    out.push({ json: { upsert: false, path: rel, error: String(e.message || e) } });\n    continue;\n  }\n  const { frontmatter: fm } = parseFrontmatter(raw);\n  const baseName = rel.split('/').pop().replace(/\\.md$/i, '');\n  const titre = String(fm.titre || fm.title || baseName).trim();\n  if (!titre) {\n    out.push({ json: { upsert: false, path: rel, error: 'titre manquant' } });\n    continue;\n  }\n  const payload = {\n    type: mapType(fm.type || fm.arc || fm.domaine),\n    titre,\n    lien_note_obsidian: rel,\n  };\n  const statut = mapStatut(fm.statut || fm.status || fm.etat);\n  if (statut) payload.statut = statut;\n\n  const prev = byLien.get(rel) || byLien.get(baseName) || byLien.get(`${baseName}.md`);\n  if (prev?.id) {\n    out.push({\n      json: {\n        upsert: true,\n        mode: 'patch',\n        id: prev.id,\n        path: rel,\n        body: {\n          titre: payload.titre,\n          ...(payload.statut ? { statut: payload.statut } : {}),\n          lien_note_obsidian: rel,\n        },\n      },\n    });\n  } else {\n    out.push({\n      json: {\n        upsert: true,\n        mode: 'post',\n        path: rel,\n        body: payload,\n      },\n    });\n  }\n}\n\nif (!out.length) {\n  return [{ json: { upsert: false, reason: 'aucun .md dans 02-Projets', filesSeen: topFiles } }];\n}\nreturn out;"
       },
-      "id": "parse-frontmatter",
-      "name": "Parser frontmatter",
+      "id": "prepare-upserts",
+      "name": "Préparer upserts",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [700, 300]
     },
     {
       "parameters": {
-        "url": "={{$env.TWIY_API_URL}}/quetes",
-        "method": "POST",
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [
+            {
+              "id": "only-upsert",
+              "leftValue": "={{$json.upsert}}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "true", "singleValue": true }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "filter-ok",
+      "name": "Notes à upsert",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2,
+      "position": [940, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.mode === 'patch' ? ($env.TWIY_API_URL + '/quetes/' + $json.id) : ($env.TWIY_API_URL + '/quetes') }}",
+        "method": "={{ $json.mode === 'patch' ? 'PATCH' : 'POST' }}",
         "sendHeaders": true,
         "headerParameters": {
-          "parameters": [{ "name": "x-api-key", "value": "={{$env.TWIY_WEBHOOK_KEY}}" }]
+          "parameters": [
+            { "name": "x-api-key", "value": "={{$env.TWIY_WEBHOOK_KEY}}" },
+            { "name": "content-type", "value": "application/json" }
+          ]
         },
         "sendBody": true,
-        "bodyParameters": {
-          "parameters": [
-            { "name": "titre", "value": "={{$json.titre}}" },
-            { "name": "statut", "value": "={{$json.frontmatter.statut}}" },
-            { "name": "lien_note_obsidian", "value": "={{$json.titre}}" }
-          ]
-        }
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.body }}",
+        "options": {}
       },
       "id": "upsert-supabase",
       "name": "Upsert vers TWIY API",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [950, 300]
+      "position": [1180, 300],
+      "continueOnFail": true
     }
   ],
   "connections": {
-    "Toutes les heures": { "main": [[{ "node": "Lister notes 02-Projets", "type": "main", "index": 0 }]] },
-    "Lister notes 02-Projets": { "main": [[{ "node": "Parser frontmatter", "type": "main", "index": 0 }]] },
-    "Parser frontmatter": { "main": [[{ "node": "Upsert vers TWIY API", "type": "main", "index": 0 }]] }
+    "Toutes les heures": {
+      "main": [[{ "node": "Lister notes 02-Projets", "type": "main", "index": 0 }]]
+    },
+    "Lister notes 02-Projets": {
+      "main": [[{ "node": "Préparer upserts", "type": "main", "index": 0 }]]
+    },
+    "Préparer upserts": {
+      "main": [[{ "node": "Notes à upsert", "type": "main", "index": 0 }]]
+    },
+    "Notes à upsert": {
+      "main": [[{ "node": "Upsert vers TWIY API", "type": "main", "index": 0 }]]
+    }
   },
   "active": false,
-  "settings": { "executionOrder": "v1" }
+  "settings": { "executionOrder": "v1" },
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "description": "Liste 02-Projets via host.docker.internal:27123 (Bearer OBSIDIAN_API_KEY), parse frontmatter, upsert quêtes TWIY (x-api-key). Recurse 1 niveau de sous-dossiers."
+  }
 }
