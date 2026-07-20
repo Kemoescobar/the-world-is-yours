@@ -77,5 +77,9 @@ DA : `docs/art-direction.md`.
 
 ## D. Partie 3 — images registre fort ✅
 
-Assets dans `client/public/brand/` : `drop-reveal-fort.png` · `instru-sleeve-fort.png` · `hero-code-sound-fort.png`.  
-Branchés sur Drop reveal / sleeves Instrus / hero CODE·SOUND (`.registre-fort`). SoundGate = `globe-hand` static ; pas de magenta/cyan dans Chantier/nav.
+Assets moodboard (pas Nano Banana) dans `client/public/brand/` :
+- `drop-reveal-fort.png` ← mb-10 profil cosmique
+- `instru-sleeve-fort.png` ← mb-2 pochette annotée
+- `hero-code-sound-fort.png` ← mb-4 jeune + globe cobalt  
+
+Branchés Drop / Instrus / Home (`.registre-fort`). SoundGate = `globe-hand` static. Palette fort = rouge cosmique `#ff2a4a` + cobalt `#2d6bff` (quotidien oxblood inchangé hors accents).

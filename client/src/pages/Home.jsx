@@ -38,7 +38,7 @@ export default function Home() {
           position: 'absolute',
           inset: 0,
           background:
-            'radial-gradient(ellipse at 50% 0%, rgba(138,61,50,0.28), transparent 42%), radial-gradient(ellipse at 12% 70%, rgba(255,90,60,0.1), transparent 40%), radial-gradient(ellipse at 88% 65%, rgba(245,197,66,0.08), transparent 42%), linear-gradient(165deg, #1a0f0d, #2b1512 42%, #351a16)',
+            'radial-gradient(ellipse at 50% 0%, rgba(138,61,50,0.28), transparent 42%), radial-gradient(ellipse at 12% 70%, rgba(255,61,58,0.1), transparent 40%), radial-gradient(ellipse at 88% 65%, rgba(232,194,74,0.08), transparent 42%), linear-gradient(165deg, #14100e, #241512 42%, #2f1914)',
         }}
       />
 

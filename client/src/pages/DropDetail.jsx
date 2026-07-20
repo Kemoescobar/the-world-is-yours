@@ -14,34 +14,34 @@ function exportDropCard({ detail, typeFait, date }) {
   if (!ctx) return;
 
   const g = ctx.createLinearGradient(0, 0, w, h);
-  g.addColorStop(0, '#1a0f0d');
-  g.addColorStop(0.45, '#2b1512');
-  g.addColorStop(1, '#4a231d');
+  g.addColorStop(0, '#14100e');
+  g.addColorStop(0.45, '#241512');
+  g.addColorStop(1, '#4a281f');
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, w, h);
 
-  // Magenta/cyan iridescent accents (registre fort)
+  // Rouge cosmique / cobalt électrique (registre fort — moodboard)
   const iris = ctx.createRadialGradient(w * 0.3, h * 0.2, 40, w * 0.3, h * 0.2, 420);
-  iris.addColorStop(0, 'rgba(255,43,214,0.35)');
+  iris.addColorStop(0, 'rgba(255,42,74,0.35)');
   iris.addColorStop(1, 'transparent');
   ctx.fillStyle = iris;
   ctx.fillRect(0, 0, w, h);
 
   const iris2 = ctx.createRadialGradient(w * 0.8, h * 0.75, 20, w * 0.8, h * 0.75, 380);
-  iris2.addColorStop(0, 'rgba(45,226,230,0.28)');
+  iris2.addColorStop(0, 'rgba(45,107,255,0.28)');
   iris2.addColorStop(1, 'transparent');
   ctx.fillStyle = iris2;
   ctx.fillRect(0, 0, w, h);
 
-  ctx.fillStyle = '#a89484';
+  ctx.fillStyle = '#a89278';
   ctx.font = '28px monospace';
   ctx.fillText(`${String(typeFait || 'drop').toUpperCase()} · ${date || ''}`, 72, 120);
 
-  ctx.fillStyle = '#f5c542';
+  ctx.fillStyle = '#e8c24a';
   ctx.font = 'bold 28px sans-serif';
   ctx.fillText('THE WORLD IS YOURS', 72, 180);
 
-  ctx.fillStyle = '#f2e8da';
+  ctx.fillStyle = '#f0e6d4';
   ctx.font = 'bold 72px sans-serif';
   const words = String(detail || 'Drop').split(/\s+/);
   let line = '';
@@ -60,7 +60,7 @@ function exportDropCard({ detail, typeFait, date }) {
   }
   if (line && y <= h - 200) ctx.fillText(line, 72, y);
 
-  ctx.fillStyle = '#ff5a3c';
+  ctx.fillStyle = '#ff3d3a';
   ctx.font = 'italic 36px Georgia, serif';
   ctx.fillText('shippé.', 72, h - 120);
 

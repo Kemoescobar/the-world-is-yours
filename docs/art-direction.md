@@ -20,25 +20,25 @@ Base UI partout (Chantier, nav, forms, panels OS) :
 
 | Token | Hex | Rôle |
 |---|---|---|
-| `--fond` / `--bg-0` | `#1a0f0d` | Fond void |
-| `--cartes` / `--bg-1` | `#2b1512` | Panels |
-| `--bordures` / `--bg-3` | `#4a231d` | Bordures / profondeur |
-| `--texte` / `--text` | `#f2e8da` | Texte |
-| `--texte-secondary` / `--text-muted` | `#a89484` | Secondaire |
-| `--accent-alerte` / `--rouge` | `#ff5a3c` | Vermillon |
-| `--accent-secondaire` / `--jaune` | `#f5c542` | Moutarde |
+| `--fond` / `--bg-0` | `#14100e` | Fond void (warm, aligned moodboard cosmique) |
+| `--cartes` / `--bg-1` | `#241512` | Panels |
+| `--bordures` / `--bg-3` | `#4a281f` | Bordures / profondeur |
+| `--texte` / `--text` | `#f0e6d4` | Texte (cream papier sleeve) |
+| `--texte-secondary` / `--text-muted` | `#a89278` | Secondaire |
+| `--accent-alerte` / `--rouge` | `#ff3d3a` | Vermillon (arc cosmique) |
+| `--accent-secondaire` / `--jaune` | `#e8c24a` | Or papier |
 
 Legacy `--bleu-*` mappés vers bordeaux chaud (`#6b2a22` / `#8a3d32`) pour ne pas casser le site.  
 Classe : `.registre-quotidien` (body layouts).
 
-### Registre fort — magenta / cyan iridescent
+### Registre fort — rouge cosmique / cobalt électrique
 **Uniquement** moments forts — **jamais** Chantier / nav / forms :
 
-- Drop reveal fullscreen (`.registre-fort` + `/brand/drop-reveal-fort.png`) + **main-globe vivant** (`.globe-hand-vivant`, CSS iris ; SoundGate reste static `globe-hand.png`)
-- Pochettes catalogue Instrus (sleeves + deck écoute + **AnalyserNode** tint) — fallback `/brand/instru-sleeve-fort.png` puis `vinyl-chrome.png`
-- Hero public CODE / SOUND (`Home` panes) — atmosphère `/brand/hero-code-sound-fort.png`
+- Drop reveal fullscreen (`.registre-fort` + `/brand/drop-reveal-fort.png`) — still moodboard **mb-10** (profil cosmique) + **main-globe vivant** (`.globe-hand-vivant`, CSS iris ; SoundGate reste static `globe-hand.png`)
+- Pochettes catalogue Instrus (sleeves + deck écoute + **AnalyserNode** tint) — fallback `/brand/instru-sleeve-fort.png` (**mb-2** pochette annotée) puis `vinyl-chrome.png`
+- Hero public CODE / SOUND (`Home` panes) — atmosphère `/brand/hero-code-sound-fort.png` (**mb-4** jeune + globe, cobalt)
 
-Tokens documentés : `--fort-magenta` `#ff2bd6` · `--fort-cyan` `#2de2e6` · `--fort-iris` / `--fort-iris-hot`.
+Tokens : `--fort-magenta` `#ff2a4a` (arc rouge mb-10) · `--fort-cyan` `#2d6bff` (cobalt mb-4) · `--fort-iris` / `--fort-iris-hot`.
 
 ### Collage Chronique / Revue (Partie 2 deferred → shippé)
 SVG génératif depuis faits + quêtes 7j (fragments texte, sparkline activité, fragment marque) — pas d’image template fixe. Heuristique sans Anthropic.
@@ -47,13 +47,13 @@ SVG génératif depuis faits + quêtes 7j (fragments texte, sparkline activité,
 Remplacé par l’onde Chantier : nav Insights retiré · `/insights` → `/chantier`.
 
 ## Cohérence
-- Palette quotidienne = **oxblood** ; registre fort = ponctuation magenta/cyan  
+- Palette quotidienne = **oxblood + cream** ; registre fort = ponctuation rouge cosmique / cobalt (sampled moodboard, pas magenta/cyan générés)  
 - Maximalisme dans les **images/Drops**, discipline dans l’**UI**  
 - Public = affiche ; Privé = OS dense même ADN  
 - Halftone, annotations manuscrites, densité HUD inchangés  
 
 ## Ne pas faire
-Clone CRT beige AWGE · néons partout · SaaS cards · hero typo seule · copier symboles Partie 3 (3ᵉ œil / lune / fleur) · magenta/cyan dans le quotidien  
+Clone CRT beige AWGE · néons partout · SaaS cards · hero typo seule · copier symboles Partie 3 générés (3ᵉ œil / lune / fleur) · accents fort dans le quotidien  
 
 ## Private OS pass
 Privé = même ADN que le public, en **console HUD** (pas admin SaaS) :
@@ -64,4 +64,5 @@ Privé = même ADN que le public, en **console HUD** (pas admin SaaS) :
 
 ## Moodboard vidéos
 Frames → [`moodboard-videos.md`](./moodboard-videos.md).  
-Grain / scanlines / HUD mono inchangés ; base froide **bleu nuit** remplacée par oxblood.
+Grain / scanlines / HUD mono inchangés ; base froide **bleu nuit** remplacée par oxblood.  
+Stills registre fort = uploads moodboard (`téléchargement` / `tmp/moodboard-uploads/mb-*.png`), pas Nano Banana.
