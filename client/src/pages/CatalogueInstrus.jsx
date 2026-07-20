@@ -5,17 +5,28 @@ import { apiGet, apiPost, apiPatch } from '../lib/api.js';
 import { uploadCapture } from '../lib/storageUpload.js';
 import CoverFlow from '../components/CoverFlow.jsx';
 
+function flattenPeaks(peaks) {
+  if (Array.isArray(peaks?.[0])) return peaks[0];
+  if (Array.isArray(peaks)) return peaks;
+  return [];
+}
+
 function Player({ url, peaks, onEnergy }) {
   const ref = useRef(null);
   const ws = useRef(null);
   const raf = useRef(0);
-  const peaksFlat = useRef([]);
+  const peaksFlat = useRef(flattenPeaks(peaks));
   const audioGraph = useRef(null); // { ctx, source, analyser, connected }
+  const onEnergyRef = useRef(onEnergy);
+  onEnergyRef.current = onEnergy;
+
+  // Keep peak buffer fresh without remounting WaveSurfer (parent often wraps peaks in a new []).
+  useEffect(() => {
+    peaksFlat.current = flattenPeaks(peaks);
+  }, [peaks]);
 
   useEffect(() => {
     if (!ref.current || !url) return undefined;
-    const flat = Array.isArray(peaks?.[0]) ? peaks[0] : (Array.isArray(peaks) ? peaks : []);
-    peaksFlat.current = flat;
 
     ws.current = WaveSurfer.create({
       container: ref.current,
@@ -25,7 +36,7 @@ function Player({ url, peaks, onEnergy }) {
       height: 48,
       barWidth: 2,
       url,
-      peaks: peaks || undefined,
+      peaks: peaksFlat.current.length ? [peaksFlat.current] : undefined,
     });
 
     const teardownAudio = () => {
@@ -70,7 +81,8 @@ function Player({ url, peaks, onEnergy }) {
 
     const sampleEnergy = () => {
       const inst = ws.current;
-      if (!inst || !onEnergy) return;
+      const emit = onEnergyRef.current;
+      if (!inst || !emit) return;
 
       const mode = ensureAnalyser();
       const g = audioGraph.current;
@@ -82,7 +94,7 @@ function Player({ url, peaks, onEnergy }) {
         const n = freqBuf.length;
         for (let i = 2; i < n; i += 1) sum += freqBuf[i];
         const avg = sum / Math.max(1, n - 2) / 255;
-        onEnergy(Math.min(1, avg * 1.85));
+        emit(Math.min(1, avg * 1.85));
       } else {
         const dur = inst.getDuration?.() || 0;
         const t = inst.getCurrentTime?.() || 0;
@@ -90,9 +102,9 @@ function Player({ url, peaks, onEnergy }) {
         if (arr.length && dur > 0) {
           const i = Math.min(arr.length - 1, Math.floor((t / dur) * arr.length));
           const v = Math.abs(arr[i] || 0);
-          onEnergy(Math.min(1, v * 2.2));
+          emit(Math.min(1, v * 2.2));
         } else {
-          onEnergy(0.25 + 0.35 * Math.abs(Math.sin(t * 5.5)));
+          emit(0.25 + 0.35 * Math.abs(Math.sin(t * 5.5)));
         }
       }
       raf.current = requestAnimationFrame(sampleEnergy);
@@ -107,7 +119,7 @@ function Player({ url, peaks, onEnergy }) {
     };
     const onPause = () => {
       cancelAnimationFrame(raf.current);
-      onEnergy?.(0);
+      onEnergyRef.current?.(0);
     };
 
     ws.current.on('play', onPlay);
@@ -120,7 +132,9 @@ function Player({ url, peaks, onEnergy }) {
       ws.current?.destroy();
       ws.current = null;
     };
-  }, [url, peaks, onEnergy]);
+    // Remount only when the track URL changes. peaks/onEnergy update via refs —
+    // otherwise each energy frame (setState) destroyed WaveSurfer + closed AudioContext.
+  }, [url]);
 
   return (
     <div>
@@ -365,6 +379,10 @@ export default function CatalogueInstrus({ mode = 'public' }) {
   }
 
   const listening = actif ? showcase.find((i) => i.id === actif) : focusItem;
+  const listeningPeaks = useMemo(() => {
+    const wave = listening?.waveform_data;
+    return wave ? [wave] : undefined;
+  }, [listening?.waveform_data]);
 
   return (
     <div style={{ padding: 'var(--space-4)', maxWidth: 1100, margin: '0 auto' }}>
@@ -487,7 +505,7 @@ export default function CatalogueInstrus({ mode = 'public' }) {
                 <div style={{ marginTop: 12 }}>
                   <Player
                     url={listening.fichier_url}
-                    peaks={listening.waveform_data ? [listening.waveform_data] : undefined}
+                    peaks={listeningPeaks}
                     onEnergy={setPlayEnergy}
                   />
                 </div>
