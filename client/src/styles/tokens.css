@@ -2746,6 +2746,120 @@ textarea.os-input {
   margin-top: 14px;
 }
 
+/* Generative weekly collage (Chronique / Revue) — SVG, not fixed template */
+.chronique-collage {
+  position: relative;
+  margin: 0 0 12px;
+  border: 1px solid rgba(242, 232, 218, 0.12);
+  background: rgba(26, 15, 13, 0.35);
+  overflow: hidden;
+}
+
+.chronique-collage--compact {
+  margin-bottom: 0;
+}
+
+.chronique-collage svg {
+  display: block;
+  width: 100%;
+}
+
+.chronique-collage__cap {
+  padding: 6px 10px;
+  border-top: 1px solid rgba(242, 232, 218, 0.08);
+  color: var(--text-muted);
+  letter-spacing: 0.1em;
+}
+
+.chronique-poster .chronique-collage {
+  margin: 0 12px 4px;
+  border-color: rgba(242, 232, 218, 0.1);
+}
+
+/* Registre fort — living hand-globe (Drop reveal only; SoundGate stays static) */
+.globe-hand-vivant {
+  isolation: isolate;
+}
+
+.globe-hand-vivant__img {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: 100%;
+  height: auto;
+  filter:
+    contrast(1.14)
+    saturate(1.35)
+    hue-rotate(-8deg)
+    drop-shadow(0 0 28px rgba(255, 43, 214, 0.35))
+    drop-shadow(0 0 36px rgba(45, 226, 230, 0.28));
+  mix-blend-mode: screen;
+  animation: globe-hand-breathe 7.5s ease-in-out infinite alternate;
+}
+
+.globe-hand-vivant__wash {
+  position: absolute;
+  inset: 8% 12% 18% 10%;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 40% 35%, rgba(255, 43, 214, 0.45), transparent 55%),
+    radial-gradient(circle at 70% 65%, rgba(45, 226, 230, 0.4), transparent 50%);
+  filter: blur(28px);
+  opacity: 0.7;
+  animation: globe-hand-iris 9s ease-in-out infinite alternate;
+  z-index: 0;
+}
+
+.globe-hand-vivant__iris {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(
+      125deg,
+      transparent 30%,
+      rgba(255, 43, 214, 0.18) 48%,
+      rgba(45, 226, 230, 0.2) 58%,
+      transparent 72%
+    );
+  mix-blend-mode: color-dodge;
+  pointer-events: none;
+  animation: globe-hand-sheen 6s linear infinite;
+  z-index: 2;
+}
+
+@keyframes globe-hand-breathe {
+  from { transform: translate3d(0, 6px, 0) scale(1) rotate(-1deg); filter: contrast(1.1) saturate(1.2) hue-rotate(-12deg) drop-shadow(0 0 22px rgba(255, 43, 214, 0.28)) drop-shadow(0 0 28px rgba(45, 226, 230, 0.22)); }
+  to { transform: translate3d(-4px, -4px, 0) scale(1.04) rotate(1.5deg); filter: contrast(1.18) saturate(1.45) hue-rotate(10deg) drop-shadow(0 0 34px rgba(255, 43, 214, 0.42)) drop-shadow(0 0 40px rgba(45, 226, 230, 0.34)); }
+}
+
+@keyframes globe-hand-iris {
+  from { opacity: 0.45; transform: scale(0.92) translate(-4%, 2%); }
+  to { opacity: 0.85; transform: scale(1.08) translate(3%, -3%); }
+}
+
+@keyframes globe-hand-sheen {
+  from { transform: translateX(-18%) rotate(0deg); opacity: 0.35; }
+  to { transform: translateX(18%) rotate(0deg); opacity: 0.7; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .globe-hand-vivant__img,
+  .globe-hand-vivant__wash,
+  .globe-hand-vivant__iris {
+    animation: none !important;
+  }
+  .globe-hand-vivant__img {
+    filter:
+      contrast(1.12)
+      saturate(1.25)
+      drop-shadow(0 0 20px rgba(255, 43, 214, 0.3))
+      drop-shadow(0 0 24px rgba(45, 226, 230, 0.22));
+  }
+  .globe-hand-vivant__iris {
+    opacity: 0.4;
+  }
+}
+
 .horizon-fil {
   margin: 0 0 var(--space-3);
   padding: 12px 14px;

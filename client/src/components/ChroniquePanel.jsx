@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { apiGet } from '../lib/api.js';
 import TypeReveal from './TypeReveal.jsx';
+import ChroniqueCollage from './ChroniqueCollage.jsx';
 
 /**
  * Bloc Chronique — récit hero en tête du Chantier.
@@ -10,6 +11,7 @@ export default function ChroniquePanel({ refreshKey = 0, onTitreChange }) {
   const [data, setData] = useState(null);
   const [statut, setStatut] = useState('idle');
   const [erreur, setErreur] = useState('');
+  const [week, setWeek] = useState({ entrees: [], quetes: [] });
 
   useEffect(() => {
     let cancelled = false;
@@ -17,9 +19,13 @@ export default function ChroniquePanel({ refreshKey = 0, onTitreChange }) {
     setErreur('');
     (async () => {
       try {
-        const [jour, chap] = await Promise.all([
+        const debut = new Date();
+        debut.setDate(debut.getDate() - 7);
+        const [jour, chap, entrees, quetes] = await Promise.all([
           apiGet('/chronique/jour'),
           apiGet('/chronique/chapitre-actif?appliquer_titre=1'),
+          apiGet('/entrees').catch(() => []),
+          apiGet('/quetes').catch(() => []),
         ]);
         if (cancelled) return;
         const preferChap = chap?.corps && chap?.chapitre;
@@ -31,6 +37,10 @@ export default function ChroniquePanel({ refreshKey = 0, onTitreChange }) {
           titre_mis_a_jour: Boolean(chap?.titre_mis_a_jour),
         };
         setData(next);
+        setWeek({
+          entrees: (entrees || []).filter((e) => new Date(e.cree_le) >= debut),
+          quetes: quetes || [],
+        });
         setStatut('pret');
         if (chap?.titre_mis_a_jour) {
           onTitreChange?.(chap.chapitre);
@@ -85,12 +95,6 @@ export default function ChroniquePanel({ refreshKey = 0, onTitreChange }) {
 
   return (
     <article className="chronique-poster chrome-edge chrome-edge-live" aria-label="Chronique du chantier">
-      <div className="chronique-poster__media" aria-hidden="true">
-        <img src="/brand/globe-hand.png" alt="" className="chronique-poster__img chronique-poster__img--a" />
-        <img src="/brand/vinyl-chrome.png" alt="" className="chronique-poster__img chronique-poster__img--b" />
-        <div className="grain" />
-        <div className="scanlines" />
-      </div>
       <div className="chronique-poster__bar">
         <span>CHRONIQUE</span>
         <span className="compteur-dot">
@@ -98,6 +102,13 @@ export default function ChroniquePanel({ refreshKey = 0, onTitreChange }) {
           {data.titre_mis_a_jour ? ' · TITRE ↑' : ''}
         </span>
       </div>
+      <ChroniqueCollage
+        compact
+        entrees={week.entrees}
+        quetes={week.quetes}
+        titre={data.titre}
+        corps={data.corps}
+      />
       <div className="chronique-poster__body">
         <TypeReveal as="h2" className="chronique-poster__titre title-wide" text={data.titre} />
         <TypeReveal as="p" className="chronique-poster__corps type-reveal--glitch" text={data.corps} />

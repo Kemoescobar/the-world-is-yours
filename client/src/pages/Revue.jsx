@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import OsHeader from '../components/OsHeader.jsx';
+import ChroniqueCollage from '../components/ChroniqueCollage.jsx';
 import { apiGet, apiPost, apiPatch } from '../lib/api.js';
 
 function ApprentissageRow({ item, onSaved }) {
@@ -159,6 +160,14 @@ export default function Revue() {
           <span>{revue ? 'RÉCIT' : 'EN ATTENTE DU RÉCIT'}</span>
           <span className="compteur-dot">{source ? source.toUpperCase() : 'HEBDO'}</span>
         </div>
+        {(revue || semaine.recentes.length > 0) && (
+          <ChroniqueCollage
+            entrees={semaine.recentes}
+            quetes={quetes}
+            titre={revue ? 'Revue hebdo' : undefined}
+            corps={revue || undefined}
+          />
+        )}
         <div className="os-panel__body">
           {revue ? (
             revue.split('\n').map((l, i) => (
@@ -167,7 +176,7 @@ export default function Revue() {
           ) : (
             <p style={{ lineHeight: 1.55, color: 'var(--text-muted)' }}>
               Génère le récit de la semaine — prose toujours disponible (heuristique sans Claude).
-              Les compteurs restent secondaires, en bas.
+              Le collage se compose depuis les faits / quêtes de la semaine.
             </p>
           )}
         </div>

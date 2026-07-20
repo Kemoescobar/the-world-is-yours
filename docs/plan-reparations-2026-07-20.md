@@ -70,6 +70,7 @@ Rien à coder — override documenté dans `docs/ravitaillement.md`.
 ## C. Partie 2 — exécutée (2026-07-20)
 
 Ship : oxblood daily palette · dual register (`.registre-quotidien` / `.registre-fort`) · onde Chantier Dev/Beatmaker · Chronique typewriter · Cmd/Ctrl+K · bonus Web Audio tint deck + Drop export carte + `lien_note_obsidian` apprentissages.  
+**Deferred clos** : collage SVG Chronique/Revue · main-globe vivant Drop · AnalyserNode réel · Insights → Chantier.  
 DA : `docs/art-direction.md`.
 
 ---

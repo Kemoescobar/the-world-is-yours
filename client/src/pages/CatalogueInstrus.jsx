@@ -10,6 +10,7 @@ function Player({ url, peaks, onEnergy }) {
   const ws = useRef(null);
   const raf = useRef(0);
   const peaksFlat = useRef([]);
+  const audioGraph = useRef(null); // { ctx, source, analyser, connected }
 
   useEffect(() => {
     if (!ref.current || !url) return undefined;
@@ -27,24 +28,81 @@ function Player({ url, peaks, onEnergy }) {
       peaks: peaks || undefined,
     });
 
+    const teardownAudio = () => {
+      const g = audioGraph.current;
+      if (!g) return;
+      try { g.source?.disconnect(); } catch { /* already gone */ }
+      try { g.analyser?.disconnect(); } catch { /* already gone */ }
+      if (g.ctx && g.ctx.state !== 'closed') {
+        g.ctx.close().catch(() => {});
+      }
+      audioGraph.current = null;
+    };
+
+    /** One MediaElementSource per element — try once; fall back to peaks if blocked. */
+    const ensureAnalyser = () => {
+      if (audioGraph.current) return audioGraph.current.analyser ? 'live' : 'peaks';
+      const media = ws.current?.getMediaElement?.();
+      if (!media) return 'peaks';
+      try {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) {
+          audioGraph.current = { ctx: null, source: null, analyser: null, connected: false };
+          return 'peaks';
+        }
+        const ctx = new AC();
+        const source = ctx.createMediaElementSource(media);
+        const analyser = ctx.createAnalyser();
+        analyser.fftSize = 256;
+        analyser.smoothingTimeConstant = 0.72;
+        source.connect(analyser);
+        analyser.connect(ctx.destination);
+        audioGraph.current = { ctx, source, analyser, connected: true };
+        return 'live';
+      } catch {
+        // Already attached elsewhere, or autoplay/policy blocked the graph
+        audioGraph.current = { ctx: null, source: null, analyser: null, connected: false };
+        return 'peaks';
+      }
+    };
+
+    const freqBuf = new Uint8Array(128);
+
     const sampleEnergy = () => {
       const inst = ws.current;
       if (!inst || !onEnergy) return;
-      const dur = inst.getDuration?.() || 0;
-      const t = inst.getCurrentTime?.() || 0;
-      const arr = peaksFlat.current;
-      if (arr.length && dur > 0) {
-        const i = Math.min(arr.length - 1, Math.floor((t / dur) * arr.length));
-        const v = Math.abs(arr[i] || 0);
-        onEnergy(Math.min(1, v * 2.2));
+
+      const mode = ensureAnalyser();
+      const g = audioGraph.current;
+      if (mode === 'live' && g?.analyser) {
+        if (g.ctx?.state === 'suspended') g.ctx.resume().catch(() => {});
+        g.analyser.getByteFrequencyData(freqBuf);
+        let sum = 0;
+        // Bias mid/high bands for punchier tint response
+        const n = freqBuf.length;
+        for (let i = 2; i < n; i += 1) sum += freqBuf[i];
+        const avg = sum / Math.max(1, n - 2) / 255;
+        onEnergy(Math.min(1, avg * 1.85));
       } else {
-        onEnergy(0.25 + 0.35 * Math.abs(Math.sin(t * 5.5)));
+        const dur = inst.getDuration?.() || 0;
+        const t = inst.getCurrentTime?.() || 0;
+        const arr = peaksFlat.current;
+        if (arr.length && dur > 0) {
+          const i = Math.min(arr.length - 1, Math.floor((t / dur) * arr.length));
+          const v = Math.abs(arr[i] || 0);
+          onEnergy(Math.min(1, v * 2.2));
+        } else {
+          onEnergy(0.25 + 0.35 * Math.abs(Math.sin(t * 5.5)));
+        }
       }
       raf.current = requestAnimationFrame(sampleEnergy);
     };
 
     const onPlay = () => {
       cancelAnimationFrame(raf.current);
+      ensureAnalyser();
+      const g = audioGraph.current;
+      if (g?.ctx?.state === 'suspended') g.ctx.resume().catch(() => {});
       raf.current = requestAnimationFrame(sampleEnergy);
     };
     const onPause = () => {
@@ -58,7 +116,9 @@ function Player({ url, peaks, onEnergy }) {
 
     return () => {
       cancelAnimationFrame(raf.current);
+      teardownAudio();
       ws.current?.destroy();
+      ws.current = null;
     };
   }, [url, peaks, onEnergy]);
 

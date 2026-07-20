@@ -34,11 +34,17 @@ Classe : `.registre-quotidien` (body layouts).
 ### Registre fort — magenta / cyan iridescent
 **Uniquement** moments forts — **jamais** Chantier / nav / forms :
 
-- Drop reveal fullscreen (`.registre-fort`)
-- Pochettes catalogue Instrus (sleeves + deck écoute)
+- Drop reveal fullscreen (`.registre-fort`) + **main-globe vivant** (`.globe-hand-vivant`, CSS iris ; SoundGate reste static)
+- Pochettes catalogue Instrus (sleeves + deck écoute + **AnalyserNode** tint)
 - Hero public CODE / SOUND (`Home` panes)
 
 Tokens documentés : `--fort-magenta` `#ff2bd6` · `--fort-cyan` `#2de2e6` · `--fort-iris` / `--fort-iris-hot`.
+
+### Collage Chronique / Revue (Partie 2 deferred → shippé)
+SVG génératif depuis faits + quêtes 7j (fragments texte, sparkline activité, fragment marque) — pas d’image template fixe. Heuristique sans Anthropic.
+
+### Insights
+Remplacé par l’onde Chantier : nav Insights retiré · `/insights` → `/chantier`.
 
 ## Cohérence
 - Palette quotidienne = **oxblood** ; registre fort = ponctuation magenta/cyan  

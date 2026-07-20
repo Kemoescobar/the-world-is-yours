@@ -48,7 +48,8 @@ Doc : `docs/phase-3.md` · roadmaps : `docs/roadmaps/README.md`
 | Dispersion gate | Banner **uniquement** si Ère `active` **et** au moins 1 quête déjà liée à un `ere_objectif_id` **et** ≥50 % hors objectif (≥2) — sinon « pas encore branchée » |
 | Dispersion UI lien | ArcDetail : select objectif d’ère par quête (`PATCH /quetes/:id`) · soft prompt HorizonFil / Ère (pas d’alarme si 0 lien) |
 | Drops spiral | Vue spiral / liste |
-| Insights sans IA | Bouton désactivé si Anthropic soft-off |
+| Insights sans IA | **Supersédé** — page retirée ; `/insights` → `/chantier` (onde remplace Insights) |
+| **Partie 2 deferred** | Collage SVG hebdo Chronique/Revue · `.globe-hand-vivant` Drop · AnalyserNode tint catalogue · Insights redirect |
 | Demo freelance | Prospect seedé retiré (migration) |
 | Compétences interactives | Expand + preuves + prérequis roadmap (`66402fe`, migration appliquée) |
 | Contremaître | Bandeau Chantier OK en LIVE |
@@ -79,6 +80,7 @@ Doc : `docs/phase-3.md` · roadmaps : `docs/roadmaps/README.md`
 5. Toi : clé Anthropic + signup fermé + clearance si ouverture publique large
 6. Croisement ravitaillement après peuplement compétences (aside jusqu’à décision contraire)
 7. ~~Partie 2 oxblood / onde / Cmd+K~~ ✅
+8. ~~Partie 2 deferred~~ ✅ (2026-07-20) — collage Chronique/Revue · main-globe vivant Drop · AnalyserNode deck instrus · Insights → `/chantier`
 
 ---
 

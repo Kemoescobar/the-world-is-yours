@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { apiGet } from '../lib/api.js';
 import { playImpact } from '../lib/sounds.js';
+import GlobeHandVivant from '../components/GlobeHandVivant.jsx';
 
 function exportDropCard({ detail, typeFait, date }) {
   const w = 1080;
@@ -115,6 +116,7 @@ export default function DropDetail() {
     >
       <div className="halftone-overlay halftone-live" style={{ position: 'absolute', opacity: 0.22 }} />
       <div className="grain grain-live" />
+      <GlobeHandVivant side="right" opacity={0.52} />
       <span
         className="annotation-manuscrite annotation-pop"
         style={{

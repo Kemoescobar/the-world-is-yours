@@ -16,7 +16,6 @@ const CatalogueProjets = lazy(() => import('./pages/CatalogueProjets.jsx'));
 const Drops = lazy(() => import('./pages/Drops.jsx'));
 const DropDetail = lazy(() => import('./pages/DropDetail.jsx'));
 const Streaks = lazy(() => import('./pages/Streaks.jsx'));
-const Insights = lazy(() => import('./pages/Insights.jsx'));
 const Analytics = lazy(() => import('./pages/Analytics.jsx'));
 const Freelance = lazy(() => import('./pages/Freelance.jsx'));
 const Portefeuille = lazy(() => import('./pages/Portefeuille.jsx'));
@@ -119,7 +118,7 @@ export default function App() {
             <Route path="/streaks" element={<Prive><Streaks /></Prive>} />
             <Route path="/rayonnement" element={<Prive><Rayonnement /></Prive>} />
             <Route path="/ere" element={<Prive><Ere /></Prive>} />
-            <Route path="/insights" element={<Prive><Insights /></Prive>} />
+            <Route path="/insights" element={<Navigate to="/chantier" replace />} />
             <Route path="/analytics" element={<Prive><Analytics /></Prive>} />
             <Route path="/freelance" element={<Prive><Freelance /></Prive>} />
             <Route path="/portefeuille" element={<Prive><Portefeuille /></Prive>} />

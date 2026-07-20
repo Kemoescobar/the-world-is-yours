@@ -15,7 +15,6 @@ const outils = [
   { to: '/ere', label: 'Ère' },
   { to: '/freelance', label: 'Freelance' },
   { to: '/portefeuille', label: 'Portefeuille' },
-  { to: '/insights', label: 'Insights' },
   { to: '/analytics', label: 'Analytics' },
   { to: '/revue', label: 'Revue' },
   { to: '/parametres', label: 'Paramètres' },
