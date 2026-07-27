@@ -2,7 +2,6 @@ import express from 'express';
 import { supabase } from '../supabaseClient.js';
 import { requireAuthOrApiKey } from '../middleware/auth.js';
 import { aiRateLimit } from '../middleware/rateLimit.js';
-import { askClaude, anthropicConfigured } from '../lib/claude.js';
 import { lireMemoire, appendLecon } from '../lib/coachingMemory.js';
 import {
   genererRevueHeuristique,
@@ -10,6 +9,7 @@ import {
 } from '../lib/chronique.js';
 import { parserCheckinHeuristique } from '../lib/checkinHeuristique.js';
 import { incrementerStreak } from './streaks.js';
+import { getActiveDirectives } from '../lib/directives.js';
 
 const router = express.Router();
 
@@ -18,9 +18,11 @@ router.use(aiRateLimit, requireAuthOrApiKey);
 router.get('/status', (_req, res) => {
   res.json({
     ok: true,
-    anthropic: anthropicConfigured(),
-    model: process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-20250514',
+    anthropic: false,
+    llm: false,
+    model: null,
     memoire: true,
+    note: 'LLM débranché — jugement via POST /api/directives (Cowork)',
   });
 });
 
@@ -48,8 +50,6 @@ async function contexteSemaine() {
 router.post('/revue', async (req, res) => {
   try {
     const ctx = await contexteSemaine();
-    const faites = ctx.quetes.filter((q) => q.statut === 'fait');
-
     const debut = new Date();
     debut.setDate(debut.getDate() - 7);
     const { data: apprentissages } = await supabase
@@ -64,6 +64,21 @@ router.post('/revue', async (req, res) => {
       .eq('statut', 'proposee')
       .maybeSingle();
 
+    // Préférence : directive revue_soir Cowork si présente
+    const dirRevue = await getActiveDirectives('revue_soir').catch(() => null);
+    if (dirRevue?.contenu) {
+      const texte = typeof dirRevue.contenu === 'string'
+        ? dirRevue.contenu
+        : (dirRevue.contenu.texte || dirRevue.contenu.revue || JSON.stringify(dirRevue.contenu));
+      return res.json({
+        ok: true,
+        revue: texte,
+        source: 'directive',
+        apprentissages: apprentissages || [],
+        contremaitre: suggestion || null,
+      });
+    }
+
     const heuristic = genererRevueHeuristique({
       entrees: ctx.entrees,
       quetes: ctx.quetes,
@@ -72,73 +87,22 @@ router.post('/revue', async (req, res) => {
       contremaitre: suggestion || null,
     });
 
-    if (!anthropicConfigured()) {
-      return res.json({
-        ok: true,
-        revue: heuristic,
-        source: 'heuristic',
-        apprentissages: apprentissages || [],
-        contremaitre: suggestion || null,
-      });
-    }
-
-    try {
-      const { text } = await askClaude(
-        `Tu es le rédacteur des Chroniques TWIY (THE WORLD IS YOURS).
-Tone: direct, culturel, pas corporate. Français.
-Structure: titre de semaine + récit (pas un dump de stats) + 1 leçon + section "ce que tu as appris" si apprentissages fournis.
-Mémoire coaching à respecter:\n${ctx.memoire}`,
-        `Données 7 jours:\n${JSON.stringify({
-          entrees: ctx.entrees.slice(0, 40),
-          quetes_faites: faites.length,
-          quetes_total: ctx.quetes.length,
-          streaks: ctx.streaks,
-          apprentissages: apprentissages || [],
-          contremaitre: suggestion || null,
-          proposals: (ctx.prospects || []).filter((p) => p.statut === 'proposal_envoye').length,
-          brouillon_heuristique: heuristic,
-        }, null, 2)}\n\nRédige la revue dominicale en prose.`,
-        1100,
-      );
-      return res.json({
-        ok: true,
-        revue: text,
-        source: 'ia',
-        apprentissages: apprentissages || [],
-        contremaitre: suggestion || null,
-      });
-    } catch (err) {
-      // Soft: jamais 503 pour absence de récit — heuristique toujours dispo
-      return res.json({
-        ok: true,
-        revue: heuristic,
-        source: 'heuristic',
-        note: err.message,
-        apprentissages: apprentissages || [],
-        contremaitre: suggestion || null,
-      });
-    }
+    return res.json({
+      ok: true,
+      revue: heuristic,
+      source: 'heuristic',
+      apprentissages: apprentissages || [],
+      contremaitre: suggestion || null,
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-router.post('/insights', async (req, res) => {
-  try {
-    const ctx = await contexteSemaine();
-    const parType = {};
-    for (const e of ctx.entrees) parType[e.type_fait] = (parType[e.type_fait] || 0) + 1;
-    const { text } = await askClaude(
-      `Tu analyses les Chroniques TWIY. Français, 4–6 bullets max.
-Cherche corrélations Dev ↔ Beatmaker ↔ Sport ↔ Freelance.
-Mémoire:\n${lireMemoire()}`,
-      `Stats:\n${JSON.stringify({ parType, streaks: ctx.streaks, nEntrees: ctx.entrees.length }, null, 2)}`,
-      600,
-    );
-    res.json({ ok: true, insights: text });
-  } catch (err) {
-    res.status(err.code === 'NO_KEY' ? 503 : 500).json({ error: err.message });
-  }
+router.post('/insights', async (_req, res) => {
+  res.status(503).json({
+    error: 'LLM débranché — insights via directive Cowork (POST /api/directives type alerte|decision)',
+  });
 });
 
 const TYPES_FAIT_OK = new Set([
@@ -174,63 +138,25 @@ router.post('/checkin', async (req, res) => {
   const creer = req.body?.creer === true;
 
   try {
-    let parsed = heuristic;
-    let source = 'heuristic';
-
-    if (anthropicConfigured()) {
-      try {
-        const { text } = await askClaude(
-          `Tu transformes un check-in libre en faits Chroniques TWIY.
-Réponds UNIQUEMENT en JSON valide: {"entrees":[{"type_fait":"commit|session_prod|sport|proposal|instru|projet|certif|quete","detail":"...","arc_id":"dev|beatmaker|croisement|null"}],"lecon":"optionnel","apprentissages_brouillon":[{"titre":"...","contenu":"...","type":"blocage_resolu|declic|principe","arc_id":"dev|beatmaker|croisement|null","tags":[]}]}
-Types autorisés stricts. arc_id null si sport/proposal générique.
-Si tu detects un blocage résolu ou un déclic, remplis apprentissages_brouillon (max 2) — JAMAIS auto-créés, brouillons seulement.
-Mémoire:\n${lireMemoire()}`,
-          `Texte:\n${texte}\n\nBrouillon heuristique:\n${JSON.stringify(heuristic)}`,
-          900,
-        );
-        const jsonMatch = text.match(/\{[\s\S]*\}/);
-        const iaParsed = JSON.parse(jsonMatch ? jsonMatch[0] : text);
-        if (Array.isArray(iaParsed?.entrees) && iaParsed.entrees.length) {
-          parsed = iaParsed;
-          source = 'ia';
-        }
-      } catch {
-        /* soft — heuristique */
-      }
-    }
-
     const creees = creer
-      ? await insererEntreesCheckin(parsed.entrees, source === 'ia' ? 'checkin_ia' : 'checkin')
+      ? await insererEntreesCheckin(heuristic.entrees, 'checkin')
       : [];
 
-    if (parsed.lecon) appendLecon(parsed.lecon);
+    if (heuristic.lecon) appendLecon(heuristic.lecon);
 
-    const brouillons = Array.isArray(parsed.apprentissages_brouillon)
-      ? parsed.apprentissages_brouillon.slice(0, 2)
+    const brouillons = Array.isArray(heuristic.apprentissages_brouillon)
+      ? heuristic.apprentissages_brouillon.slice(0, 2)
       : [];
 
     res.json({
       ok: true,
-      suggestion: parsed,
+      suggestion: heuristic,
       creees,
       apprentissages_brouillon: brouillons,
-      source,
+      source: 'heuristic',
     });
   } catch (err) {
-    // Dernier filet : toujours pouvoir créer via heuristique
-    try {
-      const creees = creer ? await insererEntreesCheckin(heuristic.entrees, 'checkin') : [];
-      res.json({
-        ok: true,
-        suggestion: heuristic,
-        creees,
-        apprentissages_brouillon: heuristic.apprentissages_brouillon || [],
-        source: 'heuristic',
-        note: err.message,
-      });
-    } catch (err2) {
-      res.status(500).json({ error: err2.message || err.message });
-    }
+    res.status(500).json({ error: err.message });
   }
 });
 
@@ -255,37 +181,11 @@ router.post('/chapitre-titre', async (req, res) => {
       .eq('chapitre_id', chapitreId);
 
     const quetesFaites = (quetes || []).filter((q) => q.statut === 'fait');
-    const heuristic = genererTitreChapitreHeuristique({
+    const parsed = genererTitreChapitreHeuristique({
       chapitre: chap,
       quetesFaites,
       entrees: entrees || [],
     });
-
-    let parsed = heuristic;
-    let source = 'heuristic';
-
-    if (anthropicConfigured()) {
-      try {
-        const { text } = await askClaude(
-          `Tu titres un chapitre Chroniques TWIY (affiche street, Bricolage vibe).
-Réponds JSON: {"titre":"...","resume_public":"1-2 phrases"}
-Titre court, punchy, pas générique. Basé UNIQUEMENT sur les faits.`,
-          JSON.stringify({ chapitre: chap, entrees: entrees || [], quetes_faites: quetesFaites, brouillon: heuristic }),
-          400,
-        );
-        const jsonMatch = text.match(/\{[\s\S]*\}/);
-        const iaParsed = JSON.parse(jsonMatch ? jsonMatch[0] : text);
-        if (iaParsed?.titre) {
-          parsed = {
-            titre: iaParsed.titre,
-            resume_public: iaParsed.resume_public || heuristic.resume_public,
-          };
-          source = 'ia';
-        }
-      } catch {
-        /* keep heuristic */
-      }
-    }
 
     if (req.body?.appliquer === true) {
       const { data, error: upErr } = await supabase
@@ -299,10 +199,10 @@ Titre court, punchy, pas générique. Basé UNIQUEMENT sur les faits.`,
         .select()
         .single();
       if (upErr) return res.status(500).json({ error: upErr.message });
-      return res.json({ ok: true, suggestion: parsed, chapitre: data, source });
+      return res.json({ ok: true, suggestion: parsed, chapitre: data, source: 'heuristic' });
     }
 
-    res.json({ ok: true, suggestion: parsed, source });
+    res.json({ ok: true, suggestion: parsed, source: 'heuristic' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -358,75 +258,17 @@ router.post('/routines-jour', async (req, res) => {
 });
 
 /**
- * Message du matin : routines + Contremaître (max 1 suggestion) + apprentissages récents.
+ * Message du matin — proxy directives type message_matin (aucune génération).
  * Auth JWT ou x-api-key (n8n cron).
  */
-router.post('/message-matin', async (req, res) => {
+router.post('/message-matin', async (_req, res) => {
   try {
-    const ctx = await contexteSemaine();
-    const { data: activeSug } = await supabase
+    const directive = await getActiveDirectives('message_matin');
+    const { data: suggestion } = await supabase
       .from('suggestions_contremaitre')
       .select('*')
       .eq('statut', 'proposee')
       .maybeSingle();
-
-    let suggestion = activeSug;
-    if (!suggestion) {
-      // Déclencher scan Contremaître (même règles : max 1, déclencheur réel)
-      const { data: quetes } = await supabase
-        .from('quetes')
-        .select('*')
-        .eq('statut', 'en_cours')
-        .order('cree_le', { ascending: true })
-        .limit(20);
-      const auj = new Date().toISOString().slice(0, 10);
-      const bloquee = (quetes || []).find((q) => q.date_prevue && q.date_prevue < auj);
-
-      if (bloquee) {
-        let competenceId = bloquee.competence_id;
-        let ressourceTitre = null;
-        let ressourceUrl = null;
-        if (competenceId) {
-          const { data: comp } = await supabase.from('competences').select('*').eq('id', competenceId).maybeSingle();
-          if (comp?.description) {
-            const urlM = comp.description.match(/<([^>\s]+)>/) || comp.description.match(/(https?:\/\/[^\s;]+)/);
-            const nameM = comp.description.match(/Ressources:\s*([^;<]+)/);
-            ressourceUrl = urlM ? urlM[1] : null;
-            ressourceTitre = nameM ? nameM[1].trim() : comp.titre;
-          }
-        }
-        if (!ressourceTitre) {
-          const { data: comps } = await supabase
-            .from('competences')
-            .select('*')
-            .not('source_roadmap', 'is', null)
-            .limit(30);
-          const withUrl = (comps || []).find((c) => /https?:\/\//.test(c.description || ''));
-          if (withUrl) {
-            competenceId = withUrl.id;
-            const urlM = withUrl.description.match(/<([^>\s]+)>/) || withUrl.description.match(/(https?:\/\/[^\s;]+)/);
-            const nameM = withUrl.description.match(/Ressources:\s*([^;<]+)/);
-            ressourceUrl = urlM ? urlM[1] : null;
-            ressourceTitre = nameM ? nameM[1].trim() : withUrl.titre;
-          }
-        }
-        if (ressourceTitre) {
-          const { data: created } = await supabase
-            .from('suggestions_contremaitre')
-            .insert({
-              declencheur_type: 'quete_bloquee',
-              declencheur_ref: bloquee.id,
-              competence_id: competenceId || null,
-              ressource_titre: ressourceTitre,
-              ressource_url: ressourceUrl,
-              statut: 'proposee',
-            })
-            .select()
-            .single();
-          suggestion = created || null;
-        }
-      }
-    }
 
     const { data: apprentissages } = await supabase
       .from('apprentissages')
@@ -434,54 +276,22 @@ router.post('/message-matin', async (req, res) => {
       .order('cree_le', { ascending: false })
       .limit(3);
 
-    const { data: dispersion } = await supabase
-      .from('eres')
-      .select('id, nom')
-      .eq('statut', 'active')
-      .limit(1)
-      .maybeSingle();
-
     let message = null;
-    if (anthropicConfigured()) {
-      try {
-        const { text } = await askClaude(
-          `Message du matin TWIY — Contremaître. Français, 4–6 lignes max, direct.
-Inclure : focus du jour, 1 rappel streak si pertinent, Contremaître s'il y a une suggestion (utile/pas utile plus tard).
-Pas de motivational fluff.
-Mémoire:\n${lireMemoire()}`,
-          JSON.stringify({
-            streaks: ctx.streaks,
-            suggestion,
-            apprentissages: apprentissages || [],
-            ere: dispersion,
-          }),
-          400,
-        );
-        message = text;
-      } catch {
-        message = null;
-      }
-    }
-
-    if (!message) {
-      const parts = ['Contremaître — matin.'];
-      if (suggestion) {
-        parts.push(`Suggestion : ${suggestion.ressource_titre}${suggestion.ressource_url ? ` → ${suggestion.ressource_url}` : ''}`);
-      } else {
-        parts.push('Aucune friction détectée — pas de suggestion.');
-      }
-      if ((apprentissages || []).length) {
-        parts.push(`Apprentissages récents : ${(apprentissages || []).map((a) => a.titre).join(' · ')}`);
-      }
-      message = parts.join('\n');
+    if (directive?.contenu) {
+      message = typeof directive.contenu === 'string'
+        ? directive.contenu
+        : (directive.contenu.texte || directive.contenu.message || null);
     }
 
     res.json({
       ok: true,
       message,
+      directive: directive || null,
       contremaitre: suggestion || null,
       apprentissages: apprentissages || [],
-      ia: Boolean(anthropicConfigured() && message),
+      ia: false,
+      source: directive ? 'directive' : null,
+      en_attente: !directive,
     });
   } catch (err) {
     res.status(500).json({ error: err.message });

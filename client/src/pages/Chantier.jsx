@@ -1,8 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchArcs } from '../store/slices/arcsSlice.js';
-import { fetchQuetes, validerQuete } from '../store/slices/questsSlice.js';
+import { validerQuete } from '../store/slices/questsSlice.js';
+import {
+  fetchDashboard,
+  patchQueteLocale,
+  reorderQuetesByPriorites,
+  selectPrioritesJour,
+  selectDashboardErreurs,
+} from '../store/slices/dashboardSlice.js';
 import OsHeader from '../components/OsHeader.jsx';
 import ContremaitreBanner from '../components/ContremaitreBanner.jsx';
 import EmploiDuTemps from '../components/EmploiDuTemps.jsx';
@@ -10,7 +16,6 @@ import ChroniquePanel from '../components/ChroniquePanel.jsx';
 import HorizonFil from '../components/HorizonFil.jsx';
 import WaveDashboard from '../components/WaveDashboard.jsx';
 import MoodboardPatchwork from '../components/MoodboardPatchwork.jsx';
-import { apiGet } from '../lib/api.js';
 import { useAuth } from '../auth/AuthContext.jsx';
 
 const streakParArc = { dev: 'dev', beatmaker: 'miprod' };
@@ -29,78 +34,42 @@ function estTitreGenerique(titre) {
 export default function Chantier() {
   const dispatch = useDispatch();
   const { session, loading: authLoading } = useAuth();
-  const arcs = useSelector((s) => s.arcs.items);
-  const arcsStatut = useSelector((s) => s.arcs.statut);
-  const arcsErreur = useSelector((s) => s.arcs.erreur);
-  const quetes = useSelector((s) => s.quetes.items);
-  const quetesStatut = useSelector((s) => s.quetes.statut);
-  const quetesErreur = useSelector((s) => s.quetes.erreur);
-  const [streaks, setStreaks] = useState([]);
-  const [chapitres, setChapitres] = useState([]);
-  const [dispersion, setDispersion] = useState(null);
-  const [ere, setEre] = useState(null);
-  const [entreesRecent, setEntreesRecent] = useState([]);
-  const [sideErreur, setSideErreur] = useState('');
-  const [sideStatut, setSideStatut] = useState('idle');
-  const [edtRefresh, setEdtRefresh] = useState(0);
-  const [chroniqueRefresh, setChroniqueRefresh] = useState(0);
+
+  const dashStatut = useSelector((s) => s.dashboard.statut);
+  const dashErreur = useSelector((s) => s.dashboard.erreur);
+  const arcs = useSelector((s) => s.dashboard.arcs);
+  const quetesBrutes = useSelector((s) => s.dashboard.quetes);
+  const streaks = useSelector((s) => s.dashboard.streaks);
+  const chapitres = useSelector((s) => s.dashboard.chapitres);
+  const dispersion = useSelector((s) => s.dashboard.dispersion);
+  const ere = useSelector((s) => s.dashboard.ereActive);
+  const entreesRecent = useSelector((s) => s.dashboard.entrees);
+  const erreursPartielles = useSelector(selectDashboardErreurs);
+  const priorites = useSelector(selectPrioritesJour);
+
+  const quetes = useMemo(
+    () => reorderQuetesByPriorites(quetesBrutes, priorites),
+    [quetesBrutes, priorites],
+  );
+
   const [toast, setToast] = useState('');
 
-  const reloadSide = useCallback(async () => {
-    const [s, c, d, e, ent] = await Promise.all([
-      apiGet('/streaks'),
-      apiGet('/chapitres'),
-      apiGet('/eres/dispersion?jours=14'),
-      apiGet('/eres/active'),
-      apiGet('/entrees'),
-    ]);
-    setStreaks(Array.isArray(s) ? s : []);
-    setChapitres(Array.isArray(c) ? c : []);
-    setDispersion(d && typeof d === 'object' ? d : null);
-    setEre(e && e.id ? e : null);
-    setEntreesRecent(Array.isArray(ent) ? ent.slice(0, 80) : []);
-  }, []);
+  const reloadDashboard = useCallback(() => {
+    const action = dispatch(fetchDashboard());
+    return action;
+  }, [dispatch]);
 
   useEffect(() => {
     if (authLoading || !session) return undefined;
 
-    const arcsAction = dispatch(fetchArcs());
-    const quetesAction = dispatch(fetchQuetes());
+    const action = reloadDashboard();
 
-    let cancelled = false;
-    setSideErreur('');
-    setSideStatut('chargement');
-    (async () => {
-      try {
-        await reloadSide();
-        if (!cancelled) setSideStatut('pret');
-      } catch (err) {
-        if (!cancelled) {
-          setStreaks([]);
-          setChapitres([]);
-          setDispersion(null);
-          setEre(null);
-          setEntreesRecent([]);
-          setSideErreur(err.message || 'échec chargement annexes');
-          setSideStatut('erreur');
-        }
-      }
-    })();
-
-    function onQuetesChanged() {
-      dispatch(fetchQuetes());
-      setEdtRefresh((n) => n + 1);
-      setChroniqueRefresh((n) => n + 1);
+    function onRefresh() {
+      reloadDashboard();
     }
 
     function onEntreesChanged(ev) {
-      // Quête créée via capture (type « Quête ») → refresh liste ; sinon faits seulement
-      if (ev?.detail?.quete || ev?.detail?.kind === 'quete') {
-        dispatch(fetchQuetes());
-      }
-      setEdtRefresh((n) => n + 1);
-      setChroniqueRefresh((n) => n + 1);
-      reloadSide().catch(() => {});
+      reloadDashboard();
       const n = ev?.detail?.creees?.length || (ev?.detail?.entree ? 1 : 0);
       if (n > 0) {
         const label = ev?.detail?.quete
@@ -111,41 +80,27 @@ export default function Chantier() {
       }
     }
 
-    function onChroniqueRefresh() {
-      setChroniqueRefresh((n) => n + 1);
-      reloadSide().catch(() => {});
-    }
-
-    function onTitreChanged() {
-      reloadSide().catch(() => {});
-    }
-
-    window.addEventListener('twiy:quetes-changed', onQuetesChanged);
+    window.addEventListener('twiy:quetes-changed', onRefresh);
     window.addEventListener('twiy:entrees-changed', onEntreesChanged);
-    window.addEventListener('twiy:chronique-refresh', onChroniqueRefresh);
-    window.addEventListener('twiy:chapitre-titre-changed', onTitreChanged);
+    window.addEventListener('twiy:chronique-refresh', onRefresh);
+    window.addEventListener('twiy:chapitre-titre-changed', onRefresh);
 
     return () => {
-      cancelled = true;
-      arcsAction.abort?.();
-      quetesAction.abort?.();
-      window.removeEventListener('twiy:quetes-changed', onQuetesChanged);
+      action.abort?.();
+      window.removeEventListener('twiy:quetes-changed', onRefresh);
       window.removeEventListener('twiy:entrees-changed', onEntreesChanged);
-      window.removeEventListener('twiy:chronique-refresh', onChroniqueRefresh);
-      window.removeEventListener('twiy:chapitre-titre-changed', onTitreChanged);
+      window.removeEventListener('twiy:chronique-refresh', onRefresh);
+      window.removeEventListener('twiy:chapitre-titre-changed', onRefresh);
     };
-  }, [dispatch, session, authLoading, reloadSide]);
+  }, [session, authLoading, reloadDashboard]);
 
   const aujourdhui = jourISO();
-  // Ne bloque l’UI que sur le premier chargement — un refetch ne vide plus la carte
   const chargement =
     authLoading
-    || arcsStatut === 'chargement'
-    || arcsStatut === 'idle'
-    || ((quetesStatut === 'chargement' || quetesStatut === 'idle') && !quetes.length)
-    || sideStatut === 'chargement'
-    || sideStatut === 'idle';
-  const erreurPrincipale = arcsErreur || quetesErreur || sideErreur;
+    || dashStatut === 'chargement'
+    || dashStatut === 'idle';
+
+  const erreurPrincipale = dashErreur;
 
   function chapitrePourArc(arcId) {
     return chapitres
@@ -180,7 +135,7 @@ export default function Chantier() {
   }, [chapitres, chapitreHero]);
 
   const arcsVisibles = useMemo(
-    () => arcs.filter((a) => !ARCS_CACHES.has(a.id)),
+    () => (arcs || []).filter((a) => !ARCS_CACHES.has(a.id)),
     [arcs],
   );
 
@@ -199,9 +154,12 @@ export default function Chantier() {
   const erePasBranchee = dispersion?.note === 'ère pas encore branchée aux quêtes';
   const sansObjectif = erePasBranchee ? 0 : (dispersion?.sans_objectif?.length || 0);
 
-  const onTitreChange = useCallback(() => {
-    reloadSide().catch(() => {});
-  }, [reloadSide]);
+  async function onValider(id) {
+    const result = await dispatch(validerQuete(id));
+    if (validerQuete.fulfilled.match(result)) {
+      dispatch(patchQueteLocale(result.payload));
+    }
+  }
 
   return (
     <div className="os-page chantier-page">
@@ -225,9 +183,7 @@ export default function Chantier() {
         )}
       />
 
-      {!authLoading && session && (
-        <ChroniquePanel refreshKey={chroniqueRefresh} onTitreChange={onTitreChange} />
-      )}
+      {!authLoading && session && <ChroniquePanel />}
 
       <HorizonFil
         aujourdhui={aujourdhui}
@@ -253,6 +209,12 @@ export default function Chantier() {
       {erreurPrincipale && (
         <p className="annotation-manuscrite" style={{ marginBottom: 12 }}>
           API — {erreurPrincipale}
+        </p>
+      )}
+
+      {erreursPartielles.length > 0 && !erreurPrincipale && (
+        <p className="annotation-manuscrite" style={{ marginBottom: 12 }}>
+          Partiel — {erreursPartielles.map((e) => e.cle).join(', ')}
         </p>
       )}
 
@@ -284,11 +246,8 @@ export default function Chantier() {
 
       {!authLoading && session && (
         <EmploiDuTemps
-          refreshKey={edtRefresh}
           onValider={async (id) => {
-            await dispatch(validerQuete(id));
-            setEdtRefresh((n) => n + 1);
-            setChroniqueRefresh((n) => n + 1);
+            await onValider(id);
           }}
         />
       )}
@@ -308,8 +267,7 @@ export default function Chantier() {
           streakPour={streakPour}
           streakRecord={streakRecord}
           onValider={(id) => {
-            dispatch(validerQuete(id));
-            setChroniqueRefresh((n) => n + 1);
+            onValider(id);
           }}
         />
       )}

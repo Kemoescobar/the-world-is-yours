@@ -4,6 +4,7 @@ import { supabase } from '../supabaseClient.js';
 import { requireAuth } from '../middleware/auth.js';
 import { validateBody } from '../middleware/validate.js';
 import { createEreSchema, patchEreSchema } from '../schemas.js';
+import { loadDispersion, loadEreActive } from '../lib/dashboardData.js';
 
 const router = express.Router();
 router.use(requireAuth);
@@ -28,84 +29,23 @@ router.get('/', async (req, res) => {
 });
 
 router.get('/active', async (req, res) => {
-  const { data, error } = await supabase
-    .from('eres')
-    .select('*')
-    .eq('statut', 'active')
-    .order('date_debut', { ascending: false })
-    .limit(1)
-    .maybeSingle();
-  if (error) return res.status(500).json({ error: error.message });
-  res.json(data);
+  try {
+    const data = await loadEreActive();
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 /** Flag doux : quêtes sans ere_objectif_id sur période (défaut 14j). */
 router.get('/dispersion', async (req, res) => {
-  const jours = Math.min(90, Math.max(1, Number(req.query.jours) || 14));
-  const debut = new Date();
-  debut.setDate(debut.getDate() - jours);
-  const iso = debut.toISOString().slice(0, 10);
-
-  const { data: ere } = await supabase
-    .from('eres')
-    .select('*')
-    .eq('statut', 'active')
-    .order('date_debut', { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  // Never alarm without an active Ère — frontend also guards on `ere`
-  if (!ere) {
-    return res.json({
-      ok: true,
-      ere: null,
-      dispersion: false,
-      sans_objectif: [],
-      total_periode: 0,
-      jours,
-      note: 'aucune ère active',
-    });
+  try {
+    const jours = Math.min(90, Math.max(1, Number(req.query.jours) || 14));
+    const data = await loadDispersion(jours);
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
-
-  const { data: quetes, error } = await supabase
-    .from('quetes')
-    .select('*')
-    .neq('statut', 'abandonne')
-    .or(`date_prevue.gte.${iso},cree_le.gte.${debut.toISOString()}`);
-  if (error) return res.status(500).json({ error: error.message });
-
-  const liste = quetes || [];
-  const avecObjectif = liste.filter((q) => q.ere_objectif_id);
-  const sans = liste.filter((q) => !q.ere_objectif_id);
-
-  // Pas encore branchée : aucune quête n'a ere_objectif_id → pas un signal Dispersion
-  if (avecObjectif.length === 0) {
-    return res.json({
-      ok: true,
-      ere,
-      dispersion: false,
-      sans_objectif: [],
-      total_periode: liste.length,
-      lies_ere: 0,
-      jours,
-      note: 'ère pas encore branchée aux quêtes',
-    });
-  }
-
-  // Soft : banner seulement si % hors objectif significatif (≥50 %) et ≥2 quêtes
-  const pct = sans.length / Math.max(liste.length, 1);
-  const dispersion = sans.length >= 2 && pct >= 0.5;
-
-  res.json({
-    ok: true,
-    ere,
-    dispersion,
-    sans_objectif: sans,
-    total_periode: liste.length,
-    lies_ere: avecObjectif.length,
-    pct_hors: Math.round(pct * 100),
-    jours,
-  });
 });
 
 router.post('/', validateBody(createEreSchema), async (req, res) => {

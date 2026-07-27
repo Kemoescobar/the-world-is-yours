@@ -1,6 +1,5 @@
-import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { apiGet } from '../lib/api.js';
+import { useSelector } from 'react-redux';
 import { playTick } from '../lib/sounds.js';
 
 const PRIORITE_LABEL = {
@@ -11,35 +10,13 @@ const PRIORITE_LABEL = {
 };
 
 /**
- * Emploi du temps intelligent — HUD timeline Matin / Après-midi / Soir.
- * Données : GET /api/emploi-du-temps (heuristique TZ Madagascar).
+ * Emploi du temps — données depuis le store dashboard (pas d’API directe).
  */
-export default function EmploiDuTemps({ onValider, refreshKey = 0 }) {
-  const [plan, setPlan] = useState(null);
-  const [statut, setStatut] = useState('idle');
-  const [erreur, setErreur] = useState('');
-
-  useEffect(() => {
-    let cancelled = false;
-    setStatut('chargement');
-    setErreur('');
-    (async () => {
-      try {
-        const data = await apiGet('/emploi-du-temps');
-        if (!cancelled) {
-          setPlan(data);
-          setStatut('pret');
-        }
-      } catch (err) {
-        if (!cancelled) {
-          setPlan(null);
-          setErreur(err.message || 'échec emploi du temps');
-          setStatut('erreur');
-        }
-      }
-    })();
-    return () => { cancelled = true; };
-  }, [refreshKey]);
+export default function EmploiDuTemps({ onValider }) {
+  const plan = useSelector((s) => s.dashboard.emploiDuTemps);
+  const statut = useSelector((s) => s.dashboard.statut);
+  const erreurs = useSelector((s) => s.dashboard.erreurs || []);
+  const erreur = erreurs.find((e) => e.cle === 'emploiDuTemps')?.message || '';
 
   async function valider(queteId) {
     if (!queteId || !onValider) return;
@@ -56,7 +33,7 @@ export default function EmploiDuTemps({ onValider, refreshKey = 0 }) {
         </span>
       </div>
 
-      {statut === 'chargement' && (
+      {(statut === 'chargement' || statut === 'idle') && (
         <p className="compteur" style={{ padding: '12px 14px', margin: 0 }}>› calcul du jour…</p>
       )}
 
@@ -150,8 +127,7 @@ export default function EmploiDuTemps({ onValider, refreshKey = 0 }) {
           )}
 
           <p className="edt__source compteur">
-            source · {plan.source === 'heuristic+ia' ? 'heuristique + conseil IA' : 'heuristique'}
-            {plan.conseil_ia ? ` — ${plan.conseil_ia}` : ''}
+            source · heuristique
           </p>
         </div>
       )}

@@ -263,6 +263,21 @@ export const patchObjectifSchema = z.object({
   statut: z.enum(['en_cours', 'atteint', 'abandonne']).optional(),
 }).strict();
 
+export const DIRECTIVE_TYPE = z.enum([
+  'message_matin',
+  'priorites_jour',
+  'revue_soir',
+  'alerte',
+  'decision',
+]);
+
+/** POST /api/directives — Cowork (X-API-Key). */
+export const createDirectiveSchema = z.object({
+  type: DIRECTIVE_TYPE,
+  contenu: z.union([z.record(z.any()), z.array(z.any())]),
+  valide_jusqua: z.string().min(4).optional().nullable(),
+});
+
 export const webhookEntreeSchema = z.object({
   type_fait: TYPE_FAIT,
   detail: z.string().max(2000).optional().nullable(),

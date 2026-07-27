@@ -1,61 +1,49 @@
-import { useEffect, useState } from 'react';
-import { apiGet } from '../lib/api.js';
+import { useMemo } from 'react';
+import { useSelector } from 'react-redux';
 import TypeReveal from './TypeReveal.jsx';
 import ChroniqueCollage from './ChroniqueCollage.jsx';
 
 /**
- * Bloc Chronique — récit hero en tête du Chantier.
- * refreshKey / twiy:chronique-refresh : après capture / check-in / quêtes.
+ * Bloc Chronique — données depuis le store dashboard (pas d’API directe).
  */
-export default function ChroniquePanel({ refreshKey = 0, onTitreChange }) {
-  const [data, setData] = useState(null);
-  const [statut, setStatut] = useState('idle');
-  const [erreur, setErreur] = useState('');
-  const [week, setWeek] = useState({ entrees: [], quetes: [] });
+export default function ChroniquePanel() {
+  const statut = useSelector((s) => s.dashboard.statut);
+  const chroniqueJour = useSelector((s) => s.dashboard.chroniqueJour);
+  const chapitreActif = useSelector((s) => s.dashboard.chapitreActif);
+  const entrees = useSelector((s) => s.dashboard.entrees);
+  const quetes = useSelector((s) => s.dashboard.quetes);
+  const erreurs = useSelector((s) => s.dashboard.erreurs || []);
 
-  useEffect(() => {
-    let cancelled = false;
-    setStatut('chargement');
-    setErreur('');
-    (async () => {
-      try {
-        const debut = new Date();
-        debut.setDate(debut.getDate() - 7);
-        const [jour, chap, entrees, quetes] = await Promise.all([
-          apiGet('/chronique/jour'),
-          apiGet('/chronique/chapitre-actif?appliquer_titre=1'),
-          apiGet('/entrees').catch(() => []),
-          apiGet('/quetes').catch(() => []),
-        ]);
-        if (cancelled) return;
-        const preferChap = chap?.corps && chap?.chapitre;
-        const next = {
-          titre: preferChap ? (chap.titre || jour?.titre) : (jour?.titre || chap?.titre),
-          corps: preferChap ? chap.corps : (jour?.corps || chap?.corps),
-          source: preferChap ? chap.source : (jour?.source || chap?.source || 'heuristic'),
-          chapitre: chap?.chapitre || null,
-          titre_mis_a_jour: Boolean(chap?.titre_mis_a_jour),
-        };
-        setData(next);
-        setWeek({
-          entrees: (entrees || []).filter((e) => new Date(e.cree_le) >= debut),
-          quetes: quetes || [],
-        });
-        setStatut('pret');
-        if (chap?.titre_mis_a_jour) {
-          onTitreChange?.(chap.chapitre);
-          window.dispatchEvent(new CustomEvent('twiy:chapitre-titre-changed', { detail: chap.chapitre }));
-        }
-      } catch (err) {
-        if (!cancelled) {
-          setErreur(err.message || 'chronique indisponible');
-          setStatut('erreur');
-          setData(null);
-        }
-      }
-    })();
-    return () => { cancelled = true; };
-  }, [refreshKey, onTitreChange]);
+  const data = useMemo(() => {
+    const preferChap = chapitreActif?.corps && chapitreActif?.chapitre;
+    if (!chroniqueJour && !chapitreActif) return null;
+    return {
+      titre: preferChap
+        ? (chapitreActif.titre || chroniqueJour?.titre)
+        : (chroniqueJour?.titre || chapitreActif?.titre),
+      corps: preferChap
+        ? chapitreActif.corps
+        : (chroniqueJour?.corps || chapitreActif?.corps),
+      source: preferChap
+        ? chapitreActif.source
+        : (chroniqueJour?.source || chapitreActif?.source || 'heuristic'),
+      chapitre: chapitreActif?.chapitre || null,
+      titre_mis_a_jour: Boolean(chapitreActif?.titre_mis_a_jour),
+    };
+  }, [chroniqueJour, chapitreActif]);
+
+  const week = useMemo(() => {
+    const debut = new Date();
+    debut.setDate(debut.getDate() - 7);
+    return {
+      entrees: (entrees || []).filter((e) => new Date(e.cree_le) >= debut),
+      quetes: quetes || [],
+    };
+  }, [entrees, quetes]);
+
+  const errChronique = erreurs.find(
+    (e) => e.cle === 'chroniqueJour' || e.cle === 'chapitreActif',
+  );
 
   if (statut === 'chargement' || statut === 'idle') {
     return (
@@ -71,7 +59,7 @@ export default function ChroniquePanel({ refreshKey = 0, onTitreChange }) {
     );
   }
 
-  if (statut === 'erreur' || !data?.corps) {
+  if (errChronique && !data?.corps) {
     return (
       <article className="chronique-poster chrome-edge">
         <div className="chronique-poster__bar">
@@ -79,7 +67,29 @@ export default function ChroniquePanel({ refreshKey = 0, onTitreChange }) {
           <span className="compteur-dot">OFF</span>
         </div>
         <div className="chronique-poster__body">
-          <p className="annotation-manuscrite">{erreur || 'Pas de récit — capture un fait (+).'}</p>
+          <p className="annotation-manuscrite">{errChronique.message || 'chronique indisponible'}</p>
+          <button
+            type="button"
+            className="btn-ghost"
+            style={{ marginTop: 10 }}
+            onClick={() => window.dispatchEvent(new CustomEvent('twiy:open-capture', { detail: { mode: 'checkin' } }))}
+          >
+            › Check-in du soir
+          </button>
+        </div>
+      </article>
+    );
+  }
+
+  if (!data?.corps) {
+    return (
+      <article className="chronique-poster chrome-edge">
+        <div className="chronique-poster__bar">
+          <span>CHRONIQUE</span>
+          <span className="compteur-dot">OFF</span>
+        </div>
+        <div className="chronique-poster__body">
+          <p className="annotation-manuscrite">Pas de récit — capture un fait (+).</p>
           <button
             type="button"
             className="btn-ghost"
@@ -105,7 +115,7 @@ export default function ChroniquePanel({ refreshKey = 0, onTitreChange }) {
       <div className="chronique-poster__bar">
         <span>CHRONIQUE</span>
         <span className="compteur-dot">
-          {data.source === 'ia' ? 'IA' : 'HEURISTIQUE'}
+          {data.source === 'ia' ? 'HEURISTIQUE' : (data.source || 'HEURISTIQUE').toUpperCase()}
           {data.titre_mis_a_jour ? ' · TITRE ↑' : ''}
         </span>
       </div>

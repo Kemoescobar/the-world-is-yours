@@ -1,10 +1,7 @@
 import express from 'express';
 import { supabase } from '../supabaseClient.js';
 import { requireAuth } from '../middleware/auth.js';
-import { askClaude, anthropicConfigured } from '../lib/claude.js';
-import {
-  genererTitreChapitreHeuristique,
-} from '../lib/chronique.js';
+import { genererTitreChapitreHeuristique } from '../lib/chronique.js';
 
 const router = express.Router();
 
@@ -20,7 +17,7 @@ router.get('/', async (req, res) => {
   res.json(data);
 });
 
-/** Clôture + titre (Claude si clé, sinon heuristique depuis faits réels). */
+/** Clôture + titre heuristique (LLM débranché). */
 router.post('/:id/cloturer', async (req, res) => {
   const { id } = req.params;
   const { data: chap, error } = await supabase.from('chapitres').select('*').eq('id', id).single();
@@ -45,74 +42,24 @@ router.post('/:id/cloturer', async (req, res) => {
     entrees: entrees || [],
   });
 
-  if (!anthropicConfigured()) {
-    const { data, error: upErr } = await supabase
-      .from('chapitres')
-      .update({
-        titre: heuristic.titre,
-        resume_public: heuristic.resume_public,
-        statut: 'clos',
-      })
-      .eq('id', id)
-      .select()
-      .single();
-    if (upErr) return res.status(500).json({ error: upErr.message });
-    return res.json({
-      ok: true,
-      chapitre: data,
-      ia: false,
-      source: 'heuristic',
-      note: 'clos avec titre heuristique (pas de clé Anthropic)',
-    });
-  }
-
-  try {
-    const { text } = await askClaude(
-      'Titre de chapitre Chroniques TWIY. JSON only: {"titre":"...","resume_public":"..."}. Basé UNIQUEMENT sur les faits — n\'invente rien.',
-      JSON.stringify({
-        chapitre: chap,
-        entrees: entrees || [],
-        quetes_faites: quetesFaites,
-        brouillon: heuristic,
-      }),
-      350,
-    );
-    const m = text.match(/\{[\s\S]*\}/);
-    const parsed = JSON.parse(m ? m[0] : text);
-
-    const { data, error: upErr } = await supabase
-      .from('chapitres')
-      .update({
-        titre: parsed.titre || heuristic.titre || chap.titre,
-        resume_public: parsed.resume_public || heuristic.resume_public || chap.resume_public,
-        statut: 'clos',
-      })
-      .eq('id', id)
-      .select()
-      .single();
-    if (upErr) return res.status(500).json({ error: upErr.message });
-    res.json({ ok: true, chapitre: data, ia: true, source: 'ia' });
-  } catch (err) {
-    // Soft: clôturer quand même avec heuristique
-    const { data, error: upErr } = await supabase
-      .from('chapitres')
-      .update({
-        titre: heuristic.titre,
-        resume_public: heuristic.resume_public,
-        statut: 'clos',
-      })
-      .eq('id', id)
-      .select()
-      .single();
-    if (upErr) return res.status(500).json({ error: upErr.message || err.message });
-    res.json({
-      ok: true,
-      chapitre: data,
-      ia: false,
-      source: 'heuristic',
-      note: `IA échouée — titre heuristique (${err.message})`,
-    });
-  }
+  const { data, error: upErr } = await supabase
+    .from('chapitres')
+    .update({
+      titre: heuristic.titre,
+      resume_public: heuristic.resume_public,
+      statut: 'clos',
+    })
+    .eq('id', id)
+    .select()
+    .single();
+  if (upErr) return res.status(500).json({ error: upErr.message });
+  return res.json({
+    ok: true,
+    chapitre: data,
+    ia: false,
+    source: 'heuristic',
+    note: 'clos avec titre heuristique (Cerveau Claude = directives Cowork)',
+  });
 });
 
 router.patch('/:id', async (req, res) => {

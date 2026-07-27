@@ -22,6 +22,9 @@ import contremaitreRouter from './routes/contremaitre.js';
 import ravitaillementRouter from './routes/ravitaillement.js';
 import emploiDuTempsRouter from './routes/emploiDuTemps.js';
 import chroniqueRouter from './routes/chronique.js';
+import dashboardRouter from './routes/dashboard.js';
+import directivesRouter from './routes/directives.js';
+import coachRouter from './routes/coach.js';
 
 const app = express();
 
@@ -68,6 +71,9 @@ app.use('/api/contremaitre', contremaitreRouter);
 app.use('/api/ravitaillement', ravitaillementRouter);
 app.use('/api/emploi-du-temps', emploiDuTempsRouter);
 app.use('/api/chronique', chroniqueRouter);
+app.use('/api/dashboard', dashboardRouter);
+app.use('/api/directives', directivesRouter);
+app.use('/api/coach', coachRouter);
 
 app.get('/', (req, res) => {
   res.json({

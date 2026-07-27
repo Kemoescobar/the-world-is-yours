@@ -40,7 +40,7 @@ async function getAccessToken() {
  * @param {RequestInit & { auth?: boolean }} options auth=false pour endpoints publics
  */
 export async function api(path, options = {}) {
-  const { auth = true, headers: extraHeaders, ...rest } = options;
+  const { auth = true, headers: extraHeaders, signal, ...rest } = options;
   const headers = {
     'Content-Type': 'application/json',
     ...extraHeaders,
@@ -71,6 +71,7 @@ export async function api(path, options = {}) {
   const res = await fetch(url, {
     cache: 'no-store',
     ...rest,
+    signal,
     headers,
   });
 

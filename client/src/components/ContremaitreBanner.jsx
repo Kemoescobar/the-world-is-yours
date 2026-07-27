@@ -1,84 +1,56 @@
-import { useEffect, useState } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import {
+  clearContremaitre,
+  formatDirectiveStamp,
+  selectMessageMatin,
+  selectPrioritesJour,
+  texteDirective,
+} from '../store/slices/dashboardSlice.js';
+import { apiPost } from '../lib/api.js';
 
 /**
- * Bandeau Contremaître / message matin + note Ravitaillement auto — Chantier.
- * Ravitaillement : refill automatique à 3 actifs (Dev + Beatmaker), sans Accepter/Refuser.
+ * Bandeau matin / priorités — UNIQUEMENT depuis directives (dashboard).
+ * Pas de conseil généré ni hardcodé en fallback.
  */
 export default function ContremaitreBanner() {
-  const [data, setData] = useState(null);
-  const [noteRav, setNoteRav] = useState('');
-  const [signauxTerminee, setSignauxTerminee] = useState([]);
-  const [erreur, setErreur] = useState('');
+  const dispatch = useDispatch();
+  const statut = useSelector((s) => s.dashboard.statut);
+  const contremaitre = useSelector((s) => s.dashboard.contremaitre);
+  const ravitaillement = useSelector((s) => s.dashboard.ravitaillement);
+  const messageDir = useSelector(selectMessageMatin);
+  const prioritesDir = useSelector(selectPrioritesJour);
+  const erreurs = useSelector((s) => s.dashboard.erreurs || []);
 
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const { apiPost, apiGet } = await import('../lib/api.js');
+  const messageTexte = texteDirective(messageDir);
+  const prioritesTexte = texteDirective(prioritesDir);
+  const stamp = formatDirectiveStamp(messageDir?.cree_le || prioritesDir?.cree_le);
 
-        const active = await apiGet('/contremaitre/active');
-        let payload = { contremaitre: active, message: null };
-        try {
-          const matin = await apiPost('/ai/message-matin', {});
-          payload = matin;
-        } catch {
-          if (active) payload.message = `Suggestion : ${active.ressource_titre}`;
-        }
+  const noteRav = ravitaillement?.total_ajoutees > 0
+    ? (ravitaillement.message || `Ravitaillement auto · ${ravitaillement.total_ajoutees} quête(s) ajoutée(s)`)
+    : (ravitaillement?.message || '');
 
-        let note = '';
-        let terminees = [];
-        try {
-          const auto = await apiPost('/ravitaillement/auto', {});
-          const n = auto?.total_ajoutees || 0;
+  const signauxTerminee = (ravitaillement?.signaux || [])
+    .filter((s) => (s.roadmap_terminee || s.bloque_prereqs) && s.message)
+    .map((s) => s.message)
+    .filter((msg, i, arr) => arr.indexOf(msg) === i)
+    .filter((msg) => !noteRav.includes(msg));
 
-          // Toujours rafraîchir : les a_faire (nouveaux ou déjà en DB) doivent apparaître sur les cartes
-          window.dispatchEvent(new CustomEvent('twiy:quetes-changed'));
+  const errPartielle = erreurs.find((e) => e.cle === 'directives' || e.cle === 'contremaitre');
 
-          if (n > 0) {
-            note = auto.message || `Ravitaillement auto · ${n} quête${n > 1 ? 's' : ''} ajoutée${n > 1 ? 's' : ''}`;
-          } else if (auto?.message) {
-            // debounce / assez d'actifs / bloqué prereqs / roadmap — message honnête du serveur
-            note = auto.message;
-            for (const s of auto?.signaux || []) {
-              if ((s.roadmap_terminee || s.bloque_prereqs) && s.message) {
-                terminees.push(s.message);
-              }
-            }
-            terminees = [...new Set(terminees)];
-            // Évite doublon note + lignes jaunes si le message serveur est déjà complet
-            if (terminees.length && note.includes(terminees[0])) {
-              terminees = [];
-            }
-          }
-        } catch {
-          // soft — table / route peut manquer avant migration
-        }
-
-        if (!cancelled) {
-          setData(payload);
-          setNoteRav(note);
-          setSignauxTerminee(terminees);
-        }
-      } catch (err) {
-        if (!cancelled) setErreur(err.message);
-      }
-    })();
-    return () => { cancelled = true; };
-  }, []);
-
-  async function feedback(statut) {
-    if (!data?.contremaitre?.id) return;
+  async function feedback(statutFb) {
+    if (!contremaitre?.id) return;
     try {
-      const { apiPost } = await import('../lib/api.js');
-      await apiPost(`/contremaitre/${data.contremaitre.id}/feedback`, { statut });
-      setData({ ...data, contremaitre: null, message: data.message });
-    } catch (err) {
-      setErreur(err.message);
+      await apiPost(`/contremaitre/${contremaitre.id}/feedback`, { statut: statutFb });
+      dispatch(clearContremaitre());
+    } catch {
+      /* soft */
     }
   }
 
-  const hasContre = Boolean(data?.contremaitre || data?.message);
+  const hasDirective = Boolean(messageTexte || prioritesTexte);
+  const hasContre = Boolean(contremaitre);
   const hasRav = Boolean(noteRav) || signauxTerminee.length > 0;
+  const chargement = statut === 'chargement' || statut === 'idle';
 
   return (
     <aside
@@ -88,23 +60,45 @@ export default function ContremaitreBanner() {
     >
       <div className="os-panel__bar">
         <span>CONTREMAÎTRE</span>
-        <span className="compteur-dot">{hasContre ? 'MAX 1' : 'SOIR'}</span>
+        <span className="compteur-dot">
+          {stamp || (hasDirective ? 'DIRECTIVE' : 'EN ATTENTE DU CHECK-IN')}
+        </span>
       </div>
       <div className="os-panel__body">
-        {erreur && <p className="annotation-manuscrite">{erreur}</p>}
-        {data?.message && (
-          <p style={{ whiteSpace: 'pre-wrap', lineHeight: 1.5, marginBottom: 10, fontSize: '0.9rem' }}>
-            {data.message}
+        {errPartielle && (
+          <p className="annotation-manuscrite">{errPartielle.cle} — {errPartielle.message}</p>
+        )}
+
+        {chargement && (
+          <p className="compteur" style={{ marginBottom: 8 }}>› …</p>
+        )}
+
+        {!chargement && !hasDirective && (
+          <p style={{ whiteSpace: 'pre-wrap', lineHeight: 1.5, marginBottom: 10, fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+            EN ATTENTE DU CHECK-IN
           </p>
         )}
-        {data?.contremaitre && (
+
+        {messageTexte && (
+          <p style={{ whiteSpace: 'pre-wrap', lineHeight: 1.5, marginBottom: 10, fontSize: '0.9rem' }}>
+            {messageTexte}
+          </p>
+        )}
+
+        {prioritesTexte && (
+          <p className="compteur" style={{ marginBottom: 10, color: 'var(--jaune)' }}>
+            › {prioritesTexte}
+          </p>
+        )}
+
+        {contremaitre && (
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', marginBottom: hasRav ? 14 : 0 }}>
             <span className="compteur" style={{ color: 'var(--jaune)' }}>
-              {data.contremaitre.ressource_titre}
+              {contremaitre.ressource_titre}
             </span>
-            {data.contremaitre.ressource_url && (
+            {contremaitre.ressource_url && (
               <a
-                href={data.contremaitre.ressource_url}
+                href={contremaitre.ressource_url}
                 target="_blank"
                 rel="noreferrer"
                 className="btn-ghost"
@@ -132,8 +126,8 @@ export default function ContremaitreBanner() {
           <p
             className="compteur"
             style={{
-              borderTop: hasContre || signauxTerminee.length ? '1px solid rgba(255,210,63,0.2)' : undefined,
-              paddingTop: hasContre || signauxTerminee.length ? 12 : 0,
+              borderTop: hasContre || hasDirective || signauxTerminee.length ? '1px solid rgba(255,210,63,0.2)' : undefined,
+              paddingTop: hasContre || hasDirective || signauxTerminee.length ? 12 : 0,
               marginBottom: 0,
               color: noteRav.includes('ajoutée') ? 'var(--jaune)' : undefined,
             }}
